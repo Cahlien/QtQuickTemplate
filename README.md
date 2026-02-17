@@ -49,7 +49,7 @@ A cross-platform **Qt 6 / Qt Quick (QML)** starter repo that aims to be “just 
 .
 ├── CMakeLists.txt
 ├── conanfile.py
-├── README_STYLE.md
+├── README.md
 ├── doc/
 │   └── qtquicktemplate.qdocconf
 ├── include/
