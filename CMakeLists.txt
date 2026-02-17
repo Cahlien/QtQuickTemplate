@@ -121,6 +121,22 @@ set_target_properties(${PROJECT_NAME} PROPERTIES
 )
 
 # ─────────────────────────────────────────────
+# Android version.properties (generated)
+# ─────────────────────────────────────────────
+set(ANDROID_VER_FILE ${CMAKE_CURRENT_SOURCE_DIR}/platforms/android/version.properties)
+add_custom_target(GenerateAndroidVersion ALL
+    COMMAND ${CMAKE_COMMAND}
+        -DMAJOR=${PROJECT_VERSION_MAJOR}
+        -DMINOR=${PROJECT_VERSION_MINOR}
+        -DPATCH=${PROJECT_VERSION_PATCH}
+        -DOUT_FILE=${ANDROID_VER_FILE}
+        -P ${CMAKE_CURRENT_SOURCE_DIR}/scripts/generate_android_version.cmake
+    COMMENT "Generating Android version.properties -> ${ANDROID_VER_FILE}"
+    VERBATIM
+)
+add_dependencies(${PROJECT_NAME} GenerateAndroidVersion)
+
+# ─────────────────────────────────────────────
 # Platform-specific sources & configuration
 # ─────────────────────────────────────────────
 if (ANDROID)
