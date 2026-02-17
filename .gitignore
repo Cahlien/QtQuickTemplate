@@ -91,3 +91,9 @@ __pycache__/
 
 # Conan
 CMakeUserPresets.json
+
+# Gradle
+.gradle/
+**/build/
+local.properties
+
