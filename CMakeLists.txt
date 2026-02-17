@@ -83,6 +83,7 @@ set(QML_ALL_FILES
     qml/templates/MainPortraitLayout.qml
     qml/templates/MainLandscapeLayout.qml
     qml/pages/Readme.qml
+    qml/pages/License.qml
     qml/pages/StyleShowcase.qml
 )
 foreach(_file ${QML_ALL_FILES})
@@ -91,6 +92,7 @@ foreach(_file ${QML_ALL_FILES})
 endforeach()
 
 set_source_files_properties(README.md PROPERTIES QT_RESOURCE_ALIAS "README.md")
+set_source_files_properties(LICENSE PROPERTIES QT_RESOURCE_ALIAS "LICENSE")
 
 qt_add_qml_module(${PROJECT_NAME}
     URI dev.crowell.${PROJECT_NAME}
@@ -99,6 +101,7 @@ qt_add_qml_module(${PROJECT_NAME}
         ${QML_ALL_FILES}
     RESOURCES
         README.md
+        LICENSE
     SOURCES
         src/main/common/app_info.cpp
         include/main/common/app_info.h
