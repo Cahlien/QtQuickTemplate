@@ -254,7 +254,10 @@ cmake_path(GET _qt_bin_dir PARENT_PATH _qt_bin_dir)
 find_program(QDOC_EXECUTABLE qdoc HINTS "${_qt_bin_dir}" NO_DEFAULT_PATH)
 if (QDOC_EXECUTABLE)
     add_custom_target(docs
-        COMMAND ${QDOC_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/doc/qtquicktemplate.qdocconf
+        COMMAND ${CMAKE_COMMAND} -E rm -rf ${CMAKE_CURRENT_BINARY_DIR}/doc/html
+        COMMAND ${QDOC_EXECUTABLE}
+            ${CMAKE_CURRENT_SOURCE_DIR}/doc/qtquicktemplate.qdocconf
+            -outputdir ${CMAKE_CURRENT_BINARY_DIR}/doc/html
         WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/doc
         COMMENT "Generating QtQuickTemplate documentation with QDoc"
     )

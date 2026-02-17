@@ -5,6 +5,9 @@ description = QtQuickTemplate application documentation
 headerdirs  = ../include/main/common
 sourcedirs  = ../src/main/common
 
+# Include paths so QDoc can find project headers
+includepaths = ../include/main/common
+
 # QML sources across all three modules
 sourcedirs += \
     ../qml/theme \
@@ -13,6 +16,9 @@ sourcedirs += \
     ../qml/organisms \
     ../qml/templates \
     ../qml/pages
+
+# Module-level \qmlmodule declarations
+sourcedirs += .
 
 outputdir   = html
 outputformats = HTML

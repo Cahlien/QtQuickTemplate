@@ -1,0 +1,32 @@
+/*!
+    \qmlmodule AppTheme
+    \title AppTheme QML Module
+    \brief Design token singleton for colors, typography, spacing, and radii.
+
+    The AppTheme module provides the \l Theme singleton, which exposes
+    dark/light color palettes derived from crowell.dev, an MD3 typography
+    scale, spacing constants, border radii, animation durations, and
+    accessibility values.
+*/
+
+/*!
+    \qmlmodule AppStyle
+    \title AppStyle QML Module
+    \brief Custom Qt Quick Controls style using AppTheme tokens.
+
+    The AppStyle module provides themed replacements for standard
+    Qt Quick Controls 2 components. Each control extends its
+    QtQuick.Templates counterpart and applies AppTheme design tokens
+    for a consistent branded appearance.
+*/
+
+/*!
+    \qmlmodule QtQuickTemplate
+    \title QtQuickTemplate QML Module
+    \brief Application entry point, navigation, layouts, and pages.
+
+    The QtQuickTemplate module contains the root ApplicationWindow,
+    the NavigationController, adaptive layout templates
+    (portrait and landscape), organism-level components (Header, Footer),
+    and all application pages.
+*/
