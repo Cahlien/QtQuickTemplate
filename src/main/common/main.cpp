@@ -9,7 +9,7 @@ import helloworld;
 
 int main(int argc, char *argv[])
 {
-    QQuickStyle::setStyle("AppStyle");
+    QQuickStyle::setStyle("dev.crowell.AppStyle");
     QQuickStyle::setFallbackStyle("Basic");
 
     QGuiApplication app(argc, argv);
@@ -19,7 +19,7 @@ int main(int argc, char *argv[])
 
     QQmlApplicationEngine engine;
 
-    const QUrl mainUrl(QStringLiteral("qrc:/qt/qml/QtQuickTemplate/Main.qml"));
+    const QUrl mainUrl(QStringLiteral("qrc:/qt/qml/dev/crowell/QtQuickTemplate/Main.qml"));
 
     QObject::connect(
         &engine,
@@ -50,7 +50,7 @@ int main(int argc, char *argv[])
     // Demonstrating successful use of the HelloWorld class from the helloworld module
     qDebug() << helloWorld.formatMessage();
 
-    engine.loadFromModule("QtQuickTemplate", "Main");
+    engine.loadFromModule("dev.crowell.QtQuickTemplate", "Main");
 
     return app.exec();
 }

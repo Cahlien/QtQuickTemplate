@@ -1,10 +1,10 @@
 import QtQuick
 import QtQuick.Layouts
-import AppTheme
+import dev.crowell.AppTheme
 
 /*!
     \qmltype MainPortraitLayout
-    \inqmlmodule QtQuickTemplate
+    \inqmlmodule dev.crowell.QtQuickTemplate
     \inherits Rectangle
     \brief Column-based layout shell for portrait orientation.
 

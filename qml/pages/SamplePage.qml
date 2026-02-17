@@ -1,9 +1,9 @@
 import QtQuick
-import AppTheme
+import dev.crowell.AppTheme
 
 /*!
     \qmltype SamplePage
-    \inqmlmodule QtQuickTemplate
+    \inqmlmodule dev.crowell.QtQuickTemplate
     \inherits Item
     \brief Placeholder page used for navigation testing.
 */

@@ -3,11 +3,11 @@ pragma ComponentBehavior: Bound
 import QtQuick
 import QtQuick.Controls
 import QtQuick.Window
-import AppTheme
+import dev.crowell.AppTheme
 
 /*!
     \qmltype Main
-    \inqmlmodule QtQuickTemplate
+    \inqmlmodule dev.crowell.QtQuickTemplate
     \inherits ApplicationWindow
     \brief Root application window with adaptive portrait/landscape layouts.
 

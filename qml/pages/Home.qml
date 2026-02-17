@@ -1,9 +1,9 @@
 import QtQuick
-import AppTheme
+import dev.crowell.AppTheme
 
 /*!
     \qmltype Home
-    \inqmlmodule QtQuickTemplate
+    \inqmlmodule dev.crowell.QtQuickTemplate
     \inherits Item
     \brief Default home page displaying a centered heading.
 */

@@ -3,7 +3,7 @@
 
 /*!
     \class AppInfo
-    \inmodule QtQuickTemplate
+    \inmodule dev.crowell.QtQuickTemplate
     \brief Singleton exposing application metadata to QML.
 
     AppInfo is registered as a QML singleton via \c QML_ELEMENT and

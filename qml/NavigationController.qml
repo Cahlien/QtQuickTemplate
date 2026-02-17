@@ -2,7 +2,7 @@ import QtQuick
 
 /*!
     \qmltype NavigationController
-    \inqmlmodule QtQuickTemplate
+    \inqmlmodule dev.crowell.QtQuickTemplate
     \inherits QtObject
     \brief Loader-based navigation manager with back/forward history.
 

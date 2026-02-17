@@ -1,9 +1,9 @@
 import QtQuick
-import AppTheme
+import dev.crowell.AppTheme
 
 /*!
     \qmltype Header
-    \inqmlmodule QtQuickTemplate
+    \inqmlmodule dev.crowell.QtQuickTemplate
     \inherits Item
     \brief Application header bar displaying a centered title.
 

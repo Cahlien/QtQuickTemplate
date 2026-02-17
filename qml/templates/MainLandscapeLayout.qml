@@ -1,10 +1,10 @@
 import QtQuick
 import QtQuick.Layouts
-import AppTheme
+import dev.crowell.AppTheme
 
 /*!
     \qmltype MainLandscapeLayout
-    \inqmlmodule QtQuickTemplate
+    \inqmlmodule dev.crowell.QtQuickTemplate
     \inherits Rectangle
     \brief Side-navigation layout shell for landscape orientation.
 

@@ -1,11 +1,11 @@
 import QtQuick
 import QtQuick.Controls
 import QtQuick.Layouts
-import AppTheme
+import dev.crowell.AppTheme
 
 /*!
     \qmltype StyleShowcase
-    \inqmlmodule QtQuickTemplate
+    \inqmlmodule dev.crowell.QtQuickTemplate
     \inherits Item
     \brief Scrollable gallery demonstrating every AppStyle control.
 

@@ -1,9 +1,9 @@
 import QtQuick
-import AppTheme
+import dev.crowell.AppTheme
 
 /*!
     \qmltype Footer
-    \inqmlmodule QtQuickTemplate
+    \inqmlmodule dev.crowell.QtQuickTemplate
     \inherits Item
     \brief Application footer bar with a top border separator.
 
