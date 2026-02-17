@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <color name="launcher_background">#ff0f172a</color>
+    <color name="default_background">#ff0a0a0c</color>
+    <color name="splash_background">#ff0f172a</color>
+    <color name="arcane_400">#ff2dd4bf</color>
+</resources>
