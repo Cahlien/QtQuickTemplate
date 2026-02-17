@@ -28,13 +28,27 @@ T.ComboBox {
     padding: Theme.spacingSm
     spacing: Theme.spacingSm
 
-    indicator: Text {
-        x: control.mirrored ? control.leftPadding : control.width - width - control.rightPadding + control.spacing
+    indicator: Canvas {
+        x: control.mirrored ? control.leftPadding : control.width - width - control.rightPadding + Theme.spacingSm
         y: control.topPadding + (control.availableHeight - height) / 2
-        text: "\u25BE"
-        font.pixelSize: 14
-        color: Theme.mutedText
+        width: 10
+        height: 6
         opacity: control.enabled ? 1.0 : Theme.disabledOpacity
+        rotation: control.popup.visible ? 180 : 0
+
+        Behavior on rotation { NumberAnimation { duration: Theme.animFast } }
+
+        onPaint: {
+            var ctx = getContext("2d");
+            ctx.reset();
+            ctx.fillStyle = Theme.mutedText;
+            ctx.beginPath();
+            ctx.moveTo(0, 0);
+            ctx.lineTo(width, 0);
+            ctx.lineTo(width / 2, height);
+            ctx.closePath();
+            ctx.fill();
+        }
     }
 
     contentItem: T.TextField {
