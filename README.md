@@ -210,7 +210,7 @@ A quick checklist you’ll almost certainly want to do:
 
 ## Style notes
 
-See `README_STYLE.md` for a deeper dive into the Theme/AppStyle approach and how the controls are overridden.
+See `libs/appstyle/README.md` for a deeper dive into the Theme/AppStyle approach and how the controls are overridden.
 
 ---
 
