@@ -37,6 +37,13 @@ ApplicationWindow {
     property alias navigation: navigationController
 
     /*!
+        \qmlproperty bool Main::showingOverlay
+        When true the NavigationController's Loader is shown instead
+        of the tab-driven StackLayout.
+    */
+    property bool showingOverlay: false
+
+    /*!
         \qmlsignal Main::navigateTo(url resourceUrl)
         Emitted to request navigation to \a resourceUrl. A Connections
         handler forwards this to the \l NavigationController.
@@ -73,11 +80,6 @@ ApplicationWindow {
         loader: pageLoader
     }
 
-    Loader {
-        id: pageLoader
-        visible: false
-    }
-
     Header {
         id: headerItem
         title: root.title
@@ -87,15 +89,27 @@ ApplicationWindow {
     NavBar {
         id: navBarItem
         visible: false
+        onCurrentIndexChanged: root.showingOverlay = false
     }
 
-    StackLayout {
-        id: contentStack
-        currentIndex: navBarItem.currentIndex
+    Item {
+        id: contentArea
         visible: false
 
-        Readme {}
-        StyleShowcase {}
+        StackLayout {
+            id: contentStack
+            anchors.fill: parent
+            currentIndex: navBarItem.currentIndex
+            visible: !root.showingOverlay
+            Readme {}
+            StyleShowcase {}
+        }
+
+        Loader {
+            id: pageLoader
+            anchors.fill: parent
+            visible: root.showingOverlay
+        }
     }
 
     Footer {
@@ -111,15 +125,24 @@ ApplicationWindow {
     }
 
     Connections {
-        function onNavigateTo(resourceUrl) {
+        function onNavigateTo(resourceUrl: url) {
             navigationController.navigate(resourceUrl);
+            root.showingOverlay = true;
         }
         target: root
     }
 
+    Connections {
+        function onLicenseRequested() {
+            navigationController.navigate(Qt.resolvedUrl("License.qml"));
+            root.showingOverlay = true;
+        }
+        target: footerItem
+    }
+
     MainPortraitLayout {
         id: portraitLayout
-        content: contentStack
+        content: contentArea
         footer: footerItem
         header: headerItem
         navBar: navBarItem
@@ -129,7 +152,7 @@ ApplicationWindow {
 
     MainLandscapeLayout {
         id: landscapeLayout
-        content: contentStack
+        content: contentArea
         footer: footerItem
         header: headerItem
         navBar: navBarItem
