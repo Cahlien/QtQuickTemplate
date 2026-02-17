@@ -90,11 +90,15 @@ foreach(_file ${QML_ALL_FILES})
     set_source_files_properties("${_file}" PROPERTIES QT_RESOURCE_ALIAS "${_name}")
 endforeach()
 
+set_source_files_properties(README.md PROPERTIES QT_RESOURCE_ALIAS "README.md")
+
 qt_add_qml_module(${PROJECT_NAME}
     URI dev.crowell.${PROJECT_NAME}
     VERSION 1.0
     QML_FILES
         ${QML_ALL_FILES}
+    RESOURCES
+        README.md
     SOURCES
         src/main/common/app_info.cpp
         include/main/common/app_info.h
