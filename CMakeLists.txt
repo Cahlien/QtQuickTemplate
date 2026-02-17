@@ -119,6 +119,64 @@ set_target_properties(${PROJECT_NAME} PROPERTIES
     QT_ANDROID_PACKAGE_SOURCE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/platforms/android
 )
 
+# ─────────────────────────────────────────────
+# Platform-specific sources & configuration
+# ─────────────────────────────────────────────
+if (ANDROID)
+    target_sources(${PROJECT_NAME} PRIVATE
+        src/main/android/platform_init_android.cpp
+    )
+
+    target_include_directories(${PROJECT_NAME} PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/include/main/android
+    )
+elseif (WIN32)
+    configure_file(
+        ${CMAKE_CURRENT_SOURCE_DIR}/platforms/windows/app.rc.in
+        ${CMAKE_CURRENT_BINARY_DIR}/app.rc
+        @ONLY
+    )
+    target_sources(${PROJECT_NAME} PRIVATE
+        src/main/common/platform_init_default.cpp
+        ${CMAKE_CURRENT_BINARY_DIR}/app.rc
+        ${CMAKE_CURRENT_SOURCE_DIR}/platforms/windows/app.manifest
+    )
+elseif (APPLE AND NOT IOS)
+    target_sources(${PROJECT_NAME} PRIVATE
+        src/main/common/platform_init_default.cpp
+    )
+    set_target_properties(${PROJECT_NAME} PROPERTIES
+        MACOSX_BUNDLE_INFO_PLIST ${CMAKE_CURRENT_SOURCE_DIR}/platforms/macos/Info.plist
+    )
+    if (EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/platforms/macos/app.icns")
+        set_source_files_properties(platforms/macos/app.icns PROPERTIES
+            MACOSX_PACKAGE_LOCATION "Resources"
+        )
+        target_sources(${PROJECT_NAME} PRIVATE platforms/macos/app.icns)
+        set_target_properties(${PROJECT_NAME} PROPERTIES
+            MACOSX_BUNDLE_ICON_FILE app.icns
+        )
+    endif ()
+elseif (UNIX AND NOT APPLE AND NOT ANDROID)
+    target_sources(${PROJECT_NAME} PRIVATE
+        src/main/common/platform_init_default.cpp
+    )
+    configure_file(
+        ${CMAKE_CURRENT_SOURCE_DIR}/platforms/linux/QtQuickTemplate.desktop.in
+        ${CMAKE_CURRENT_BINARY_DIR}/${PROJECT_NAME}.desktop
+        @ONLY
+    )
+    configure_file(
+        ${CMAKE_CURRENT_SOURCE_DIR}/platforms/linux/dev.crowell.app.template.metainfo.xml.in
+        ${CMAKE_CURRENT_BINARY_DIR}/dev.crowell.app.template.metainfo.xml
+        @ONLY
+    )
+else ()
+    target_sources(${PROJECT_NAME} PRIVATE
+        src/main/common/platform_init_default.cpp
+    )
+endif ()
+
 target_link_libraries(${PROJECT_NAME}
     PRIVATE
     Qt6::Core
@@ -149,3 +207,29 @@ install(TARGETS ${PROJECT_NAME}
     LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
     RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
 )
+
+if (UNIX AND NOT APPLE AND NOT ANDROID)
+    install(FILES ${CMAKE_CURRENT_BINARY_DIR}/${PROJECT_NAME}.desktop
+        DESTINATION ${CMAKE_INSTALL_DATAROOTDIR}/applications
+    )
+    install(FILES ${CMAKE_CURRENT_BINARY_DIR}/dev.crowell.app.template.metainfo.xml
+        DESTINATION ${CMAKE_INSTALL_DATAROOTDIR}/metainfo
+    )
+    # Install icons if present
+    file(GLOB _linux_icons "platforms/linux/icons/*.png" "platforms/linux/icons/*.svg")
+    foreach (_icon ${_linux_icons})
+        get_filename_component(_icon_name "${_icon}" NAME_WE)
+        # Expect filenames like 48x48.png, 256x256.png, scalable.svg
+        if (_icon_name MATCHES "^([0-9]+)x([0-9]+)$")
+            install(FILES "${_icon}"
+                DESTINATION ${CMAKE_INSTALL_DATAROOTDIR}/icons/hicolor/${_icon_name}/apps
+                RENAME dev.crowell.app.template.png
+            )
+        elseif (_icon_name STREQUAL "scalable")
+            install(FILES "${_icon}"
+                DESTINATION ${CMAKE_INSTALL_DATAROOTDIR}/icons/hicolor/scalable/apps
+                RENAME dev.crowell.app.template.svg
+            )
+        endif ()
+    endforeach ()
+endif ()
