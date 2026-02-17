@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<component type="desktop-application">
+    <id>dev.crowell.app.template</id>
+    <metadata_license>MIT</metadata_license>
+    <project_license>MIT</project_license>
+    <name>QtQuick Template</name>
+    <summary>A QtQuick template application</summary>
+
+    <description>
+        <p>
+            QtQuick Template is a starter application built with Qt Quick
+            and Qt Quick Controls, providing a modern cross-platform UI
+            foundation for desktop and mobile applications.
+        </p>
+    </description>
+
+    <launchable type="desktop-id">@PROJECT_NAME@.desktop</launchable>
+
+    <url type="homepage">https://github.com/YourOrganization/QtQuickTemplate</url>
+    <url type="bugtracker">https://github.com/YourOrganization/QtQuickTemplate/issues</url>
+
+    <provides>
+        <binary>app@PROJECT_NAME@</binary>
+    </provides>
+
+    <releases>
+        <release version="@PROJECT_VERSION@" date="2026-02-16"/>
+    </releases>
+
+    <content_rating type="oars-1.1"/>
+</component>
