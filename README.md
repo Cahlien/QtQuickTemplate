@@ -61,6 +61,7 @@ A cross-platform **Qt 6 / Qt Quick (QML)** starter repo that aims to be “just 
 │   ├── CMakeLists.txt                 # auto-adds child lib dirs
 │   ├── appstyle/                      # custom Qt Quick Controls 2 style
 │   │   ├── CMakeLists.txt
+│   │   ├── README.md
 │   │   └── qml/
 │   │       ├── Button.qml
 │   │       ├── CheckBox.qml
