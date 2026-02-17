@@ -1,6 +1,6 @@
 /*!
-    \qmlmodule AppTheme
-    \title AppTheme QML Module
+    \qmlmodule dev.crowell.AppTheme
+    \title dev.crowell.AppTheme QML Module
     \brief Design token singleton for colors, typography, spacing, and radii.
 
     The AppTheme module provides the \l Theme singleton, which exposes

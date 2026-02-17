@@ -4,7 +4,7 @@ import QtQuick
 
 /*!
     \qmltype Theme
-    \inqmlmodule AppTheme
+    \inqmlmodule dev.crowell.AppTheme
     \inherits QtObject
     \brief Singleton providing all design tokens for the application.
 
