@@ -19,7 +19,7 @@ T.TabButton {
                             implicitContentWidth + leftPadding + rightPadding)
     implicitHeight: Math.max(implicitBackgroundHeight + topInset + bottomInset,
                              implicitContentHeight + topPadding + bottomPadding,
-                             40)
+                             48)
 
     padding: Theme.spacingSm
     leftPadding: Theme.spacingMd
@@ -41,7 +41,7 @@ T.TabButton {
     }
 
     background: Rectangle {
-        implicitHeight: 40
+        implicitHeight: 48
         color: control.checked ? Theme.surface
              : control.down ? Theme.surface2
              : control.hovered ? Theme.surfaceHover
