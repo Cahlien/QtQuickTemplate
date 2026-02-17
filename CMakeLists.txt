@@ -79,6 +79,7 @@ set(QML_ALL_FILES
     qml/NavigationController.qml
     qml/organisms/Header.qml
     qml/organisms/Footer.qml
+    qml/organisms/NavBar.qml
     qml/templates/MainPortraitLayout.qml
     qml/templates/MainLandscapeLayout.qml
     qml/pages/Home.qml
