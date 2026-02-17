@@ -1,0 +1,97 @@
+buildscript {
+    repositories {
+        google()
+        mavenCentral()
+    }
+
+    dependencies {
+        //noinspection AndroidGradlePluginVersion
+        classpath libs.plugins.android.application.get().toString()
+        classpath libs.plugins.kotlin.android.get().toString()
+    }
+}
+
+apply plugin: qtGradlePluginType
+
+def verProps = new Properties()
+def verFile = new File(projectDir, "version.properties")
+if (verFile.exists()) {
+    verFile.withInputStream { verProps.load(it) }
+    println "[Android] Using version from ${verFile}: versionName=${verProps['versionName']}, versionCode=${verProps['versionCode']}"
+} else {
+    println "[Android] version.properties not found at ${verFile}; falling back to defaults"
+}
+
+dependencies {
+    implementation fileTree(dir: 'libs', include: ['*.jar', '*.aar'])
+    //noinspection GradleDependency
+    implementation libs.androidx.core
+    implementation libs.material
+    implementation libs.androidx.core.splashscreen
+}
+
+android {
+    namespace = androidPackageName
+    compileSdkVersion androidCompileSdkVersion
+    buildToolsVersion androidBuildToolsVersion
+    ndkVersion = androidNdkVersion
+
+    sourceSets {
+        main {
+            manifest.srcFile 'AndroidManifest.xml'
+            java.srcDirs = [qtAndroidDir + '/src', 'src', 'java']
+            aidl.srcDirs = [qtAndroidDir + '/src', 'src', 'aidl']
+            res.srcDirs = [qtAndroidDir + '/res', 'res']
+            resources.srcDirs = ['resources']
+            renderscript.srcDirs = ['src']
+            assets.srcDirs = ['assets']
+            jniLibs.srcDirs = ['libs']
+       }
+    }
+
+    tasks.withType(JavaCompile) {
+        options.incremental = true
+        options.compilerArgs += ['-Xlint:all']
+    }
+
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_24
+        targetCompatibility JavaVersion.VERSION_24
+    }
+
+    lintOptions {
+        abortOnError = false
+    }
+
+    aaptOptions {
+        noCompress 'rcc'
+    }
+
+    defaultConfig {
+        resConfig "en"
+        minSdkVersion qtMinSdkVersion
+        targetSdkVersion qtTargetSdkVersion
+        ndk.abiFilters = qtTargetAbiList.split(",")
+
+        if (verProps['versionName']) {
+            versionName verProps['versionName']
+        }
+        if (verProps['versionCode']) {
+            versionCode verProps['versionCode'].toInteger()
+        }
+    }
+
+    buildFeatures {
+        buildConfig = true
+    }
+}
+
+kotlin {
+    jvmToolchain(25)
+}
+
+java {
+    toolchain {
+        languageVersion.set(JavaLanguageVersion.of(25))
+    }
+}

@@ -1,0 +1,15 @@
+[versions]
+agp = "9.0.1"
+kotlin = "2.3.10"
+androidxCore = "1.16.0"
+material = "1.13.0"
+coreSplashscreen = "1.0.1"
+
+[libraries]
+androidx-core = { group = "androidx.core", name = "core", version.ref = "androidxCore" }
+androidx-core-splashscreen = { group = "androidx.core", name = "core-splashscreen", version.ref = "coreSplashscreen" }
+material = { group = "com.google.android.material", name = "material", version.ref = "material" }
+
+[plugins]
+android-application = { id = "com.android.tools.build:gradle", version.ref = "agp" }
+kotlin-android = { id = "org.jetbrains.kotlin:kotlin-gradle-plugin", version.ref = "kotlin" }
