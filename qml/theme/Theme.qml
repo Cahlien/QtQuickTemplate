@@ -3,22 +3,28 @@ pragma Singleton
 import QtQuick
 
 QtObject {
-    // ── Colors (Material Design 3 — Dark) ──
-    readonly property color background: "#121212"
-    readonly property color surface: "#1E1E1E"
-    readonly property color surfaceVariant: "#2C2C2C"
-    readonly property color primary: "#BB86FC"
-    readonly property color primaryVariant: "#3700B3"
-    readonly property color secondary: "#03DAC6"
-    readonly property color secondaryVariant: "#018786"
-    readonly property color error: "#CF6679"
-    readonly property color onBackground: "#FFFFFF"
-    readonly property color onSurface: "#E0E0E0"
-    readonly property color onSurfaceVariant: "#A0A0A0"
-    readonly property color onPrimary: "#000000"
-    readonly property color onSecondary: "#000000"
-    readonly property color onError: "#000000"
-    readonly property color outline: "#444444"
+    id: theme
+
+    property bool darkMode: true
+
+    // ── Colors (from crowell.dev arcane + circuit palettes) ──
+    readonly property color background: darkMode ? "#0a0a0c" : "#f4f4f5"
+    readonly property color surface: darkMode ? "#141416" : "#ffffff"
+    readonly property color surface2: darkMode ? "#1c1c1e" : "#e4e4e7"
+    readonly property color primary: darkMode ? "#40e0d0" : "#2eb8a8"
+    readonly property color primaryHover: darkMode ? "#4dfce6" : "#40e0d0"
+    readonly property color primaryPressed: darkMode ? "#2eb8a8" : "#207068"
+    readonly property color secondary: darkMode ? "#2eb8a8" : "#207068"
+    readonly property color text: darkMode ? "#e4e4e7" : "#141416"
+    readonly property color mutedText: darkMode ? "#a1a1aa" : "#52525b"
+    readonly property color border: darkMode ? "#27272a" : "#d4d4d8"
+    readonly property color onPrimary: darkMode ? "#081a19" : "#e6fffc"
+    readonly property color success: darkMode ? "#4ade80" : "#16a34a"
+    readonly property color warning: darkMode ? "#facc15" : "#ca8a04"
+    readonly property color danger: darkMode ? "#f87171" : "#dc2626"
+    readonly property color focusOutline: darkMode ? "#40e0d0" : "#2eb8a8"
+    readonly property color outline: darkMode ? "#3f3f46" : "#a1a1aa"
+    readonly property color surfaceHover: darkMode ? "#1c1c1e" : "#e4e4e7"
 
     // ── Typography (Material Design 3 type scale) ──
     readonly property font displayLarge: Qt.font({pixelSize: 57, weight: Font.Normal})
@@ -50,4 +56,12 @@ QtObject {
     readonly property int radiusLg: 12
     readonly property int radiusXl: 16
     readonly property int radiusFull: 9999
+
+    // ── Animation ──
+    readonly property int animFast: 100
+    readonly property int animNormal: 200
+
+    // ── Accessibility ──
+    readonly property real disabledOpacity: 0.5
+    readonly property int focusWidth: 2
 }

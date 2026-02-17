@@ -13,6 +13,58 @@ find_package(Qt6 6.10 REQUIRED COMPONENTS Core Quick QuickControls2 Qml)
 qt_policy(SET QTP0004 NEW)
 qt_standard_project_setup(REQUIRES 6.10)
 
+# ─────────────────────────────────────────────
+# Module 1: AppTheme (shared theme tokens)
+# ─────────────────────────────────────────────
+qt_add_library(apptheme STATIC)
+set_source_files_properties(qml/theme/Theme.qml PROPERTIES
+    QT_QML_SINGLETON_TYPE TRUE
+    QT_RESOURCE_ALIAS "Theme.qml"
+)
+qt_add_qml_module(apptheme
+    URI AppTheme
+    VERSION 1.0
+    OUTPUT_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/AppTheme
+    QML_FILES
+        qml/theme/Theme.qml
+)
+
+# ─────────────────────────────────────────────
+# Module 2: AppStyle (custom controls style)
+# ─────────────────────────────────────────────
+qt_add_library(appstyle STATIC)
+
+set(APPSTYLE_QML_FILES
+    qml/AppStyle/Button.qml
+    qml/AppStyle/CheckBox.qml
+    qml/AppStyle/ComboBox.qml
+    qml/AppStyle/MenuItem.qml
+    qml/AppStyle/ProgressBar.qml
+    qml/AppStyle/ScrollBar.qml
+    qml/AppStyle/Slider.qml
+    qml/AppStyle/Switch.qml
+    qml/AppStyle/TabButton.qml
+    qml/AppStyle/TextField.qml
+    qml/AppStyle/ToolTip.qml
+)
+foreach(_file ${APPSTYLE_QML_FILES})
+    get_filename_component(_name "${_file}" NAME)
+    set_source_files_properties("${_file}" PROPERTIES QT_RESOURCE_ALIAS "${_name}")
+endforeach()
+
+qt_add_qml_module(appstyle
+    URI AppStyle
+    VERSION 1.0
+    OUTPUT_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/AppStyle
+    QML_FILES
+        ${APPSTYLE_QML_FILES}
+    DEPENDENCIES
+        AppTheme
+)
+
+# ─────────────────────────────────────────────
+# Module 3: Main application
+# ─────────────────────────────────────────────
 qt_add_executable(${PROJECT_NAME}
     src/main.cpp
 )
