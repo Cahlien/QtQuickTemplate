@@ -2,6 +2,16 @@ import QtQuick
 import QtQuick.Templates as T
 import AppTheme
 
+/*!
+    \qmltype ProgressBar
+    \inqmlmodule AppStyle
+    \inherits QtQuick.Templates::ProgressBar
+    \brief Styled progress indicator with determinate and indeterminate modes.
+
+    ProgressBar draws a thin rounded track with a primary-colored fill.
+    In indeterminate mode the fill rectangle animates back and forth
+    continuously.
+*/
 T.ProgressBar {
     id: control
 

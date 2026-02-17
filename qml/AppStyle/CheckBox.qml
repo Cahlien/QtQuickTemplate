@@ -2,6 +2,16 @@ import QtQuick
 import QtQuick.Templates as T
 import AppTheme
 
+/*!
+    \qmltype CheckBox
+    \inqmlmodule AppStyle
+    \inherits QtQuick.Templates::CheckBox
+    \brief Styled check box with animated indicator and check-mark glyph.
+
+    CheckBox displays a rounded square indicator that fills with the
+    primary color when checked. A Unicode check-mark fades in with an
+    animated opacity transition.
+*/
 T.CheckBox {
     id: control
 

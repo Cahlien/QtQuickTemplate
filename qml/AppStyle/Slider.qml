@@ -2,6 +2,16 @@ import QtQuick
 import QtQuick.Templates as T
 import AppTheme
 
+/*!
+    \qmltype Slider
+    \inqmlmodule AppStyle
+    \inherits QtQuick.Templates::Slider
+    \brief Styled slider with a circular handle and filled track.
+
+    Slider shows a rounded track with a primary-colored fill up to
+    the current position. The circular handle changes color on hover
+    and press with animated transitions.
+*/
 T.Slider {
     id: control
 

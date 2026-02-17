@@ -3,6 +3,16 @@ import QtQuick.Templates as T
 import QtQuick.Window
 import AppTheme
 
+/*!
+    \qmltype ComboBox
+    \inqmlmodule AppStyle
+    \inherits QtQuick.Templates::ComboBox
+    \brief Styled drop-down selector with a themed popup list.
+
+    ComboBox provides a surface-colored input with a down-arrow indicator
+    and a popup list of delegates styled with AppTheme tokens. The
+    currently highlighted delegate receives the primary color.
+*/
 T.ComboBox {
     id: control
 

@@ -2,6 +2,16 @@ import QtQuick
 import QtQuick.Templates as T
 import AppTheme
 
+/*!
+    \qmltype TextField
+    \inqmlmodule AppStyle
+    \inherits QtQuick.Templates::TextField
+    \brief Styled single-line text input with focus and hover borders.
+
+    TextField provides a surface-colored rounded input. The border
+    transitions to the primary color on hover and to the focus-outline
+    color when the field has active focus.
+*/
 T.TextField {
     id: control
 

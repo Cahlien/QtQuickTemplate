@@ -2,6 +2,16 @@ import QtQuick
 import QtQuick.Templates as T
 import AppTheme
 
+/*!
+    \qmltype TabButton
+    \inqmlmodule AppStyle
+    \inherits QtQuick.Templates::TabButton
+    \brief Styled tab button with a bottom accent bar when selected.
+
+    TabButton renders text that switches to the primary color when
+    checked. A 2px accent bar appears along the bottom edge of the
+    active tab. Hover and press produce surface-color feedback.
+*/
 T.TabButton {
     id: control
 

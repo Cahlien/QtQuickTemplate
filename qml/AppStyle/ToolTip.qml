@@ -2,6 +2,16 @@ import QtQuick
 import QtQuick.Templates as T
 import AppTheme
 
+/*!
+    \qmltype ToolTip
+    \inqmlmodule AppStyle
+    \inherits QtQuick.Templates::ToolTip
+    \brief Styled tooltip popup with a bordered surface background.
+
+    ToolTip appears above its parent and displays wrapped text using
+    the \c bodySmall font. It auto-closes on escape or press outside
+    the parent.
+*/
 T.ToolTip {
     id: control
 

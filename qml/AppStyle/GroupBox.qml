@@ -2,6 +2,15 @@ import QtQuick
 import QtQuick.Templates as T
 import AppTheme
 
+/*!
+    \qmltype GroupBox
+    \inqmlmodule AppStyle
+    \inherits QtQuick.Templates::GroupBox
+    \brief Styled container with a title label and bordered background.
+
+    GroupBox wraps its content in a rounded, bordered rectangle and
+    displays a title using the \c labelLarge font token.
+*/
 T.GroupBox {
     id: control
 

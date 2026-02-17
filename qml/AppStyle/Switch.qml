@@ -2,6 +2,16 @@ import QtQuick
 import QtQuick.Templates as T
 import AppTheme
 
+/*!
+    \qmltype Switch
+    \inqmlmodule AppStyle
+    \inherits QtQuick.Templates::Switch
+    \brief Styled toggle switch with animated thumb and track.
+
+    Switch displays a pill-shaped track that transitions to the primary
+    color when checked. The circular thumb slides between positions with
+    an eased animation.
+*/
 T.Switch {
     id: control
 

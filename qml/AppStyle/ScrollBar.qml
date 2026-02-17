@@ -2,6 +2,16 @@ import QtQuick
 import QtQuick.Templates as T
 import AppTheme
 
+/*!
+    \qmltype ScrollBar
+    \inqmlmodule AppStyle
+    \inherits QtQuick.Templates::ScrollBar
+    \brief Minimal styled scroll bar with fade-in/out behavior.
+
+    ScrollBar renders a thin rounded thumb that fades in when the
+    view is actively scrolling and fades out when idle. Pressed and
+    hovered states progressively darken the thumb color.
+*/
 T.ScrollBar {
     id: control
 
