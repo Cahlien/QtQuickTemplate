@@ -2,6 +2,7 @@ pragma ComponentBehavior: Bound
 
 import QtQuick
 import QtQuick.Controls
+import QtQuick.Layouts
 import QtQuick.Window
 import dev.crowell.AppTheme
 
@@ -12,7 +13,7 @@ import dev.crowell.AppTheme
     \brief Root application window with adaptive portrait/landscape layouts.
 
     Main is the entry point of the application. It creates a
-    \l NavigationController, a hidden Loader for page content,
+    \l NavigationController, a NavBar for tab-based page switching,
     and Header/Footer instances. A StackView switches between
     \l MainPortraitLayout and \l MainLandscapeLayout based on the
     window's aspect ratio.
@@ -21,12 +22,6 @@ import dev.crowell.AppTheme
 */
 ApplicationWindow {
     id: root
-
-    /*!
-        \qmlproperty url Main::initialPage
-        The page loaded on startup. Defaults to \c StyleShowcase.qml.
-    */
-    property url initialPage: Qt.resolvedUrl("StyleShowcase.qml")
 
     /*!
         \qmlproperty bool Main::isMobile
@@ -73,12 +68,6 @@ ApplicationWindow {
     visible: true
     width: isMobile ? Screen.width : 390
 
-    Component.onCompleted: {
-        if (root.initialPage && root.initialPage !== "") {
-            navigationController.navigate(root.initialPage);
-        }
-    }
-
     NavigationController {
         id: navigationController
         loader: pageLoader
@@ -93,6 +82,20 @@ ApplicationWindow {
         id: headerItem
         title: root.title
         visible: false
+    }
+
+    NavBar {
+        id: navBarItem
+        visible: false
+    }
+
+    StackLayout {
+        id: contentStack
+        currentIndex: navBarItem.currentIndex
+        visible: false
+
+        Home {}
+        StyleShowcase {}
     }
 
     Footer {
@@ -116,18 +119,20 @@ ApplicationWindow {
 
     MainPortraitLayout {
         id: portraitLayout
-        content: pageLoader
+        content: contentStack
         footer: footerItem
         header: headerItem
+        navBar: navBarItem
         navigation: navigationController
         visible: false
     }
 
     MainLandscapeLayout {
         id: landscapeLayout
-        content: pageLoader
+        content: contentStack
         footer: footerItem
         header: headerItem
+        navBar: navBarItem
         navigation: navigationController
         visible: false
     }
