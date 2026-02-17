@@ -1,10 +1,10 @@
 import QtQuick
 import QtQuick.Templates as T
-import AppTheme
+import dev.crowell.AppTheme
 
 /*!
     \qmltype MenuItem
-    \inqmlmodule AppStyle
+    \inqmlmodule dev.crowell.AppStyle
     \inherits QtQuick.Templates::MenuItem
     \brief Styled menu item with optional check indicator.
 

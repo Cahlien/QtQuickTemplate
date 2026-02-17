@@ -1,10 +1,10 @@
 import QtQuick
 import QtQuick.Templates as T
-import AppTheme
+import dev.crowell.AppTheme
 
 /*!
     \qmltype TextField
-    \inqmlmodule AppStyle
+    \inqmlmodule dev.crowell.AppStyle
     \inherits QtQuick.Templates::TextField
     \brief Styled single-line text input with focus and hover borders.
 

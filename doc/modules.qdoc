@@ -10,8 +10,8 @@
 */
 
 /*!
-    \qmlmodule AppStyle
-    \title AppStyle QML Module
+    \qmlmodule dev.crowell.AppStyle
+    \title dev.crowell.AppStyle QML Module
     \brief Custom Qt Quick Controls style using AppTheme tokens.
 
     The AppStyle module provides themed replacements for standard

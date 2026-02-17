@@ -1,10 +1,10 @@
 import QtQuick
 import QtQuick.Templates as T
-import AppTheme
+import dev.crowell.AppTheme
 
 /*!
     \qmltype ScrollBar
-    \inqmlmodule AppStyle
+    \inqmlmodule dev.crowell.AppStyle
     \inherits QtQuick.Templates::ScrollBar
     \brief Minimal styled scroll bar with fade-in/out behavior.
 

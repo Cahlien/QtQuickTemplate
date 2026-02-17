@@ -1,10 +1,10 @@
 import QtQuick
 import QtQuick.Templates as T
-import AppTheme
+import dev.crowell.AppTheme
 
 /*!
     \qmltype ToolTip
-    \inqmlmodule AppStyle
+    \inqmlmodule dev.crowell.AppStyle
     \inherits QtQuick.Templates::ToolTip
     \brief Styled tooltip popup with a bordered surface background.
 

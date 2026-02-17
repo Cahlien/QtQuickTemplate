@@ -1,10 +1,10 @@
 import QtQuick
 import QtQuick.Templates as T
-import AppTheme
+import dev.crowell.AppTheme
 
 /*!
     \qmltype TabButton
-    \inqmlmodule AppStyle
+    \inqmlmodule dev.crowell.AppStyle
     \inherits QtQuick.Templates::TabButton
     \brief Styled tab button with a bottom accent bar when selected.
 

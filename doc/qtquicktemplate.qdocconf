@@ -10,8 +10,8 @@ includepaths = ../include/main/common
 
 # QML sources across all three modules
 sourcedirs += \
-    ../qml/theme \
-    ../qml/AppStyle \
+    ../libs/apptheme/qml \
+    ../libs/appstyle/qml \
     ../qml \
     ../qml/organisms \
     ../qml/templates \

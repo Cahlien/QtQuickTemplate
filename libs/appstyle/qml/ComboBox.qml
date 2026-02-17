@@ -1,11 +1,11 @@
 import QtQuick
 import QtQuick.Templates as T
 import QtQuick.Window
-import AppTheme
+import dev.crowell.AppTheme
 
 /*!
     \qmltype ComboBox
-    \inqmlmodule AppStyle
+    \inqmlmodule dev.crowell.AppStyle
     \inherits QtQuick.Templates::ComboBox
     \brief Styled drop-down selector with a themed popup list.
 

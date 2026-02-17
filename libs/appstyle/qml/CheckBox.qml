@@ -1,18 +1,18 @@
 import QtQuick
 import QtQuick.Templates as T
-import AppTheme
+import dev.crowell.AppTheme
 
 /*!
-    \qmltype Switch
-    \inqmlmodule AppStyle
-    \inherits QtQuick.Templates::Switch
-    \brief Styled toggle switch with animated thumb and track.
+    \qmltype CheckBox
+    \inqmlmodule dev.crowell.AppStyle
+    \inherits QtQuick.Templates::CheckBox
+    \brief Styled check box with animated indicator and check-mark glyph.
 
-    Switch displays a pill-shaped track that transitions to the primary
-    color when checked. The circular thumb slides between positions with
-    an eased animation.
+    CheckBox displays a rounded square indicator that fills with the
+    primary color when checked. A Unicode check-mark fades in with an
+    animated opacity transition.
 */
-T.Switch {
+T.CheckBox {
     id: control
 
     implicitWidth: Math.max(implicitBackgroundWidth + leftInset + rightInset,
@@ -25,31 +25,38 @@ T.Switch {
     spacing: Theme.spacingSm
 
     indicator: Rectangle {
-        implicitWidth: 44
-        implicitHeight: 24
+        implicitWidth: 20
+        implicitHeight: 20
         x: control.text ? (control.mirrored ? control.width - width - control.rightPadding
                                              : control.leftPadding)
                         : control.leftPadding + (control.availableWidth - width) / 2
         y: control.topPadding + (control.availableHeight - height) / 2
-        radius: Theme.radiusFull
-        color: control.checked ? Theme.primary : Theme.surface2
+        radius: Theme.radiusSm
+        color: control.checked ? Theme.primary : Theme.surface
         border.width: control.visualFocus ? Theme.focusWidth : 1
-        border.color: control.visualFocus ? Theme.focusOutline
-                    : control.checked ? Theme.primary : Theme.border
+        border.color: {
+            if (control.visualFocus)
+                return Theme.focusOutline;
+            if (control.checked)
+                return Theme.primary;
+            if (control.hovered)
+                return Theme.primary;
+            return Theme.border;
+        }
         opacity: control.enabled ? 1.0 : Theme.disabledOpacity
 
-        Behavior on color { ColorAnimation { duration: Theme.animNormal } }
+        Behavior on color { ColorAnimation { duration: Theme.animFast } }
+        Behavior on border.color { ColorAnimation { duration: Theme.animFast } }
 
-        Rectangle {
-            x: control.checked ? parent.width - width - 3 : 3
-            y: (parent.height - height) / 2
-            width: 18
-            height: 18
-            radius: Theme.radiusFull
-            color: control.checked ? Theme.onPrimary : Theme.mutedText
-
-            Behavior on x { NumberAnimation { duration: Theme.animNormal; easing.type: Easing.InOutQuad } }
-            Behavior on color { ColorAnimation { duration: Theme.animNormal } }
+        Text {
+            anchors.centerIn: parent
+            text: "\u2713"
+            font.pixelSize: 14
+            font.weight: Font.Bold
+            color: Theme.onPrimary
+            visible: control.checked
+            opacity: control.checked ? 1.0 : 0.0
+            Behavior on opacity { NumberAnimation { duration: Theme.animFast } }
         }
     }
 
