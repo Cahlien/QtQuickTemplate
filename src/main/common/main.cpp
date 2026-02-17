@@ -2,6 +2,7 @@
 #include <QQmlApplicationEngine>
 #include <QQuickStyle>
 #include <QQuickWindow>
+#include <helloworld.h>
 
 #include "platform_init.h"
 
@@ -42,6 +43,11 @@ int main(int argc, char *argv[])
         },
         Qt::QueuedConnection
     );
+
+    HelloWorld helloWorld{};
+
+    // Demonstrating successful use of the HelloWorld class from the helloworld module
+    qDebug() << helloWorld.formatMessage();
 
     engine.loadFromModule("QtQuickTemplate", "Main");
 
