@@ -59,6 +59,17 @@ A cross-platform **Qt 6 / Qt Quick (QML)** starter repo that aims to be “just 
 │           └── platform_init.h
 ├── libs/
 │   ├── CMakeLists.txt                 # auto-adds child lib dirs
+│   ├── appstyle/                      # custom Qt Quick Controls 2 style
+│   │   ├── CMakeLists.txt
+│   │   └── qml/
+│   │       ├── Button.qml
+│   │       ├── CheckBox.qml
+│   │       ├── ...
+│   │       └── ToolTip.qml
+│   ├── apptheme/                      # AppTheme singleton (design tokens)
+│   │   ├── CMakeLists.txt
+│   │   └── qml/
+│   │       └── Theme.qml
 │   └── helloworld/                    # sample C++20 module library
 │       ├── CMakeLists.txt
 │       ├── helloworld.cppm
@@ -81,24 +92,9 @@ A cross-platform **Qt 6 / Qt Quick (QML)** starter repo that aims to be “just 
 │   │   ├── Home.qml
 │   │   ├── SamplePage.qml
 │   │   └── StyleShowcase.qml
-│   ├── templates/
-│   │   ├── MainPortraitLayout.qml
-│   │   └── MainLandscapeLayout.qml
-│   ├── theme/
-│   │   └── Theme.qml                  # AppTheme singleton (design tokens)
-│   └── AppStyle/                      # Qt Quick Controls 2 style overrides
-│       ├── Button.qml
-│       ├── CheckBox.qml
-│       ├── ComboBox.qml
-│       ├── GroupBox.qml
-│       ├── MenuItem.qml
-│       ├── ProgressBar.qml
-│       ├── ScrollBar.qml
-│       ├── Slider.qml
-│       ├── Switch.qml
-│       ├── TabButton.qml
-│       ├── TextField.qml
-│       └── ToolTip.qml
+│   └── templates/
+│       ├── MainPortraitLayout.qml
+│       └── MainLandscapeLayout.qml
 └── src/
     └── main/
         ├── common/
@@ -167,9 +163,11 @@ If you need to change the Android app id / namespace, start in:
 
 This project intentionally **flattens QML resource paths** using `QT_RESOURCE_ALIAS` so that pages/components can be referenced by simple filenames (e.g. `Qt.resolvedUrl("Home.qml")`) even if they live under `qml/pages/` in the source tree.
 
+The `AppTheme` and `AppStyle` modules are located in the `libs/` directory.
+
 Modules:
-- `AppTheme` → `Theme.qml` singleton
-- `AppStyle` → custom controls style (depends on `AppTheme`)
+- `AppTheme` → `Theme.qml` singleton (located in `libs/apptheme/qml/`)
+- `AppStyle` → custom controls style (depends on `AppTheme`, located in `libs/appstyle/qml/`)
 - `QtQuickTemplate` → main application QML
 
 ---
