@@ -5,16 +5,22 @@ import dev.crowell.AppTheme
     \qmltype Footer
     \inqmlmodule dev.crowell.QtQuickTemplate
     \inherits Item
-    \brief Application footer bar with a top border separator.
+    \brief Application footer bar with copyright and a clickable license link.
 
-    Footer renders a surface-colored bar with a top border line and
-    a centered "Footer" label. It is designed to be placed at the
-    bottom of a layout via \l MainPortraitLayout or \l MainLandscapeLayout.
+    Footer renders a surface-colored bar with a top border line,
+    a copyright notice on the left, and a clickable "MIT License"
+    link on the right. Clicking the link emits \l licenseRequested.
 
     \sa Header, MainPortraitLayout, MainLandscapeLayout
 */
 Item {
     id: root
+
+    /*!
+        \qmlsignal Footer::licenseRequested()
+        Emitted when the user taps the license link.
+    */
+    signal licenseRequested()
 
     height: 56
     z: 1
@@ -32,10 +38,33 @@ Item {
         }
 
         Text {
-            anchors.centerIn: parent
-            text: "\u00A9 " + new Date().getFullYear() + " \u00B7 MIT License"
+            anchors.left: parent.left
+            anchors.leftMargin: Theme.spacingMd
+            anchors.verticalCenter: parent.verticalCenter
+            text: "\u00A9 " + new Date().getFullYear() + " Matthew Crowell"
             color: Theme.mutedText
             font: Theme.labelLarge
+        }
+
+        Text {
+            id: licenseLink
+            anchors.right: parent.right
+            anchors.rightMargin: Theme.spacingMd
+            anchors.verticalCenter: parent.verticalCenter
+            text: "MIT License"
+            color: Theme.primary
+            font.family: Theme.labelLarge.family
+            font.pixelSize: Theme.labelLarge.pixelSize
+            font.weight: Theme.labelLarge.weight
+            font.underline: linkMouse.containsMouse
+
+            MouseArea {
+                id: linkMouse
+                anchors.fill: parent
+                cursorShape: Qt.PointingHandCursor
+                hoverEnabled: true
+                onClicked: root.licenseRequested()
+            }
         }
     }
 }
