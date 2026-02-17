@@ -112,7 +112,7 @@ A cross-platform **Qt 6 / Qt Quick (QML)** starter repo that aims to be “just 
 
 - **Qt 6.10+** (Core, Quick, QuickControls2, Qml)
 - **CMake 3.28+**
-- A C++20-capable compiler
+- A C++23-capable compiler
 - If using **Clang + C++20 modules**, you need `clang-scan-deps` available (the project tries hard to find it automatically, including from Android NDK paths).
 
 Optional:
