@@ -1,8 +1,6 @@
 # HelloWorld C++20 Module Library
 add_library(helloworld STATIC)
 
-
-
 target_sources(helloworld
     PRIVATE
         src/helloworld.cpp
@@ -19,12 +17,20 @@ target_include_directories(helloworld PUBLIC
 
 target_compile_features(helloworld PUBLIC cxx_std_20)
 
-get_target_property(_qt_bin_dir Qt6::qmake IMPORTED_LOCATION)
-cmake_path(GET _qt_bin_dir PARENT_PATH _qt_bin_dir)
-find_program(QDOC_EXECUTABLE qdoc HINTS "${_qt_bin_dir}" NO_DEFAULT_PATH)
+if (CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
+    target_compile_options(helloworld PUBLIC -fmodules-ts)
+endif ()
+
+find_package(Threads REQUIRED)
+target_link_libraries(helloworld PUBLIC Threads::Threads)
+
+find_program(QDOC_EXECUTABLE qdoc HINTS "${QT_HOST_PATH}/bin")
 if (QDOC_EXECUTABLE)
     add_custom_target(helloworld_docs
-        COMMAND ${QDOC_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/doc/helloworld.qdocconf
+        COMMAND ${CMAKE_COMMAND} -E rm -rf ${CMAKE_CURRENT_BINARY_DIR}/doc/html
+        COMMAND ${QDOC_EXECUTABLE}
+            ${CMAKE_CURRENT_SOURCE_DIR}/doc/helloworld.qdocconf
+            -outputdir ${CMAKE_CURRENT_BINARY_DIR}/doc/html
         WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/doc
         COMMENT "Generating HelloWorld documentation with QDoc"
     )

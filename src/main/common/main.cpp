@@ -2,7 +2,8 @@
 #include <QQmlApplicationEngine>
 #include <QQuickStyle>
 #include <QQuickWindow>
-#include <helloworld.h>
+
+import helloworld;
 
 #include "platform_init.h"
 

@@ -1,5 +1,20 @@
 cmake_minimum_required(VERSION 3.28)
 
+# Seed clang-scan-deps as early as possible so first configure pass has it.
+# This avoids requiring a second configure/build cycle in some Android setups.
+if (NOT CMAKE_CXX_COMPILER_CLANG_SCAN_DEPS OR CMAKE_CXX_COMPILER_CLANG_SCAN_DEPS MATCHES "-NOTFOUND$")
+    set(_scan_hints)
+    foreach(_ndk_var ANDROID_NDK_ROOT ANDROID_NDK_HOME ANDROID_NDK)
+        if (DEFINED ENV{${_ndk_var}})
+            list(APPEND _scan_hints "$ENV{${_ndk_var}}/toolchains/llvm/prebuilt/linux-x86_64/bin")
+        endif ()
+    endforeach ()
+    find_program(_bootstrap_clang_scan_deps clang-scan-deps HINTS ${_scan_hints})
+    if (_bootstrap_clang_scan_deps)
+        set(CMAKE_CXX_COMPILER_CLANG_SCAN_DEPS "${_bootstrap_clang_scan_deps}" CACHE FILEPATH "`clang-scan-deps` dependency scanner" FORCE)
+    endif ()
+endif ()
+
 project(QtQuickTemplate VERSION 0.1.0 LANGUAGES CXX)
 
 set(CMAKE_CXX_STANDARD 20)
@@ -7,25 +22,42 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
 set(CMAKE_POSITION_INDEPENDENT_CODE ON)
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
+set(CMAKE_CXX_SCAN_FOR_MODULES ON)
 
 find_package(Qt6 6.10 REQUIRED COMPONENTS Core Quick QuickControls2 Qml)
 qt_policy(SET QTP0004 NEW)
 qt_standard_project_setup(REQUIRES 6.10)
 
-# When cross-compiling (e.g. Android NDK), the toolchain clang may not
-# bundle clang-scan-deps.  Fall back to the host copy so that C++20
-# module scanning works.  Runs after find_package(Qt6) so it can
-# override any NOTFOUND value Qt's config may have set.
-if (CMAKE_CROSSCOMPILING AND (NOT CMAKE_CXX_COMPILER_CLANG_SCAN_DEPS
-        OR CMAKE_CXX_COMPILER_CLANG_SCAN_DEPS MATCHES "NOTFOUND"))
-    find_program(_host_scan_deps clang-scan-deps)
-    if (_host_scan_deps)
-        set(CMAKE_CXX_COMPILER_CLANG_SCAN_DEPS "${_host_scan_deps}" CACHE FILEPATH "" FORCE)
+set(CMAKE_AUTOMOC ON)
+set(CMAKE_AUTORCC ON)
+set(CMAKE_AUTOUIC ON)
+
+if(CONAN_GENERATORS_FOLDER)
+    list(PREPEND CMAKE_PREFIX_PATH "${CONAN_GENERATORS_FOLDER}")
+    list(PREPEND CMAKE_MODULE_PATH "${CONAN_GENERATORS_FOLDER}")
+endif()
+
+# Ensure clang module scanning tool is configured for Clang builds.
+# Some toolchains leave CMAKE_CXX_COMPILER_CLANG_SCAN_DEPS unset.
+if (CMAKE_CXX_COMPILER_ID MATCHES "Clang")
+    if (NOT CMAKE_CXX_COMPILER_CLANG_SCAN_DEPS OR CMAKE_CXX_COMPILER_CLANG_SCAN_DEPS MATCHES "-NOTFOUND$")
+        get_filename_component(_cxx_compiler_dir "${CMAKE_CXX_COMPILER}" DIRECTORY)
+        find_program(_clang_scan_deps clang-scan-deps HINTS "${_cxx_compiler_dir}")
+        if (NOT _clang_scan_deps)
+            find_program(_clang_scan_deps clang-scan-deps)
+        endif ()
+        if (_clang_scan_deps)
+            set(CMAKE_CXX_COMPILER_CLANG_SCAN_DEPS "${_clang_scan_deps}" CACHE FILEPATH "" FORCE)
+        else ()
+            message(FATAL_ERROR
+                "clang-scan-deps is required for C++20 modules with Clang but was not found. "
+                "Install it or ensure it is available next to the selected compiler (${CMAKE_CXX_COMPILER})."
+            )
+        endif ()
     endif ()
 endif ()
 
 add_subdirectory(libs)
-
 
 # ─────────────────────────────────────────────
 # Module 1: AppTheme (shared theme tokens)
