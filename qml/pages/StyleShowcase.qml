@@ -3,6 +3,17 @@ import QtQuick.Controls
 import QtQuick.Layouts
 import AppTheme
 
+/*!
+    \qmltype StyleShowcase
+    \inqmlmodule QtQuickTemplate
+    \inherits Item
+    \brief Scrollable gallery demonstrating every AppStyle control.
+
+    StyleShowcase presents grouped examples of Button, TextField,
+    CheckBox, Switch, Slider, ProgressBar, ComboBox, TabButton,
+    and a dark-mode toggle so that the custom style can be visually
+    verified in one place.
+*/
 Item {
     id: root
 

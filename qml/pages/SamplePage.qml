@@ -1,6 +1,12 @@
 import QtQuick
 import AppTheme
 
+/*!
+    \qmltype SamplePage
+    \inqmlmodule QtQuickTemplate
+    \inherits Item
+    \brief Placeholder page used for navigation testing.
+*/
 Item {
     Rectangle {
         anchors.fill: parent

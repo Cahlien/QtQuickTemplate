@@ -1,6 +1,18 @@
 import QtQuick
 import AppTheme
 
+/*!
+    \qmltype Footer
+    \inqmlmodule QtQuickTemplate
+    \inherits Item
+    \brief Application footer bar with a top border separator.
+
+    Footer renders a surface-colored bar with a top border line and
+    a centered "Footer" label. It is designed to be placed at the
+    bottom of a layout via \l MainPortraitLayout or \l MainLandscapeLayout.
+
+    \sa Header, MainPortraitLayout, MainLandscapeLayout
+*/
 Item {
     id: root
 

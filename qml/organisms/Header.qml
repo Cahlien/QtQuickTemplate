@@ -1,9 +1,25 @@
 import QtQuick
 import AppTheme
 
+/*!
+    \qmltype Header
+    \inqmlmodule QtQuickTemplate
+    \inherits Item
+    \brief Application header bar displaying a centered title.
+
+    Header renders a surface-colored bar with a bottom border separator
+    and a centered title label. It is designed to be placed at the top of
+    a layout via \l MainPortraitLayout or \l MainLandscapeLayout.
+
+    \sa Footer, MainPortraitLayout, MainLandscapeLayout
+*/
 Item {
     id: root
 
+    /*!
+        \qmlproperty string Header::title
+        The text displayed in the center of the header bar.
+    */
     property string title: ""
 
     height: 48

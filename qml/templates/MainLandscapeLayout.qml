@@ -2,12 +2,44 @@ import QtQuick
 import QtQuick.Layouts
 import AppTheme
 
+/*!
+    \qmltype MainLandscapeLayout
+    \inqmlmodule QtQuickTemplate
+    \inherits Rectangle
+    \brief Side-navigation layout shell for landscape orientation.
+
+    MainLandscapeLayout places the \l header and \l footer in a narrow
+    side column on the left, with the page \l content filling the
+    remaining width. It is activated automatically by \l Main when the
+    window width exceeds its height.
+
+    \sa MainPortraitLayout, Header, Footer
+*/
 Rectangle {
     id: root
 
+    /*!
+        \qmlproperty Item MainLandscapeLayout::footer
+        The footer item placed at the bottom of the side column.
+    */
     property Item footer
+
+    /*!
+        \qmlproperty Item MainLandscapeLayout::header
+        The header item placed at the top of the side column.
+    */
     property Item header
+
+    /*!
+        \qmlproperty Item MainLandscapeLayout::content
+        The main content area filling the right portion of the layout.
+    */
     property Item content
+
+    /*!
+        \qmlproperty NavigationController MainLandscapeLayout::navigation
+        The navigation controller driving page transitions.
+    */
     property NavigationController navigation
 
     color: Theme.background
