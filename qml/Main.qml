@@ -5,13 +5,47 @@ import QtQuick.Controls
 import QtQuick.Window
 import AppTheme
 
+/*!
+    \qmltype Main
+    \inqmlmodule QtQuickTemplate
+    \inherits ApplicationWindow
+    \brief Root application window with adaptive portrait/landscape layouts.
+
+    Main is the entry point of the application. It creates a
+    \l NavigationController, a hidden \l Loader for page content,
+    and Header/Footer instances. A StackView switches between
+    \l MainPortraitLayout and \l MainLandscapeLayout based on the
+    window's aspect ratio.
+
+    \sa NavigationController, MainPortraitLayout, MainLandscapeLayout
+*/
 ApplicationWindow {
     id: root
 
+    /*!
+        \qmlproperty url Main::initialPage
+        The page loaded on startup. Defaults to \c StyleShowcase.qml.
+    */
     property url initialPage: Qt.resolvedUrl("StyleShowcase.qml")
+
+    /*!
+        \qmlproperty bool Main::isMobile
+        \readonly
+        \c true on Android and iOS platforms; \c false otherwise.
+    */
     property bool isMobile: Qt.platform.os === "android" || Qt.platform.os === "ios"
+
+    /*!
+        \qmlproperty NavigationController Main::navigation
+        Alias exposing the internal \l NavigationController.
+    */
     property alias navigation: navigationController
 
+    /*!
+        \qmlsignal Main::navigateTo(url resourceUrl)
+        Emitted to request navigation to \a resourceUrl. A \l Connections
+        handler forwards this to the \l NavigationController.
+    */
     signal navigateTo(url resourceUrl)
 
     color: Theme.background
