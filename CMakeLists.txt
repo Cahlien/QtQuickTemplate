@@ -8,6 +8,18 @@ set(CMAKE_CXX_EXTENSIONS OFF)
 set(CMAKE_POSITION_INDEPENDENT_CODE ON)
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
+# When cross-compiling (e.g. Android NDK), the toolchain clang may not
+# bundle clang-scan-deps.  Fall back to the host copy so that C++20
+# module scanning works.
+if (CMAKE_CROSSCOMPILING AND NOT CMAKE_CXX_COMPILER_CLANG_SCAN_DEPS)
+    find_program(_host_scan_deps clang-scan-deps)
+    if (_host_scan_deps)
+        set(CMAKE_CXX_COMPILER_CLANG_SCAN_DEPS "${_host_scan_deps}" CACHE FILEPATH "" FORCE)
+    endif ()
+endif ()
+
+add_subdirectory(libs)
+
 find_package(Qt6 6.10 REQUIRED COMPONENTS Core Quick QuickControls2 Qml)
 
 qt_policy(SET QTP0004 NEW)
