@@ -12,7 +12,7 @@ import AppTheme
     \brief Root application window with adaptive portrait/landscape layouts.
 
     Main is the entry point of the application. It creates a
-    \l NavigationController, a hidden \l Loader for page content,
+    \l NavigationController, a hidden Loader for page content,
     and Header/Footer instances. A StackView switches between
     \l MainPortraitLayout and \l MainLandscapeLayout based on the
     window's aspect ratio.
@@ -43,7 +43,7 @@ ApplicationWindow {
 
     /*!
         \qmlsignal Main::navigateTo(url resourceUrl)
-        Emitted to request navigation to \a resourceUrl. A \l Connections
+        Emitted to request navigation to \a resourceUrl. A Connections
         handler forwards this to the \l NavigationController.
     */
     signal navigateTo(url resourceUrl)

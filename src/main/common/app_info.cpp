@@ -3,12 +3,12 @@
 
 /*!
     \class AppInfo
-    \inqmlmodule QtQuickTemplate
+    \inmodule QtQuickTemplate
     \brief Singleton exposing application metadata to QML.
 
     AppInfo is registered as a QML singleton via \c QML_ELEMENT and
     \c QML_SINGLETON. It provides read-only properties such as
-    \l version for display in the UI.
+    \c version for display in the UI.
 */
 
 /*!

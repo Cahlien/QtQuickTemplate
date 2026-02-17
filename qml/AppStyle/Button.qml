@@ -9,7 +9,7 @@ import AppTheme
     \brief Styled push button with hover, press, and highlighted states.
 
     Button applies AppTheme tokens for colors, radii, and typography.
-    Set \l {AbstractButton::highlighted}{highlighted} to \c true for a
+    Set \c highlighted to \c true for a
     filled primary-color variant. Focus, hover, and press states each
     produce distinct visual feedback with animated color transitions.
 */

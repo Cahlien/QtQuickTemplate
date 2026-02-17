@@ -7,7 +7,7 @@ import QtQuick
     \brief Loader-based navigation manager with back/forward history.
 
     NavigationController maintains back and forward history stacks and
-    drives a \l Loader to display pages by URL. Call \l navigate() to
+    drives a Loader to display pages by URL. Call \l navigate() to
     push a new page, \l goBack() and \l goForward() to traverse history,
     or \l clearHistory() to reset.
 
@@ -17,7 +17,7 @@ QtObject {
     id: navigationController
 
     /*!
-        \qmlproperty Loader NavigationController::loader
+        \qmlproperty var NavigationController::loader
         The Loader instance whose \c source is set when navigating.
     */
     required property Loader loader

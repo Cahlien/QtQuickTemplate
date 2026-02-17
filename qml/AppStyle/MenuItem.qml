@@ -9,7 +9,7 @@ import AppTheme
     \brief Styled menu item with optional check indicator.
 
     MenuItem renders text with a highlight background when selected.
-    When \l {AbstractButton::checkable}{checkable} is \c true, a
+    When \c checkable is \c true, a
     check-mark indicator appears on the leading edge.
 */
 T.MenuItem {
