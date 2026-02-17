@@ -200,6 +200,7 @@ target_link_libraries(${PROJECT_NAME}
     appthemeplugin
     appstyle
     appstyleplugin
+    helloworld
 )
 
 target_include_directories(${PROJECT_NAME}
