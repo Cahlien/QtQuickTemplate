@@ -15,6 +15,22 @@ ApplicationWindow {
     signal navigateTo(url resourceUrl)
 
     color: Theme.background
+
+    palette {
+        window: Theme.background
+        windowText: Theme.text
+        base: Theme.surface
+        text: Theme.text
+        button: Theme.surface
+        buttonText: Theme.text
+        highlight: Theme.primary
+        highlightedText: Theme.onPrimary
+        placeholderText: Theme.mutedText
+        mid: Theme.border
+        dark: Theme.surface2
+        light: Theme.surface
+    }
+
     flags: Qt.Window | Qt.MaximizeUsingFullscreenGeometryHint | Qt.ExpandedClientAreaHint
     height: isMobile ? Screen.height : 844
     minimumHeight: 568
