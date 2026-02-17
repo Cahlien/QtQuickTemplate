@@ -30,6 +30,12 @@ Rectangle {
     property Item header
 
     /*!
+        \qmlproperty Item MainPortraitLayout::navBar
+        The navigation bar placed between the header and content.
+    */
+    property Item navBar
+
+    /*!
         \qmlproperty Item MainPortraitLayout::content
         The main content area that fills the remaining vertical space.
     */
@@ -59,6 +65,12 @@ Rectangle {
 
             LayoutItemProxy {
                 target: root.header
+                Layout.fillWidth: true
+                Layout.preferredHeight: 48
+            }
+
+            LayoutItemProxy {
+                target: root.navBar
                 Layout.fillWidth: true
                 Layout.preferredHeight: 48
             }

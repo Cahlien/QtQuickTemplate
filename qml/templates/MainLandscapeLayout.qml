@@ -31,6 +31,12 @@ Rectangle {
     property Item header
 
     /*!
+        \qmlproperty Item MainLandscapeLayout::navBar
+        The navigation bar placed below the header in the side column.
+    */
+    property Item navBar
+
+    /*!
         \qmlproperty Item MainLandscapeLayout::content
         The main content area filling the right portion of the layout.
     */
@@ -65,6 +71,12 @@ Rectangle {
 
                 LayoutItemProxy {
                     target: root.header
+                    Layout.fillWidth: true
+                    Layout.preferredHeight: 48
+                }
+
+                LayoutItemProxy {
+                    target: root.navBar
                     Layout.fillWidth: true
                     Layout.preferredHeight: 48
                 }
