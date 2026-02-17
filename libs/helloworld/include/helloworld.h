@@ -3,19 +3,13 @@
 #include <string>
 #include <string_view>
 
-#if defined(_WIN32) && defined(HELLOWORLD_SHARED)
-#  if defined(HELLOWORLD_EXPORTS)
-#    define HELLOWORLD_API __declspec(dllexport)
-#  else
-#    define HELLOWORLD_API __declspec(dllimport)
-#  endif
-#elif defined(__GNUC__) && defined(HELLOWORLD_SHARED)
-#  define HELLOWORLD_API __attribute__((visibility("default")))
+#if defined(__APPLE__) && defined(TARGET_OS_IPHONE)
+#  define HELLOWORLD_EXPORT
 #else
-#  define HELLOWORLD_API
+#  include "helloworld_export.h"
 #endif
 
-class HELLOWORLD_API HelloWorld
+class HELLOWORLD_EXPORT HelloWorld
 {
 public:
     HelloWorld();
