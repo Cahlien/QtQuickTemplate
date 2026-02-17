@@ -1,0 +1,18 @@
+project     = QtQuickTemplate
+description = QtQuickTemplate application documentation
+
+# C++ headers and sources (QML-exposed types like AppInfo)
+headerdirs  = ../include/main/common
+sourcedirs  = ../src/main/common
+
+# QML sources across all three modules
+sourcedirs += \
+    ../qml/theme \
+    ../qml/AppStyle \
+    ../qml \
+    ../qml/organisms \
+    ../qml/templates \
+    ../qml/pages
+
+outputdir   = html
+outputformats = HTML

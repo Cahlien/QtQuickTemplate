@@ -1,0 +1,8 @@
+project     = HelloWorld
+description = HelloWorld library documentation
+
+headerdirs  = ../include
+sourcedirs  = ../src
+
+outputdir   = html
+outputformats = HTML
