@@ -1,0 +1,75 @@
+{
+  "source": "https://www.crowell.dev",
+  "extractedAt": "2026-02-16",
+  "palettes": {
+    "arcane": {
+      "50": "#e6fffc",
+      "100": "#b3fff5",
+      "200": "#80ffee",
+      "300": "#4dfce6",
+      "400": "#40e0d0",
+      "500": "#2eb8a8",
+      "600": "#207068",
+      "700": "#1a5a54",
+      "800": "#144440",
+      "900": "#0e2e2c",
+      "950": "#081a19"
+    },
+    "circuit": {
+      "50": "#f4f4f5",
+      "100": "#e4e4e7",
+      "200": "#d4d4d8",
+      "300": "#a1a1aa",
+      "400": "#71717a",
+      "500": "#52525b",
+      "600": "#3f3f46",
+      "700": "#27272a",
+      "800": "#1c1c1e",
+      "900": "#141416",
+      "950": "#0a0a0c"
+    }
+  },
+  "semantic": {
+    "dark": {
+      "background": "#0a0a0c",
+      "surface": "#141416",
+      "surface2": "#1c1c1e",
+      "primary": "#40e0d0",
+      "secondary": "#2eb8a8",
+      "text": "#e4e4e7",
+      "mutedText": "#a1a1aa",
+      "border": "#27272a",
+      "onPrimary": "#081a19",
+      "success": "#4ade80",
+      "warning": "#facc15",
+      "danger": "#f87171",
+      "focusOutline": "#40e0d0",
+      "outline": "#3f3f46"
+    },
+    "light": {
+      "background": "#f4f4f5",
+      "surface": "#ffffff",
+      "surface2": "#e4e4e7",
+      "primary": "#2eb8a8",
+      "secondary": "#207068",
+      "text": "#141416",
+      "mutedText": "#52525b",
+      "border": "#d4d4d8",
+      "onPrimary": "#e6fffc",
+      "success": "#16a34a",
+      "warning": "#ca8a04",
+      "danger": "#dc2626",
+      "focusOutline": "#2eb8a8",
+      "outline": "#a1a1aa"
+    }
+  },
+  "contrastValidation": {
+    "dark": {
+      "textOnBackground": { "ratio": 15.3, "pass": "AAA" },
+      "mutedTextOnBackground": { "ratio": 7.9, "pass": "AAA" },
+      "textOnSurface": { "ratio": 14.7, "pass": "AAA" },
+      "primaryOnBackground": { "ratio": 11.3, "pass": "AAA" },
+      "onPrimaryOnPrimary": { "ratio": 10.3, "pass": "AAA" }
+    }
+  }
+}
