@@ -1,0 +1,63 @@
+import QtQuick
+import QtQuick.Templates as T
+import AppTheme
+
+T.CheckBox {
+    id: control
+
+    implicitWidth: Math.max(implicitBackgroundWidth + leftInset + rightInset,
+                            implicitContentWidth + leftPadding + rightPadding)
+    implicitHeight: Math.max(implicitBackgroundHeight + topInset + bottomInset,
+                             implicitContentHeight + topPadding + bottomPadding,
+                             implicitIndicatorHeight + topPadding + bottomPadding)
+
+    padding: Theme.spacingXs
+    spacing: Theme.spacingSm
+
+    indicator: Rectangle {
+        implicitWidth: 20
+        implicitHeight: 20
+        x: control.text ? (control.mirrored ? control.width - width - control.rightPadding
+                                             : control.leftPadding)
+                        : control.leftPadding + (control.availableWidth - width) / 2
+        y: control.topPadding + (control.availableHeight - height) / 2
+        radius: Theme.radiusSm
+        color: control.checked ? Theme.primary : Theme.surface
+        border.width: control.visualFocus ? Theme.focusWidth : 1
+        border.color: {
+            if (control.visualFocus)
+                return Theme.focusOutline;
+            if (control.checked)
+                return Theme.primary;
+            if (control.hovered)
+                return Theme.primary;
+            return Theme.border;
+        }
+        opacity: control.enabled ? 1.0 : Theme.disabledOpacity
+
+        Behavior on color { ColorAnimation { duration: Theme.animFast } }
+        Behavior on border.color { ColorAnimation { duration: Theme.animFast } }
+
+        Text {
+            anchors.centerIn: parent
+            text: "\u2713"
+            font.pixelSize: 14
+            font.weight: Font.Bold
+            color: Theme.onPrimary
+            visible: control.checked
+            opacity: control.checked ? 1.0 : 0.0
+            Behavior on opacity { NumberAnimation { duration: Theme.animFast } }
+        }
+    }
+
+    contentItem: Text {
+        leftPadding: control.indicator && !control.mirrored ? control.indicator.width + control.spacing : 0
+        rightPadding: control.indicator && control.mirrored ? control.indicator.width + control.spacing : 0
+        text: control.text
+        font: Theme.bodyMedium
+        color: Theme.text
+        elide: Text.ElideRight
+        verticalAlignment: Text.AlignVCenter
+        opacity: control.enabled ? 1.0 : Theme.disabledOpacity
+    }
+}
