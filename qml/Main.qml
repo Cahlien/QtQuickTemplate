@@ -3,11 +3,12 @@ pragma ComponentBehavior: Bound
 import QtQuick
 import QtQuick.Controls
 import QtQuick.Window
+import AppTheme
 
 ApplicationWindow {
     id: root
 
-    property url initialPage: Qt.resolvedUrl("Home.qml")
+    property url initialPage: Qt.resolvedUrl("StyleShowcase.qml")
     property bool isMobile: Qt.platform.os === "android" || Qt.platform.os === "ios"
     property alias navigation: navigationController
 
