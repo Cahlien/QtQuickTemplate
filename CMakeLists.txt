@@ -38,6 +38,7 @@ set(APPSTYLE_QML_FILES
     qml/AppStyle/Button.qml
     qml/AppStyle/CheckBox.qml
     qml/AppStyle/ComboBox.qml
+    qml/AppStyle/GroupBox.qml
     qml/AppStyle/MenuItem.qml
     qml/AppStyle/ProgressBar.qml
     qml/AppStyle/ScrollBar.qml
