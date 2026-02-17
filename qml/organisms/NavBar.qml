@@ -9,7 +9,7 @@ import dev.crowell.AppTheme
     \brief Tab-based navigation bar for switching between app pages.
 
     NavBar renders a surface-colored bar with a top border separator
-    and a TabBar containing Home and Controls tabs. The \l currentIndex
+    and a TabBar containing Readme and Controls tabs. The \l currentIndex
     property drives which page is displayed in the content area.
 
     \sa Header, Footer, MainPortraitLayout, MainLandscapeLayout
@@ -36,7 +36,7 @@ Item {
             anchors.fill: parent
 
             TabButton {
-                text: qsTr("Home")
+                text: qsTr("Readme")
             }
 
             TabButton {

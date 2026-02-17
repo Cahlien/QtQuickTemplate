@@ -94,7 +94,7 @@ ApplicationWindow {
         currentIndex: navBarItem.currentIndex
         visible: false
 
-        Home {}
+        Readme {}
         StyleShowcase {}
     }
 

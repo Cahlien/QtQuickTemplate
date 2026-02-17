@@ -82,8 +82,7 @@ set(QML_ALL_FILES
     qml/organisms/NavBar.qml
     qml/templates/MainPortraitLayout.qml
     qml/templates/MainLandscapeLayout.qml
-    qml/pages/Home.qml
-    qml/pages/SamplePage.qml
+    qml/pages/Readme.qml
     qml/pages/StyleShowcase.qml
 )
 foreach(_file ${QML_ALL_FILES})
