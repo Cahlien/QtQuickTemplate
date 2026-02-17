@@ -97,3 +97,6 @@ CMakeUserPresets.json
 **/build/
 local.properties
 
+# Cache
+.cache/**
+*.ini
