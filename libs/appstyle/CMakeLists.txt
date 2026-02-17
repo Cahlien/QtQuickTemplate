@@ -1,4 +1,6 @@
-qt_add_library(appstyle STATIC)
+set(TARGET appstyle)
+
+qt_add_library(${TARGET} STATIC)
 
 set(APPSTYLE_QML_FILES
     qml/Button.qml
@@ -20,7 +22,7 @@ foreach(_file ${APPSTYLE_QML_FILES})
     set_source_files_properties("${_file}" PROPERTIES QT_RESOURCE_ALIAS "${_name}")
 endforeach()
 
-qt_add_qml_module(appstyle
+qt_add_qml_module(${TARGET}
     URI dev.crowell.AppStyle
     VERSION 1.0
     OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/dev/crowell/AppStyle
