@@ -18,3 +18,14 @@ target_include_directories(helloworld PUBLIC
 )
 
 target_compile_features(helloworld PUBLIC cxx_std_20)
+
+get_target_property(_qt_bin_dir Qt6::qmake IMPORTED_LOCATION)
+cmake_path(GET _qt_bin_dir PARENT_PATH _qt_bin_dir)
+find_program(QDOC_EXECUTABLE qdoc HINTS "${_qt_bin_dir}" NO_DEFAULT_PATH)
+if (QDOC_EXECUTABLE)
+    add_custom_target(helloworld_docs
+        COMMAND ${QDOC_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/doc/helloworld.qdocconf
+        WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/doc
+        COMMENT "Generating HelloWorld documentation with QDoc"
+    )
+endif ()

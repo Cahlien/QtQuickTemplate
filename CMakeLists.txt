@@ -217,6 +217,17 @@ if (ipo_ok)
     set_property(TARGET ${PROJECT_NAME} PROPERTY INTERPROCEDURAL_OPTIMIZATION_RELEASE TRUE)
 endif ()
 
+get_target_property(_qt_bin_dir Qt6::qmake IMPORTED_LOCATION)
+cmake_path(GET _qt_bin_dir PARENT_PATH _qt_bin_dir)
+find_program(QDOC_EXECUTABLE qdoc HINTS "${_qt_bin_dir}" NO_DEFAULT_PATH)
+if (QDOC_EXECUTABLE)
+    add_custom_target(docs
+        COMMAND ${QDOC_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/doc/qtquicktemplate.qdocconf
+        WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/doc
+        COMMENT "Generating QtQuickTemplate documentation with QDoc"
+    )
+endif ()
+
 include(GNUInstallDirs)
 install(TARGETS ${PROJECT_NAME}
     BUNDLE DESTINATION .
