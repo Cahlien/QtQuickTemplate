@@ -39,6 +39,13 @@ Thumbs.db
 *.pro.user*
 *.qbs.user*
 CMakeLists.txt.user*
+.qtcreator/
+
+# JetBrains IDEs
+.idea/
+
+# Junie
+.junie/
 
 # xemacs temporary files
 *.flc
