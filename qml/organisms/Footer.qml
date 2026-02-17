@@ -1,4 +1,5 @@
 import QtQuick
+import AppTheme
 
 Item {
     id: root
@@ -15,13 +16,13 @@ Item {
             anchors.right: parent.right
             anchors.top: parent.top
             height: 1
-            color: Theme.outline
+            color: Theme.border
         }
 
         Text {
             anchors.centerIn: parent
             text: qsTr("Footer")
-            color: Theme.onSurfaceVariant
+            color: Theme.mutedText
             font: Theme.labelLarge
         }
     }

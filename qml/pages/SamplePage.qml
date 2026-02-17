@@ -1,4 +1,5 @@
 import QtQuick
+import AppTheme
 
 Item {
     Rectangle {
@@ -7,7 +8,7 @@ Item {
 
         Text {
             anchors.centerIn: parent
-            color: Theme.onSurface
+            color: Theme.text
             font: Theme.bodyLarge
             text: qsTr("Sample Page")
         }

@@ -1,4 +1,5 @@
 import QtQuick
+import AppTheme
 
 Item {
     id: root
@@ -15,7 +16,7 @@ Item {
         Text {
             anchors.centerIn: parent
             text: root.title
-            color: Theme.onSurface
+            color: Theme.text
             font: Theme.titleLarge
         }
 
@@ -24,7 +25,7 @@ Item {
             anchors.right: parent.right
             anchors.bottom: parent.bottom
             height: 1
-            color: Theme.outline
+            color: Theme.border
         }
     }
 }
