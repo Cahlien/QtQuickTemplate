@@ -91,7 +91,7 @@ foreach(_file ${QML_ALL_FILES})
 endforeach()
 
 qt_add_qml_module(${PROJECT_NAME}
-    URI QtQuickTemplate
+    URI dev.crowell.${PROJECT_NAME}
     VERSION 1.0
     QML_FILES
         ${QML_ALL_FILES}
@@ -99,7 +99,7 @@ qt_add_qml_module(${PROJECT_NAME}
         src/main/common/app_info.cpp
         include/main/common/app_info.h
     DEPENDENCIES
-        AppTheme
+        dev.crowell.AppTheme
 )
 
 if (NOT ANDROID AND NOT APPLE)

@@ -21,8 +21,8 @@
 */
 
 /*!
-    \qmlmodule QtQuickTemplate
-    \title QtQuickTemplate QML Module
+    \qmlmodule dev.crowell.QtQuickTemplate
+    \title dev.crowell.QtQuickTemplate QML Module
     \brief Application entry point, navigation, layouts, and pages.
 
     The QtQuickTemplate module contains the root ApplicationWindow,
