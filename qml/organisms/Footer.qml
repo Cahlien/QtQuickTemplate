@@ -33,7 +33,7 @@ Item {
 
         Text {
             anchors.centerIn: parent
-            text: qsTr("Footer")
+            text: "\u00A9 " + new Date().getFullYear() + " \u00B7 MIT License"
             color: Theme.mutedText
             font: Theme.labelLarge
         }
