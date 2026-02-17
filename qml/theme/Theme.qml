@@ -2,9 +2,29 @@ pragma Singleton
 
 import QtQuick
 
+/*!
+    \qmltype Theme
+    \inqmlmodule AppTheme
+    \inherits QtObject
+    \brief Singleton providing all design tokens for the application.
+
+    Theme exposes color palettes (dark and light), an MD3 typography scale,
+    spacing constants, border radii, animation durations, and accessibility
+    values. Every visual component in the application references \c Theme.*
+    for its styling.
+
+    Toggle \l darkMode to switch between the dark and light palettes.
+    Colors are derived from the \l {https://www.crowell.dev}{crowell.dev}
+    arcane and circuit color palettes.
+*/
 QtObject {
     id: theme
 
+    /*!
+        \qmlproperty bool Theme::darkMode
+        When \c true the dark palette is active; when \c false the light
+        palette is used. Defaults to \c true.
+    */
     property bool darkMode: true
 
     // ── Colors (from crowell.dev arcane + circuit palettes) ──
