@@ -4,7 +4,8 @@
 
 int main(int argc, char *argv[])
 {
-    QQuickStyle::setStyle("Basic");
+    QQuickStyle::setStyle("AppStyle");
+    QQuickStyle::setFallbackStyle("Basic");
 
     QGuiApplication app(argc, argv);
     app.setApplicationName("QtQuickTemplate");

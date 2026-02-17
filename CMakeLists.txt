@@ -73,21 +73,22 @@ target_compile_definitions(${PROJECT_NAME} PRIVATE
     APP_VERSION_STRING="${PROJECT_VERSION}"
 )
 
-# ── Theme singleton ──
-set_source_files_properties(qml/Theme.qml
-    PROPERTIES QT_QML_SINGLETON_TYPE TRUE
-)
-
-# ── Flatten atomic-design subdirectories into the module root ──
-set(QML_SUBDIRECTORY_FILES
+# Flatten ALL qml/ paths into the module root via QT_RESOURCE_ALIAS.
+# Without this, files under qml/ keep the prefix in the resource tree
+# (e.g. qrc:/qt/qml/QtQuickTemplate/qml/Main.qml) and Qt.resolvedUrl()
+# breaks across differently-nested files.
+set(QML_ALL_FILES
+    qml/Main.qml
+    qml/NavigationController.qml
     qml/organisms/Header.qml
     qml/organisms/Footer.qml
     qml/templates/MainPortraitLayout.qml
     qml/templates/MainLandscapeLayout.qml
     qml/pages/Home.qml
     qml/pages/SamplePage.qml
+    qml/pages/StyleShowcase.qml
 )
-foreach(_file ${QML_SUBDIRECTORY_FILES})
+foreach(_file ${QML_ALL_FILES})
     get_filename_component(_name "${_file}" NAME)
     set_source_files_properties("${_file}" PROPERTIES QT_RESOURCE_ALIAS "${_name}")
 endforeach()
@@ -96,13 +97,12 @@ qt_add_qml_module(${PROJECT_NAME}
     URI QtQuickTemplate
     VERSION 1.0
     QML_FILES
-        qml/Main.qml
-        qml/NavigationController.qml
-        qml/Theme.qml
-        ${QML_SUBDIRECTORY_FILES}
+        ${QML_ALL_FILES}
     SOURCES
         src/app_info.cpp
         include/app_info.h
+    DEPENDENCIES
+        AppTheme
 )
 
 if (NOT ANDROID AND NOT APPLE)
@@ -124,6 +124,10 @@ target_link_libraries(${PROJECT_NAME}
     Qt6::Quick
     Qt6::QuickControls2
     Qt6::Qml
+    apptheme
+    appthemeplugin
+    appstyle
+    appstyleplugin
 )
 
 target_include_directories(${PROJECT_NAME}
