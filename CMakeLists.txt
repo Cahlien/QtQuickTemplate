@@ -187,6 +187,14 @@ target_link_libraries(${PROJECT_NAME}
     helloworld
 )
 
+qt_import_qml_plugins(${PROJECT_NAME})
+
+if (ANDROID)
+    # Android 15 requires 16 KB page size support for ELF alignment.
+    # See https://developer.android.com/16kb-page-size
+    set_target_properties(${PROJECT_NAME} PROPERTIES LINK_FLAGS "-Wl,-z,max-page-size=16384")
+endif ()
+
 target_include_directories(${PROJECT_NAME}
     PRIVATE
     ${CMAKE_CURRENT_SOURCE_DIR}/include/main/common
