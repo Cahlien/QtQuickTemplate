@@ -13,7 +13,7 @@ import dev.crowell.AppTheme
     \brief Root application window with adaptive portrait/landscape layouts.
 
     Main is the entry point of the application. It creates a
-    \l NavigationController, a NavBar for tab-based page switching,
+    \l NavigationController, a NavBar for page switching,
     and Header/Footer instances. A StackView switches between
     \l MainPortraitLayout and \l MainLandscapeLayout based on the
     window's aspect ratio.
@@ -35,20 +35,6 @@ ApplicationWindow {
         Alias exposing the internal \l NavigationController.
     */
     property alias navigation: navigationController
-
-    /*!
-        \qmlproperty bool Main::showingOverlay
-        When true the NavigationController's Loader is shown instead
-        of the tab-driven StackLayout.
-    */
-    property bool showingOverlay: false
-
-    /*!
-        \qmlsignal Main::navigateTo(url resourceUrl)
-        Emitted to request navigation to \a resourceUrl. A Connections
-        handler forwards this to the \l NavigationController.
-    */
-    signal navigateTo(url resourceUrl)
 
     color: Theme.background
 
@@ -78,6 +64,7 @@ ApplicationWindow {
     NavigationController {
         id: navigationController
         loader: pageLoader
+        defaultContentSource: Qt.resolvedUrl("Readme.qml")
     }
 
     Header {
@@ -89,26 +76,18 @@ ApplicationWindow {
     NavBar {
         id: navBarItem
         visible: false
-        onCurrentIndexChanged: root.showingOverlay = false
+        onReadmeRequested: navigationController.navigate(Qt.resolvedUrl("Readme.qml"))
+        onControlsRequested: navigationController.navigate(Qt.resolvedUrl("StyleShowcase.qml"))
     }
 
     Item {
         id: contentArea
         visible: false
 
-        StackLayout {
-            id: contentStack
-            anchors.fill: parent
-            currentIndex: navBarItem.currentIndex
-            visible: !root.showingOverlay
-            Readme {}
-            StyleShowcase {}
-        }
-
         Loader {
             id: pageLoader
             anchors.fill: parent
-            visible: root.showingOverlay
+            source: navigationController.defaultContentSource
         }
     }
 
@@ -125,17 +104,8 @@ ApplicationWindow {
     }
 
     Connections {
-        function onNavigateTo(resourceUrl: url) {
-            navigationController.navigate(resourceUrl);
-            root.showingOverlay = true;
-        }
-        target: root
-    }
-
-    Connections {
         function onLicenseRequested() {
             navigationController.navigate(Qt.resolvedUrl("License.qml"));
-            root.showingOverlay = true;
         }
         target: footerItem
     }
