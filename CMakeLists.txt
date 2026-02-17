@@ -66,7 +66,7 @@ qt_add_qml_module(appstyle
 # Module 3: Main application
 # ─────────────────────────────────────────────
 qt_add_executable(${PROJECT_NAME}
-    src/main.cpp
+    src/main/common/main.cpp
 )
 
 target_compile_definitions(${PROJECT_NAME} PRIVATE
@@ -99,8 +99,8 @@ qt_add_qml_module(${PROJECT_NAME}
     QML_FILES
         ${QML_ALL_FILES}
     SOURCES
-        src/app_info.cpp
-        include/app_info.h
+        src/main/common/app_info.cpp
+        include/main/common/app_info.h
     DEPENDENCIES
         AppTheme
 )
@@ -133,8 +133,8 @@ target_link_libraries(${PROJECT_NAME}
 
 target_include_directories(${PROJECT_NAME}
     PRIVATE
-    ${CMAKE_CURRENT_SOURCE_DIR}/include
-    ${CMAKE_CURRENT_SOURCE_DIR}/src
+    ${CMAKE_CURRENT_SOURCE_DIR}/include/main/common
+    ${CMAKE_CURRENT_SOURCE_DIR}/src/main/common
 )
 
 include(CheckIPOSupported)
