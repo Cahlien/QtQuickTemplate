@@ -14,6 +14,10 @@
 #   linuxdeploy-plugin-qt       https://github.com/linuxdeploy/linuxdeploy-plugin-qt/releases
 #   linuxdeploy-plugin-appimage https://github.com/linuxdeploy/linuxdeploy-plugin-appimage/releases
 
+# Set the GPG Key ID for signing (optional).
+# If not set, linuxdeploy uses the default key.
+set(GPG_KEY_ID "" CACHE STRING "GPG Key ID for AppImage signing")
+
 if (NOT (UNIX AND NOT APPLE AND NOT ANDROID))
     return()
 endif ()
@@ -77,6 +81,8 @@ add_custom_target(AppImage
         LINUXDEPLOY_PLUGIN_DIR=${_ld_dir}:${_qt_plugin_dir}:${_ai_plugin_dir}
         ARCH=x86_64
         OUTPUT=${_appimage_out}
+        SIGN=1
+        SIGN_KEY=${GPG_KEY_ID}
         NO_STRIP=1
         ${LINUXDEPLOY_EXECUTABLE}
             --appdir "${_appdir}"
