@@ -109,6 +109,8 @@ qt_add_qml_module(${PROJECT_NAME}
     SOURCES
         src/main/common/app_info.cpp
         include/main/common/app_info.h
+        src/main/common/navigation_controller.cpp
+        include/main/common/navigation_controller.h
     DEPENDENCIES
         dev.crowell.AppTheme
 )
@@ -149,6 +151,7 @@ add_dependencies(${PROJECT_NAME} GenerateAndroidVersion)
 if (ANDROID)
     target_sources(${PROJECT_NAME} PRIVATE
         src/main/android/platform_init_android.cpp
+        src/main/android/android_back_handler.cpp
     )
 
     target_include_directories(${PROJECT_NAME} PRIVATE
