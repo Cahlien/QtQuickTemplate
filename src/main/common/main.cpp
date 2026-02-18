@@ -1,4 +1,5 @@
 #include <QGuiApplication>
+#include <QIcon>
 #include <QQmlApplicationEngine>
 #include <QQuickStyle>
 #include <QQuickWindow>
@@ -16,6 +17,7 @@ int main(int argc, char *argv[])
     QQuickStyle::setFallbackStyle("Basic");
 
     QGuiApplication app(argc, argv);
+    app.setWindowIcon(QIcon(":/qt/qml/dev/crowell/QtQuickTemplate/app_icon.png"));
     app.setApplicationName("QtQuickTemplate");
     app.setApplicationVersion(APP_VERSION_STRING);
     app.setOrganizationName("YourOrganization");

@@ -66,6 +66,9 @@ qt_add_executable(${PROJECT_NAME}
     src/main/common/main.cpp
 )
 
+set(APP_ICON_RESOURCE platforms/linux/icons/256x256.png)
+set_source_files_properties(${APP_ICON_RESOURCE} PROPERTIES QT_RESOURCE_ALIAS "app_icon.png")
+
 target_compile_definitions(${PROJECT_NAME} PRIVATE
     APP_VERSION_STRING="${PROJECT_VERSION}"
 )
@@ -102,6 +105,7 @@ qt_add_qml_module(${PROJECT_NAME}
     RESOURCES
         README.md
         LICENSE
+        ${APP_ICON_RESOURCE}
     SOURCES
         src/main/common/app_info.cpp
         include/main/common/app_info.h
