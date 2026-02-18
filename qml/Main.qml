@@ -1,10 +1,8 @@
-pragma ComponentBehavior: Bound
-
 import QtQuick
 import QtQuick.Controls
-import QtQuick.Layouts
 import QtQuick.Window
 import dev.crowell.AppTheme
+
 
 /*!
     \qmltype Main
@@ -23,12 +21,15 @@ import dev.crowell.AppTheme
 ApplicationWindow {
     id: root
 
+
     /*!
         \qmlproperty bool Main::isMobile
         \readonly
         \c true on Android and iOS platforms; \c false otherwise.
     */
-    property bool isMobile: Qt.platform.os === "android" || Qt.platform.os === "ios"
+    property bool isMobile: Qt.platform.os === "android"
+                            || Qt.platform.os === "ios"
+
 
     /*!
         \qmlproperty NavigationController Main::navigation
@@ -76,8 +77,10 @@ ApplicationWindow {
     NavBar {
         id: navBarItem
         visible: false
-        onReadmeRequested: navigationController.navigate(Qt.resolvedUrl("Readme.qml"))
-        onControlsRequested: navigationController.navigate(Qt.resolvedUrl("StyleShowcase.qml"))
+        onReadmeRequested: navigationController.navigate(Qt.resolvedUrl(
+                                                             "Readme.qml"))
+        onControlsRequested: navigationController.navigate(
+                                 Qt.resolvedUrl("StyleShowcase.qml"))
     }
 
     Item {

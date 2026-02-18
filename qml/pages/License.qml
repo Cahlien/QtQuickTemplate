@@ -1,5 +1,7 @@
 import QtQuick
+import QtQuick.Controls
 import dev.crowell.AppTheme
+
 
 /*!
     \qmltype License
