@@ -113,7 +113,7 @@ QtObject {
         _current = { url: resolved, properties: props };
 
         loader.setSource(resolved, props);
-        navigationRequested(target.toString(), properties);
+        navigationRequested(resolved.toString(), properties);
         historyChanged();
     }
 
