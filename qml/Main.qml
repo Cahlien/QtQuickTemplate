@@ -105,8 +105,21 @@ ApplicationWindow {
 
     Connections {
         function onLicenseRequested() {
-            navigationController.navigate(Qt.resolvedUrl("License.qml"));
+            const licenseView = stackView.push(Qt.resolvedUrl("License.qml"))
+
+            if (licenseView === null || licenseView === undefined) {
+                console.error("Failed to load License.qml")
+                return
+            }
+
+            function onCloseRequested() {
+                stackView.pop()
+                licenseView['closeRequested'].disconnect(onCloseRequested)
+            }
+
+            licenseView['closeRequested'].connect(onCloseRequested)
         }
+
         target: footerItem
     }
 
