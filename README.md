@@ -1,8 +1,8 @@
 # QtQuickTemplate
 
-A cross-platform **Qt 6 / Qt Quick (QML)** starter repo that aims to be “just enough structure” to begin a real app:
+A cross-platform **Qt 6 / Qt Quick (QML)** starter repo that aims to be "just enough structure" to begin a real app:
 
-- A clean QML app shell with **portrait + landscape** layouts and a tiny navigation controller.
+- A clean QML app shell with **portrait + landscape** layouts and a C++ navigation controller.
 - A centralized **Theme** singleton (design tokens) and a custom **Qt Quick Controls 2 style** (`AppStyle`).
 - A place for reusable native/C++ code (including a small **C++20 module** example library).
 - Platform packaging hooks for **Android, Windows, macOS, and Linux**.
@@ -14,11 +14,37 @@ A cross-platform **Qt 6 / Qt Quick (QML)** starter repo that aims to be “just 
 
 ### UI & QML architecture
 - `Main.qml` is the `ApplicationWindow` entry point.
-- A `NavigationController` swaps pages via a shared `Loader`.
+- A C++ `NavigationController` singleton manages both overlay pages (via `StackView`) and content pages (via `Loader`).
 - Two layout templates:
   - `MainPortraitLayout.qml` (header → content → footer)
   - `MainLandscapeLayout.qml` (side column for header/footer + content on the right)
-- A sample set of pages (`Home`, `SamplePage`, `StyleShowcase`) and simple `Header`/`Footer` components.
+- A sample set of pages (`Readme`, `StyleShowcase`, `License`) and simple `Header`/`Footer` components.
+
+### Navigation architecture
+The `NavigationController` exposes two independent navigation stacks:
+
+- **Overlay stack** — Full-screen pages like `License.qml` that sit on top of the main layout. Managed via imperative calls:
+  ```qml
+  NavigationController.push("qrc:/qt/qml/.../License.qml")
+  NavigationController.pop()
+  ```
+
+- **Content stack** — Tab content like `Readme` ↔ `StyleShowcase` loaded via `Loader`. Supports declarative bindings:
+  ```qml
+  // Navigate to content
+  NavigationController.navigateTo(Qt.resolvedUrl("StyleShowcase.qml").toString())
+
+  // Declarative binding - Loader updates automatically
+  Loader { source: NavigationController.currentContentUrl }
+
+  // Back/forward navigation
+  NavigationController.contentBack()
+  NavigationController.contentForward()
+  ```
+
+- **Back navigation** — Platform-specific handling:
+  - Android 13+: System back gesture via JNI → `NavigationController.pop()`
+  - Desktop/iOS: Keyboard (Backspace, hardware Back key) + mouse (Button 4)
 
 ### Styling
 - `AppTheme` module: `Theme.qml` singleton holds colors, typography, spacing, radii, animations, etc.
@@ -30,8 +56,9 @@ A cross-platform **Qt 6 / Qt Quick (QML)** starter repo that aims to be “just 
 ### Native/C++ structure
 - `src/main/common/` holds the application entry point and shared C++ code.
 - `include/main/common/` holds the public headers for that code.
+- `src/main/common/navigation/` contains the `NavigationController` implementation.
 - Platform specialization lives next to the app:
-  - `src/main/android/` contains Android-specific C++ glue.
+  - `src/main/android/` contains Android-specific C++ glue (including back gesture handling).
 
 ### Platform bootstrapping (Android splash)
 - Android uses a `QtActivity` subclass that shows a lightweight overlay and fades it out when Qt renders its first frame.
@@ -56,6 +83,8 @@ A cross-platform **Qt 6 / Qt Quick (QML)** starter repo that aims to be “just 
 │   └── main/
 │       └── common/
 │           ├── app_info.h
+│           ├── navigation/
+│           │   └── navigation_controller.h
 │           └── platform_init.h
 ├── libs/
 │   ├── CMakeLists.txt                 # auto-adds child lib dirs
@@ -85,13 +114,13 @@ A cross-platform **Qt 6 / Qt Quick (QML)** starter repo that aims to be “just 
 │   └── windows/                       # .rc + manifest
 ├── qml/
 │   ├── Main.qml
-│   ├── NavigationController.qml
 │   ├── organisms/
 │   │   ├── Header.qml
-│   │   └── Footer.qml
+│   │   ├── Footer.qml
+│   │   └── NavBar.qml
 │   ├── pages/
-│   │   ├── Home.qml
-│   │   ├── SamplePage.qml
+│   │   ├── License.qml
+│   │   ├── Readme.qml
 │   │   └── StyleShowcase.qml
 │   └── templates/
 │       ├── MainPortraitLayout.qml
@@ -101,8 +130,11 @@ A cross-platform **Qt 6 / Qt Quick (QML)** starter repo that aims to be “just 
         ├── common/
         │   ├── main.cpp
         │   ├── app_info.cpp
+        │   ├── navigation/
+        │   │   └── navigation_controller.cpp
         │   └── platform_init_default.cpp
         └── android/
+            ├── android_back_handler.cpp
             └── platform_init_android.cpp
 ```
 
@@ -135,7 +167,7 @@ Run (examples):
 
 ### Using Conan (optional)
 
-This recipe currently doesn’t declare third-party deps, but it wires up `CMakeToolchain` + `CMakeDeps`, so adding deps later is painless.
+This recipe currently doesn't declare third-party deps, but it wires up `CMakeToolchain` + `CMakeDeps`, so adding deps later is painless.
 
 ```bash
 conan install . -s build_type=Debug --build=missing -of build/conan
@@ -149,7 +181,7 @@ cmake --build build -j
 
 This repo is set up to be built using a Qt Android kit (Qt Creator is the smoothest path):
 
-- `QT_ANDROID_PACKAGE_SOURCE_DIR` points at `platforms/android/`, so Qt’s Android deployment tooling will pick up the Gradle project and resources automatically.
+- `QT_ANDROID_PACKAGE_SOURCE_DIR` points at `platforms/android/`, so Qt's Android deployment tooling will pick up the Gradle project and resources automatically.
 - The Android activity shows a splash overlay and removes it once Qt reports its first rendered frame.
 
 If you need to change the Android app id / namespace, start in:
@@ -162,7 +194,7 @@ If you need to change the Android app id / namespace, start in:
 
 ## QML modules & resource layout
 
-This project intentionally **flattens QML resource paths** using `QT_RESOURCE_ALIAS` so that pages/components can be referenced by simple filenames (e.g. `Qt.resolvedUrl("Home.qml")`) even if they live under `qml/pages/` in the source tree.
+This project intentionally **flattens QML resource paths** using `QT_RESOURCE_ALIAS` so that pages/components can be referenced by simple filenames (e.g. `Qt.resolvedUrl("Readme.qml")`) even if they live under `qml/pages/` in the source tree.
 
 The `AppTheme` and `AppStyle` modules are located in the `libs/` directory.
 
@@ -175,7 +207,7 @@ Modules:
 
 ## Documentation (QDoc)
 
-If `qdoc` is available in your Qt installation, you’ll get build targets:
+If `qdoc` is available in your Qt installation, you'll get build targets:
 
 - Generate app docs:
   ```bash
@@ -193,7 +225,7 @@ The main QDoc configuration lives in `doc/qtquicktemplate.qdocconf`.
 
 ## Customizing this template
 
-A quick checklist you’ll almost certainly want to do:
+A quick checklist you'll almost certainly want to do:
 
 - Rename the project: `project(QtQuickTemplate ...)` in `CMakeLists.txt`
 - Update `app.setOrganizationName("YourOrganization")` and other branding strings in `main.cpp`
@@ -217,4 +249,4 @@ See `libs/appstyle/README.md` for a deeper dive into the Theme/AppStyle approach
 
 ## Contributing
 
-PRs welcome—keep changes small, keep the template sharp, and try not to introduce “magic” unless it removes more pain than it adds.
+PRs welcome—keep changes small, keep the template sharp, and try not to introduce "magic" unless it removes more pain than it adds.
