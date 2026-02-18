@@ -2,6 +2,7 @@
 #include <QQmlApplicationEngine>
 #include <QQuickStyle>
 #include <QQuickWindow>
+#include <memory>
 
 import helloworld;
 
@@ -38,9 +39,10 @@ int main(int argc, char *argv[])
 
             auto *window = qobject_cast<QQuickWindow *>(obj);
             if (window) {
-                QObject::connect(window, &QQuickWindow::frameSwapped, window, [=]() {
+                auto conn = std::make_shared<QMetaObject::Connection>();
+                *conn = QObject::connect(window, &QQuickWindow::frameSwapped, window, [conn, window]() {
                     onFirstFrame(window);
-                    QObject::disconnect(window, nullptr, nullptr, nullptr);
+                    QObject::disconnect(*conn);
                 });
             }
         },
