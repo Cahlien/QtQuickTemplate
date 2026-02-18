@@ -41,11 +41,9 @@ int main(int argc, char *argv[])
 
             auto *window = qobject_cast<QQuickWindow *>(obj);
             if (window) {
-                auto conn = std::make_shared<QMetaObject::Connection>();
-                *conn = QObject::connect(window, &QQuickWindow::frameSwapped, window, [conn, window]() {
+                QObject::connect(window, &QQuickWindow::frameSwapped, window, [window]() {
                     onFirstFrame(window);
-                    QObject::disconnect(*conn);
-                });
+                }, Qt::SingleShotConnection);
             }
         },
         Qt::QueuedConnection
