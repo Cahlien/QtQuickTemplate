@@ -4,8 +4,7 @@
 #include <QMutexLocker>
 #include <QQmlEngine>
 
-// Note: minimizeApp() is intentionally NOT defined here.
-// It follows the same platform-file pattern as onFirstFrame():
+// minimizeApp() is platform-specific and defined elsewhere:
 //   Android  → src/main/android/android_back_handler.cpp
 //   All else → src/main/common/platform_init_default.cpp
 
@@ -30,7 +29,7 @@ NavigationController *NavigationController::create(QQmlEngine * /*engine*/,
     return instance();
 }
 
-// ── Navigation API ────────────────────────────────────────────────────────────
+// ── Overlay navigation (StackView) ────────────────────────────────────────────
 
 void NavigationController::push(const QString &path, const QVariantMap &props)
 {
@@ -47,14 +46,12 @@ void NavigationController::pop()
     bool stackWasEmpty = false;
     {
         QMutexLocker lock(&m_mutex);
-        if (m_stack.isEmpty()) {
+        if (m_stack.isEmpty())
             stackWasEmpty = true;
-        } else {
+        else
             m_stack.pop();
-        }
     }
-    // Always emit popRequested — even when empty — so QML can decide to
-    // minimise the app or perform content-level back navigation.
+    // Always emit — even when empty — so QML can minimise or do content back.
     emit popRequested();
     if (!stackWasEmpty)
         emit depthChanged();
@@ -72,6 +69,42 @@ void NavigationController::replace(const QString &path, const QVariantMap &props
     emit depthChanged();
 }
 
+// ── Content navigation (Loader) ───────────────────────────────────────────────
+
+void NavigationController::navigateTo(const QString &url, const QVariantMap &props)
+{
+    // On the very first call m_contentInitialized is false: seed the home entry
+    // rather than pushing it, so the home page never appears in the back stack.
+    if (m_contentInitialized)
+        m_contentBack.push(m_currentContent);
+
+    m_contentForward.clear();
+    m_currentContent     = { url, props };
+    m_contentInitialized = true;
+
+    emit contentHistoryChanged();
+}
+
+void NavigationController::contentBack()
+{
+    if (m_contentBack.isEmpty()) return;
+
+    m_contentForward.push(m_currentContent);
+    m_currentContent = m_contentBack.pop();
+
+    emit contentHistoryChanged();
+}
+
+void NavigationController::contentForward()
+{
+    if (m_contentForward.isEmpty()) return;
+
+    m_contentBack.push(m_currentContent);
+    m_currentContent = m_contentForward.pop();
+
+    emit contentHistoryChanged();
+}
+
 // ── Properties ────────────────────────────────────────────────────────────────
 
 int NavigationController::depth() const
@@ -84,4 +117,19 @@ bool NavigationController::canGoBack() const
 {
     QMutexLocker lock(&m_mutex);
     return !m_stack.isEmpty();
+}
+
+QString NavigationController::currentContentUrl() const
+{
+    return m_currentContent.url;
+}
+
+bool NavigationController::canGoContentBack() const
+{
+    return !m_contentBack.isEmpty();
+}
+
+bool NavigationController::canGoContentForward() const
+{
+    return !m_contentForward.isEmpty();
 }

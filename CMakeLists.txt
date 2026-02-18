@@ -79,7 +79,6 @@ target_compile_definitions(${PROJECT_NAME} PRIVATE
 # breaks across differently-nested files.
 set(QML_ALL_FILES
     qml/Main.qml
-    qml/NavigationController.qml
     qml/organisms/Header.qml
     qml/organisms/Footer.qml
     qml/organisms/NavBar.qml
@@ -109,8 +108,8 @@ qt_add_qml_module(${PROJECT_NAME}
     SOURCES
         src/main/common/app_info.cpp
         include/main/common/app_info.h
-        src/main/common/navigation_controller.cpp
-        include/main/common/navigation_controller.h
+        src/main/common/navigation/navigation_controller.cpp
+        include/main/common/navigation/navigation_controller.h
     DEPENDENCIES
         dev.crowell.AppTheme
 )
@@ -228,6 +227,7 @@ endif ()
 target_include_directories(${PROJECT_NAME}
     PRIVATE
     ${CMAKE_CURRENT_SOURCE_DIR}/include/main/common
+    ${CMAKE_CURRENT_SOURCE_DIR}/include/main/common/navigation
     ${CMAKE_CURRENT_SOURCE_DIR}/src/main/common
 )
 
