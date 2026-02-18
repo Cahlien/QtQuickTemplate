@@ -11,18 +11,48 @@ Item {
     id: root
 
     property string licenseContent: ""
+    signal closeRequested
 
     Component.onCompleted: {
-        var xhr = new XMLHttpRequest();
-        xhr.onreadystatechange = function() {
+        var xhr = new XMLHttpRequest()
+        xhr.onreadystatechange = function () {
             if (xhr.readyState === XMLHttpRequest.DONE) {
                 if (xhr.status === 200 || xhr.status === 0) {
-                    root.licenseContent = xhr.responseText;
+                    root.licenseContent = xhr.responseText
                 }
             }
-        };
-        xhr.open("GET", Qt.resolvedUrl("LICENSE"));
-        xhr.send();
+        }
+        xhr.open("GET", Qt.resolvedUrl("LICENSE"))
+        xhr.send()
+    }
+
+    ToolButton {
+        id: closeButton
+        anchors.top: parent.top
+        anchors.right: parent.right
+        anchors.margins: 12
+
+        width: 36
+        height: 36
+        z: 100
+
+        onClicked: root.closeRequested()
+
+        contentItem: Text {
+            text: "\u00D7" // ×
+            font.pixelSize: 20
+            font.weight: Font.DemiBold
+            horizontalAlignment: Text.AlignHCenter
+            verticalAlignment: Text.AlignVCenter
+            color: "white"
+        }
+
+        background: Rectangle {
+            radius: width / 2
+            color: closeButton.pressed ? "#ffffff33" : closeButton.hovered ? "#ffffff22" : "#00000000"
+            border.color: "#ffffff33"
+            border.width: 1
+        }
     }
 
     Flickable {
