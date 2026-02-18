@@ -31,8 +31,6 @@ Item {
 
     ToolButton {
         id: closeButton
-
-        // Position the button in the upper right
         anchors.top: parent.top
         anchors.right: parent.right
         anchors.margins: 12
@@ -64,22 +62,36 @@ Item {
         }
 
         background: Item {
+            ShaderEffectSource {
+                id: backgroundProxy
+                sourceItem: flickable
+                sourceRect: Qt.rect(closeButton.x, closeButton.y,
+                                    closeButton.width, closeButton.height)
+                live: true
+                recursive: false
+            }
+
+            MultiEffect {
+                id: glassEffect
+                anchors.fill: parent
+                source: backgroundProxy
+
+                blurEnabled: true
+                blurMax: 32
+                blur: 1.0
+
+                // Masking
+                maskEnabled: true
+                maskSource: maskShape
+
+                autoPaddingEnabled: false
+            }
+
             Rectangle {
-                id: maskRect
+                id: maskShape
                 anchors.fill: parent
                 radius: width / 2
                 visible: false
-            }
-
-            // The Glass Blur Effect
-            MultiEffect {
-                id: glassEffect
-                source: licenseFlickable
-                anchors.fill: parent
-                maskSource: maskRect
-                blurEnabled: true
-                blur: 1.0
-                autoPaddingEnabled: false
             }
 
             Rectangle {

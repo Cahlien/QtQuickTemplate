@@ -244,6 +244,8 @@ if (QDOC_EXECUTABLE)
     )
 endif ()
 
+include(cmake/AppImage.cmake)
+
 include(GNUInstallDirs)
 install(TARGETS ${PROJECT_NAME}
     BUNDLE DESTINATION .
