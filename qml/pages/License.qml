@@ -31,30 +31,64 @@ Item {
 
     ToolButton {
         id: closeButton
+
+        // Position the button in the upper right
         anchors.top: parent.top
         anchors.right: parent.right
         anchors.margins: 12
-
         width: 36
         height: 36
         z: 100
 
         onClicked: root.closeRequested()
 
-        contentItem: Text {
-            text: "\u00D7" // ×
-            font.pixelSize: 20
-            font.weight: Font.DemiBold
-            horizontalAlignment: Text.AlignHCenter
-            verticalAlignment: Text.AlignVCenter
-            color: "white"
+        contentItem: Item {
+            Rectangle {
+                anchors.centerIn: parent
+                width: 18
+                height: 2
+                rotation: 45
+                antialiasing: true
+                radius: 1
+                color: closeButton.hovered ? "#40E0D0" : "#E0F2F1"
+            }
+            Rectangle {
+                anchors.centerIn: parent
+                width: 18
+                height: 2
+                rotation: -45
+                antialiasing: true
+                radius: 1
+                color: closeButton.hovered ? "#40E0D0" : "#E0F2F1"
+            }
         }
 
-        background: Rectangle {
-            radius: width / 2
-            color: closeButton.pressed ? "#ffffff33" : closeButton.hovered ? "#ffffff22" : "#00000000"
-            border.color: "#ffffff33"
-            border.width: 1
+        background: Item {
+            Rectangle {
+                id: maskRect
+                anchors.fill: parent
+                radius: width / 2
+                visible: false
+            }
+
+            // The Glass Blur Effect
+            MultiEffect {
+                id: glassEffect
+                source: licenseFlickable
+                anchors.fill: parent
+                maskSource: maskRect
+                blurEnabled: true
+                blur: 1.0
+                autoPaddingEnabled: false
+            }
+
+            Rectangle {
+                anchors.fill: parent
+                radius: width / 2
+                color: closeButton.pressed ? "#4440E0D0" : closeButton.hovered ? "#2240E0D0" : "#11ffffff"
+                border.color: closeButton.hovered ? "#8840E0D0" : "#33ffffff"
+                border.width: 1
+            }
         }
     }
 
