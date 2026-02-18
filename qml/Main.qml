@@ -13,32 +13,34 @@ import dev.crowell.AppTheme
 
     Navigation architecture
     -----------------------
-    All page pushes flow through the C++ \c Router singleton:
+    All navigation flows through the C++ \c NavigationController singleton.
 
-    \code
-    Router.push("qrc:/qt/qml/dev/crowell/QtQuickTemplate/License.qml")
-    Router.pop()
-    \endcode
-
-    \c Router emits \c pushRequested / \c popRequested which the
-    \c routerConnections handler translates into \c StackView operations.
-    The QML \l NavigationController continues to own the content-level
-    history (Readme ↔ StyleShowcase) inside the layout.
+    \list
+    \li \b Content pages (Readme, StyleShowcase) — driven by
+        \c NavigationController.navigateTo() / \c contentBack() / \c contentForward().
+        The \l pageLoader source binds directly to
+        \c NavigationController.currentContentUrl; the \l navBarItem tab index
+        is kept in sync via a \c Binding element.
+    \li \b Overlay pages (License, etc.) — driven by
+        \c NavigationController.push() / \c pop().
+        \c NavigationController emits \c pushRequested / \c popRequested which
+        the \c routerConnections handler translates into \c StackView operations.
+    \endlist
 
     Back gesture routing
     --------------------
     \list
     \li \b Android 13+: The Kotlin \c OnBackInvokedCallback calls the JNI
-        function \c nativeBackRequested(), which invokes \c Router.pop() on
-        the Qt main thread via a queued connection.  \c onClosing is NOT used
-        because Qt 6.10 has a regression where it is bypassed when
-        \c enableOnBackInvokedCallback=true.
+        function \c nativeBackRequested(), which invokes
+        \c NavigationController.pop() on the Qt main thread via a queued
+        connection.  \c onClosing is NOT used because Qt 6.10 has a regression
+        where it is bypassed when \c enableOnBackInvokedCallback=true.
     \li \b Desktop / iOS: \c Item.Keys.onPressed handles Backspace and the
         dedicated Back key.  Mouse Button 4 (browser-back) is handled by a
         \c TapHandler.
     \endlist
 
-    \sa NavigationController, MainPortraitLayout, MainLandscapeLayout, Router
+    \sa MainPortraitLayout, MainLandscapeLayout, NavigationController
 */
 ApplicationWindow {
     id: root
@@ -52,12 +54,6 @@ ApplicationWindow {
     */
     property bool isMobile: Qt.platform.os === "android"
                             || Qt.platform.os === "ios"
-
-    /*!
-        \qmlproperty NavigationController Main::navigation
-        Alias exposing the internal QML \l NavigationController.
-    */
-    property alias navigation: navigationController
 
     // ── Window setup ──────────────────────────────────────────────────────
 
@@ -91,13 +87,14 @@ ApplicationWindow {
     visible:       true
     width:         isMobile ? Screen.width : 390
 
-    // ── Navigation ────────────────────────────────────────────────────────
-
-    NavigationController {
-        id: navigationController
-        loader: pageLoader
-        defaultContentSource: Qt.resolvedUrl("Readme.qml")
+    // Load the home page. The first navigateTo() call seeds the current entry
+    // without pushing anything to the back stack, so pressing back from the
+    // home page never returns to a blank state.
+    Component.onCompleted: {
+        NavigationController.navigateTo(Qt.resolvedUrl("Readme.qml").toString())
     }
+
+    // ── Back navigation ───────────────────────────────────────────────────
 
     /*!
         \qmlmethod void Main::handleBack()
@@ -106,44 +103,44 @@ ApplicationWindow {
 
         Priority order:
         1. A fullscreen page (e.g. License) is on the StackView → pop it.
-        2. The QML NavigationController has a content history entry → go back.
+        2. The C++ NavigationController has a content history entry → go back.
         3. We are at the root screen.
               Android: move the task to the background.
               Desktop: do nothing (user must use the window close button).
     */
     function handleBack() {
         if (stackView.depth > 1) {
-            // A Router-pushed page sits on top of the layout template.
+            // A NavigationController-pushed page sits on top of the layout template.
             stackView.pop()
-            // No need to call Router.pop() here — pop() was already called
-            // by whoever triggered handleBack (JNI path or key handler),
+            // No need to call NavigationController.pop() here — pop() was already
+            // called by whoever triggered handleBack (JNI path or key handler),
             // which in turn emitted popRequested and landed us here.
-        } else if (navigationController.canGoBack) {
-            navigationController.goBack()
+        } else if (NavigationController.canGoContentBack) {
+            NavigationController.contentBack()
         } else if (Qt.platform.os === "android") {
-            Router.minimizeApp()
+            NavigationController.minimizeApp()
         }
         // Desktop: fall through silently — the window close button quits.
     }
 
-    // ── Router → StackView bridge ─────────────────────────────────────────
+    // ── NavigationController → StackView bridge ───────────────────────────
 
     Connections {
         id: routerConnections
-        target: Router
+        target: NavigationController
 
-        /// Respond to C++ Router.push(): push the page onto the StackView
-        /// and wire the page's optional closeRequested signal back to
-        /// Router.pop() so the page's own close button also goes through
-        /// the Router.
+        /// Respond to NavigationController.push(): push the page onto the
+        /// StackView and wire the page's optional closeRequested signal back
+        /// to NavigationController.pop() so the page's own close button also
+        /// goes through the NavigationController.
         function onPushRequested(path, props) {
             const item = stackView.push(path, props)
             if (item && typeof item['closeRequested'] !== 'undefined') {
-                item['closeRequested'].connect(() => Router.pop())
+                item['closeRequested'].connect(() => NavigationController.pop())
             }
         }
 
-        /// Respond to C++ Router.pop() (triggered by JNI, key, or mouse).
+        /// Respond to NavigationController.pop() (triggered by JNI, key, or mouse).
         function onPopRequested() {
             root.handleBack()
         }
@@ -168,7 +165,7 @@ ApplicationWindow {
             if (Qt.platform.os !== "android") {
                 if (event.key === Qt.Key_Backspace || event.key === Qt.Key_Back) {
                     event.accepted = true
-                    Router.pop()
+                    NavigationController.pop()
                 }
             }
         }
@@ -178,7 +175,7 @@ ApplicationWindow {
             acceptedButtons: Qt.BackButton
             onTapped: {
                 if (Qt.platform.os !== "android")
-                    Router.pop()
+                    NavigationController.pop()
             }
         }
     }
@@ -194,19 +191,20 @@ ApplicationWindow {
     NavBar {
         id: navBarItem
         visible: false
-        onReadmeRequested:   navigationController.navigate(Qt.resolvedUrl("Readme.qml"))
-        onControlsRequested: navigationController.navigate(Qt.resolvedUrl("StyleShowcase.qml"))
+        onReadmeRequested:   NavigationController.navigateTo(Qt.resolvedUrl("Readme.qml").toString())
+        onControlsRequested: NavigationController.navigateTo(Qt.resolvedUrl("StyleShowcase.qml").toString())
     }
 
-    // Keep the NavBar tab highlight in sync with every navigation event,
-    // including goBack() / goForward() which bypass the user's tab click.
-    Connections {
-        target: navigationController
-        function onNavigationRequested(target, properties) {
-            if (target.indexOf("Readme.qml") !== -1)
-                navBarItem.currentIndex = 0
-            else if (target.indexOf("StyleShowcase.qml") !== -1)
-                navBarItem.currentIndex = 1
+    // Keep the NavBar tab highlight in sync with every navigation event
+    // (including contentBack / contentForward) without requiring a Connections
+    // block. The Binding element re-evaluates whenever currentContentUrl changes.
+    Binding {
+        target:   navBarItem
+        property: "currentIndex"
+        value: {
+            const url = NavigationController.currentContentUrl
+            if (url.indexOf("StyleShowcase.qml") !== -1) return 1
+            return 0
         }
     }
 
@@ -217,7 +215,9 @@ ApplicationWindow {
         Loader {
             id: pageLoader
             anchors.fill: parent
-            source: navigationController.defaultContentSource
+            // Declarative binding: the Loader's source tracks the C++ property.
+            // No Connections or setSource calls needed for content navigation.
+            source: NavigationController.currentContentUrl
         }
     }
 
@@ -235,14 +235,15 @@ ApplicationWindow {
         visible: true
     }
 
-    // ── Footer → Router bridge ────────────────────────────────────────────
+    // ── Footer → NavigationController bridge ─────────────────────────────
 
     Connections {
         target: footerItem
 
-        // Route through Router so Android back and Desktop back both work.
+        // Route through NavigationController so Android back and Desktop back
+        // both work.
         function onLicenseRequested() {
-            Router.push(Qt.resolvedUrl("License.qml").toString())
+            NavigationController.push(Qt.resolvedUrl("License.qml").toString())
         }
     }
 
@@ -250,21 +251,19 @@ ApplicationWindow {
 
     MainPortraitLayout {
         id: portraitLayout
-        content:    contentArea
-        footer:     footerItem
-        header:     headerItem
-        navBar:     navBarItem
-        navigation: navigationController
-        visible:    false
+        content: contentArea
+        footer:  footerItem
+        header:  headerItem
+        navBar:  navBarItem
+        visible: false
     }
 
     MainLandscapeLayout {
         id: landscapeLayout
-        content:    contentArea
-        footer:     footerItem
-        header:     headerItem
-        navBar:     navBarItem
-        navigation: navigationController
-        visible:    false
+        content: contentArea
+        footer:  footerItem
+        header:  headerItem
+        navBar:  navBarItem
+        visible: false
     }
 }
