@@ -12,7 +12,8 @@
     <application android:name="org.qtproject.qt.android.bindings.QtApplication" android:hardwareAccelerated="true"
                  android:label="@string/app_name" android:requestLegacyExternalStorage="true"
                  android:allowBackup="false" android:theme="@style/Theme.App.Splash"
-                 android:roundIcon="@mipmap/ic_launcher_round" android:icon="@mipmap/ic_launcher">
+                 android:roundIcon="@mipmap/ic_launcher_round" android:icon="@mipmap/ic_launcher"
+                 android:enableOnBackInvokedCallback="true">
         <activity android:name="dev.crowell.app.template.activities.MainActivity"
                   android:configChanges="orientation|uiMode|screenLayout|screenSize|smallestScreenSize|layoutDirection|locale|fontScale|keyboard|keyboardHidden|navigation|mcc|mnc|density"
                   android:exported="true" android:launchMode="singleTop" android:screenOrientation="portrait">

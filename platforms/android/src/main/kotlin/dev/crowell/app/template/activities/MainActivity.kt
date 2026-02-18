@@ -1,9 +1,12 @@
 package dev.crowell.app.template.activities
 
+import android.os.Build
 import android.os.Bundle
 import android.view.View
 import android.view.ViewGroup
 import android.widget.TextView
+import android.window.OnBackInvokedDispatcher // Added
+import android.window.OnBackInvokedCallback   // Added
 import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowCompat
@@ -26,6 +29,9 @@ class MainActivity : QtActivity() {
         }
     }
 
+    // 1. Declare the native C++ function
+    external fun nativeBackRequested()
+
     private var overlay: View? = null
     private var versionView: TextView? = null
 
@@ -36,6 +42,17 @@ class MainActivity : QtActivity() {
 
         super.onCreate(savedInstanceState)
 
+        // 2. Register the Back Callback (Android 13+ / API 33+)
+        if (Build.VERSION.SDK_INT >= 33) {
+            onBackInvokedDispatcher.registerOnBackInvokedCallback(
+                OnBackInvokedDispatcher.PRIORITY_DEFAULT
+            ) {
+                // This runs when the back gesture completes
+                nativeBackRequested()
+            }
+        }
+
+        // --- Your existing UI logic below ---
         WindowCompat.setDecorFitsSystemWindows(window, false)
         window.statusBarColor = 0x00000000
         window.navigationBarColor = 0x00000000
