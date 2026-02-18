@@ -42,12 +42,6 @@ Rectangle {
     */
     property Item content
 
-    /*!
-        \qmlproperty NavigationController MainLandscapeLayout::navigation
-        The navigation controller driving page transitions.
-    */
-    property NavigationController navigation
-
     color: Theme.background
 
     Rectangle {
