@@ -1,10 +1,6 @@
 #pragma once
 
-// These must be included before qqmlregistration.h so that
-// QML_SINGLETON's generated factory code — and the moc — can
-// see the complete types used in NavigationController::create().
 #include <QJSEngine>
-#include <QMutex>
 #include <QObject>
 #include <QQmlEngine>
 #include <QStack>
@@ -14,128 +10,86 @@
 
 /*!
     \class NavigationController
-    \brief Thread-safe navigation manager exposed to QML as the \c NavigationController singleton.
+    \brief Unified navigation manager exposed to QML as the \c NavigationController singleton.
 
-    Owns two independent navigation stacks:
+    Maintains a single back-stack of lightweight \c Entry records — each storing
+    only a URL, optional initial properties, and a chrome-visibility flag.  No
+    QQuickItem references are held; pages are (re)hydrated on demand by the QML
+    \c Loader via \c Loader::setSource(url, props).
+
+    QML reacts declaratively to property changes:
 
     \list
-    \li \b Overlay stack — StackView pages (e.g. License).  Guarded by a
-        mutex because pop() may arrive from the Android UI thread via JNI.
-    \li \b Content stack — Loader pages (e.g. Readme ↔ StyleShowcase).
-        Manipulated on the Qt main thread only; no mutex required.
+    \li \c currentUrl / \c currentProps / \c currentShowChrome drive the active \c Loader.
+    \li \c canGoBack controls whether the back button triggers a pop or a root signal.
+    \li \c navigationDirection tells the transition animator which direction to slide.
     \endlist
 
-    QML reads navigation state through properties and reacts to the
-    \c contentHistoryChanged and \c depthChanged NOTIFY signals.
-    The overlay signals (\c pushRequested, \c popRequested, \c replaceRequested)
-    remain imperative because StackView operations cannot be expressed as
-    a single declarative binding.
+    The \c backAtRoot signal fires when \c pop() is called with an empty back-stack;
+    QML uses it to minimise the app on Android or do nothing on desktop.
 
-    In QML (same module, no extra import needed):
-    \code
-    // Overlay pages
-    NavigationController.push("qrc:/qt/qml/.../License.qml")
-    NavigationController.pop()
-
-    // Content pages
-    NavigationController.navigateTo(Qt.resolvedUrl("StyleShowcase.qml").toString())
-    NavigationController.contentBack()
-
-    // Declarative binding
-    Loader { source: NavigationController.currentContentUrl }
-    \endcode
+    Thread safety: \c pop() is always invoked on the Qt main thread via
+    \c Qt::QueuedConnection from the JNI back-handler, so no mutex is required.
 */
 class NavigationController : public QObject
 {
     Q_OBJECT
-    // QML_ELEMENT registers the type under the C++ class name "NavigationController".
-    // No separate QML_NAMED_ELEMENT needed; QML_SINGLETON alone is not sufficient
-    // — it must be paired with QML_ELEMENT or QML_NAMED_ELEMENT.
     QML_ELEMENT
     QML_SINGLETON
 
-    // ── Overlay stack properties ───────────────────────────────────────────
-    Q_PROPERTY(int  depth     READ depth     NOTIFY depthChanged FINAL)
-    Q_PROPERTY(bool canGoBack READ canGoBack NOTIFY depthChanged FINAL)
-
-    // ── Content stack properties ───────────────────────────────────────────
-    // All three share contentHistoryChanged as their NOTIFY signal because
-    // every navigation event updates all three simultaneously.
-    Q_PROPERTY(QString currentContentUrl
-               READ currentContentUrl NOTIFY contentHistoryChanged FINAL)
-    Q_PROPERTY(bool canGoContentBack
-               READ canGoContentBack  NOTIFY contentHistoryChanged FINAL)
-    Q_PROPERTY(bool canGoContentForward
-               READ canGoContentForward NOTIFY contentHistoryChanged FINAL)
+    Q_PROPERTY(QString     currentUrl         READ currentUrl         NOTIFY currentChanged FINAL)
+    Q_PROPERTY(QVariantMap currentProps        READ currentProps        NOTIFY currentChanged FINAL)
+    Q_PROPERTY(bool        currentShowChrome   READ currentShowChrome   NOTIFY currentChanged FINAL)
+    Q_PROPERTY(bool        canGoBack           READ canGoBack           NOTIFY currentChanged FINAL)
 
 public:
     ~NavigationController() override = default;
 
     // ── Singleton plumbing ────────────────────────────────────────────────
 
-    /// Called once by the QML engine. Returns the same static instance as
-    /// instance() and marks it CppOwnership so the engine never deletes it.
-    static NavigationController *create(QQmlEngine *engine,
-                                        QJSEngine  *scriptEngine);
-
-    /// C++ accessor used by android_back_handler.cpp (no engine needed).
+    static NavigationController *create(QQmlEngine *engine, QJSEngine *scriptEngine);
     static NavigationController *instance();
 
-    // ── Overlay navigation (StackView) ────────────────────────────────────
+    // ── Navigation API ────────────────────────────────────────────────────
 
-    Q_INVOKABLE void push(const QString &path, const QVariantMap &props = {});
+    /// Push a new page.  The first call seeds the home entry without adding to
+    /// the back-stack, so back from the home page never returns to a blank state.
+    Q_INVOKABLE void push(const QString     &url,
+                          const QVariantMap &props      = {},
+                          bool               showChrome = true);
+
+    /// Pop the top entry.  Emits \c backAtRoot if the stack is already empty.
     Q_INVOKABLE void pop();
-    Q_INVOKABLE void replace(const QString &path, const QVariantMap &props = {});
 
-    // ── Content navigation (Loader) ───────────────────────────────────────
-
-    /// Push the current page to the back stack and make \a url current.
-    /// On the very first call (before any navigation) the current entry is
-    /// seeded rather than pushed, so the home page never appears in history.
-    Q_INVOKABLE void navigateTo(const QString &url,
-                                const QVariantMap &props = {});
-
-    /// Load the previous content page, pushing current onto the forward stack.
-    Q_INVOKABLE void contentBack();
-
-    /// Load the next content page, pushing current onto the back stack.
-    Q_INVOKABLE void contentForward();
-
-    // ── Platform ──────────────────────────────────────────────────────────
+    /// Replace the current entry in-place (back-stack is unaffected).
+    Q_INVOKABLE void replace(const QString     &url,
+                             const QVariantMap &props      = {},
+                             bool               showChrome = true);
 
     /// Move the app to the background (Android only; no-op elsewhere).
     Q_INVOKABLE void minimizeApp();
 
     // ── Property accessors ────────────────────────────────────────────────
 
-    [[nodiscard]] int     depth()              const;
-    [[nodiscard]] bool    canGoBack()          const;
-    [[nodiscard]] QString currentContentUrl()  const;
-    [[nodiscard]] bool    canGoContentBack()   const;
-    [[nodiscard]] bool    canGoContentForward() const;
+    [[nodiscard]] QString     currentUrl()         const;
+    [[nodiscard]] QVariantMap currentProps()        const;
+    [[nodiscard]] bool        currentShowChrome()   const;
+    [[nodiscard]] bool        canGoBack()           const;
 
 signals:
-    // Overlay — imperative because StackView push/pop cannot be bound
-    void pushRequested   (const QString &path, const QVariantMap &props);
-    void popRequested    ();
-    void replaceRequested(const QString &path, const QVariantMap &props);
-    void depthChanged    ();
-
-    // Content — NOTIFY signal for all three content properties
-    void contentHistoryChanged();
+    void currentChanged();
+    /// Fired when \c pop() is called with an empty back-stack.
+    void backAtRoot();
 
 private:
     explicit NavigationController(QObject *parent = nullptr);
 
-    // ── Overlay stack (mutex-guarded, JNI-accessible) ─────────────────────
-    struct OverlayEntry { QString path; QVariantMap props; };
-    mutable QMutex       m_mutex;
-    QStack<OverlayEntry> m_stack;
+    struct Entry {
+        QString     url;
+        QVariantMap props;
+        bool        showChrome = true;
+    };
 
-    // ── Content stack (Qt main thread only) ───────────────────────────────
-    struct ContentEntry { QString url; QVariantMap props; };
-    QStack<ContentEntry> m_contentBack;
-    QStack<ContentEntry> m_contentForward;
-    ContentEntry         m_currentContent;   // url == "" until first navigateTo
-    bool                 m_contentInitialized = false;
+    QStack<Entry> m_back;
+    Entry         m_current;
 };

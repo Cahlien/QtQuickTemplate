@@ -1,8 +1,8 @@
 #include "navigation_controller.h"
 
 #include <QJSEngine>
-#include <QMutexLocker>
 #include <QQmlEngine>
+#include <QDebug>
 
 // minimizeApp() is platform-specific and defined elsewhere:
 //   Android  → src/main/android/android_back_handler.cpp
@@ -23,113 +23,65 @@ NavigationController *NavigationController::instance()
 NavigationController *NavigationController::create(QQmlEngine * /*engine*/,
                                                    QJSEngine  * /*scriptEngine*/)
 {
-    // Tell the engine it does NOT own this object — the static lifetime
-    // must outlast the QML engine.
     QJSEngine::setObjectOwnership(instance(), QJSEngine::CppOwnership);
     return instance();
 }
 
-// ── Overlay navigation (StackView) ────────────────────────────────────────────
+// ── Navigation ────────────────────────────────────────────────────────────────
 
-void NavigationController::push(const QString &path, const QVariantMap &props)
+void NavigationController::push(const QString     &url,
+                                const QVariantMap &props,
+                                bool               showChrome)
 {
-    {
-        QMutexLocker lock(&m_mutex);
-        m_stack.push({path, props});
-    }
-    emit pushRequested(path, props);
-    emit depthChanged();
+    // First push seeds the home entry without touching the back-stack, so the
+    // back button from the home page never returns to a blank state.
+    if (!m_current.url.isEmpty())
+        m_back.push(m_current);
+
+    m_current = { url, props, showChrome };
+    qDebug() << "NC::push  url=" << url << "  backSize=" << m_back.size();
+    emit currentChanged();
 }
 
 void NavigationController::pop()
 {
-    bool stackWasEmpty = false;
-    {
-        QMutexLocker lock(&m_mutex);
-        if (m_stack.isEmpty())
-            stackWasEmpty = true;
-        else
-            m_stack.pop();
+    qDebug() << "NC::pop   backSize=" << m_back.size();
+    if (m_back.isEmpty()) {
+        qDebug() << "NC::pop   → backAtRoot";
+        emit backAtRoot();
+        return;
     }
-    // Always emit — even when empty — so QML can minimise or do content back.
-    emit popRequested();
-    if (!stackWasEmpty)
-        emit depthChanged();
+    m_current = m_back.pop();
+    qDebug() << "NC::pop   → restored url=" << m_current.url;
+    emit currentChanged();
 }
 
-void NavigationController::replace(const QString &path, const QVariantMap &props)
+void NavigationController::replace(const QString     &url,
+                                   const QVariantMap &props,
+                                   bool               showChrome)
 {
-    {
-        QMutexLocker lock(&m_mutex);
-        if (!m_stack.isEmpty())
-            m_stack.pop();
-        m_stack.push({path, props});
-    }
-    emit replaceRequested(path, props);
-    emit depthChanged();
+    m_current = { url, props, showChrome };
+    emit currentChanged();
 }
 
-// ── Content navigation (Loader) ───────────────────────────────────────────────
+// ── Property accessors ────────────────────────────────────────────────────────
 
-void NavigationController::navigateTo(const QString &url, const QVariantMap &props)
+QString NavigationController::currentUrl() const
 {
-    // On the very first call m_contentInitialized is false: seed the home entry
-    // rather than pushing it, so the home page never appears in the back stack.
-    if (m_contentInitialized)
-        m_contentBack.push(m_currentContent);
-
-    m_contentForward.clear();
-    m_currentContent     = { url, props };
-    m_contentInitialized = true;
-
-    emit contentHistoryChanged();
+    return m_current.url;
 }
 
-void NavigationController::contentBack()
+QVariantMap NavigationController::currentProps() const
 {
-    if (m_contentBack.isEmpty()) return;
-
-    m_contentForward.push(m_currentContent);
-    m_currentContent = m_contentBack.pop();
-
-    emit contentHistoryChanged();
+    return m_current.props;
 }
 
-void NavigationController::contentForward()
+bool NavigationController::currentShowChrome() const
 {
-    if (m_contentForward.isEmpty()) return;
-
-    m_contentBack.push(m_currentContent);
-    m_currentContent = m_contentForward.pop();
-
-    emit contentHistoryChanged();
-}
-
-// ── Properties ────────────────────────────────────────────────────────────────
-
-int NavigationController::depth() const
-{
-    QMutexLocker lock(&m_mutex);
-    return static_cast<int>(m_stack.size());
+    return m_current.showChrome;
 }
 
 bool NavigationController::canGoBack() const
 {
-    QMutexLocker lock(&m_mutex);
-    return !m_stack.isEmpty();
-}
-
-QString NavigationController::currentContentUrl() const
-{
-    return m_currentContent.url;
-}
-
-bool NavigationController::canGoContentBack() const
-{
-    return !m_contentBack.isEmpty();
-}
-
-bool NavigationController::canGoContentForward() const
-{
-    return !m_contentForward.isEmpty();
+    return !m_back.isEmpty();
 }
