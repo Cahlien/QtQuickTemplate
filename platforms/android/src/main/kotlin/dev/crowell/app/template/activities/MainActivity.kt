@@ -1,5 +1,6 @@
 package dev.crowell.app.template.activities
 
+import android.annotation.SuppressLint
 import android.os.Build
 import android.os.Bundle
 import android.view.View
@@ -121,5 +122,25 @@ class MainActivity : QtActivity() {
         Log.d(TAG, "onQtReady")
         notifyQtReady()
         runOnUiThread { dismissOverlay() }
+    }
+
+    // ── Back-navigation guard ─────────────────────────────────────────────
+    //
+    // QtActivity's default onBackPressed() dispatches Key_Back into the Qt
+    // event loop and, when nothing handles it, finishes the Activity.
+    // We intentionally skip super so that path never runs:
+    //
+    //   • API 33+  – OnBackInvokedCallback (registered above) is the sole handler.
+    //   • API < 33 – This override routes through the same JNI bridge.
+
+    @Suppress("DEPRECATION")
+    @SuppressLint("MissingSuperCall")
+    override fun onBackPressed() {
+        if (Build.VERSION.SDK_INT < 33) {
+            nativeBackRequested()
+        }
+        // On API 33+ the OnBackInvokedCallback handles the back event;
+        // this override only prevents QtActivity.onBackPressed() from
+        // finishing the Activity if it is ever reached.
     }
 }
