@@ -13,6 +13,7 @@
 #include "navigation_controller.h"
 
 #include <QCoreApplication>  // pulls in qcoreapplication_platform.h → QNativeInterface::QAndroidApplication
+#include <QDebug>
 #include <QJniObject>
 #include <QMetaObject>
 #include <jni.h>
@@ -25,6 +26,7 @@ JNIEXPORT void JNICALL
 Java_dev_crowell_app_template_activities_MainActivity_nativeBackRequested(
     JNIEnv * /*env*/, jobject /*thiz*/)
 {
+    qDebug() << "JNI: nativeBackRequested fired";
     // We are on the Android UI thread here.  NavigationController::pop()
     // emits signals that drive QML/StackView mutations, which must happen on
     // the Qt main thread.  Qt::QueuedConnection posts an event across threads
