@@ -42,6 +42,13 @@ Rectangle {
     */
     property Item content
 
+    /*!
+        \qmlproperty bool MainLandscapeLayout::showChrome
+        When \c false the header, navigation bar, and footer proxies collapse so
+        the content area expands to fill the full layout.  Defaults to \c true.
+    */
+    property bool showChrome: true
+
     color: Theme.background
 
     Rectangle {
@@ -65,12 +72,14 @@ Rectangle {
 
                 LayoutItemProxy {
                     target: root.header
+                    visible: root.showChrome
                     Layout.fillWidth: true
                     Layout.preferredHeight: 48
                 }
 
                 LayoutItemProxy {
                     target: root.navBar
+                    visible: root.showChrome
                     Layout.fillWidth: true
                     Layout.preferredHeight: 48
                 }
@@ -81,6 +90,7 @@ Rectangle {
 
                 LayoutItemProxy {
                     target: root.footer
+                    visible: root.showChrome
                     Layout.fillWidth: true
                     Layout.preferredHeight: 56
                 }
