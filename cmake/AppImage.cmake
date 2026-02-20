@@ -78,7 +78,8 @@ set(_icon_name "dev.crowell.app.template")
 set(_icon_staging "${_appimage_build_dir}/${_icon_name}.png")
 
 # qt.conf generated at configure time
-set(_qt_conf_template "${CMAKE_CURRENT_BINARY_DIR}/qt.conf")
+file(MAKE_DIRECTORY "${_appimage_build_dir}")
+set(_qt_conf_template "${_appimage_build_dir}/qt.conf")
 file(WRITE "${_qt_conf_template}"
 "[Paths]\n"
 "Prefix=..\n"
@@ -86,6 +87,11 @@ file(WRITE "${_qt_conf_template}"
 "Qml2Imports=qml\n"
 "Libraries=lib\n"
 )
+
+# Remove legacy qt.conf in the top-level build dir if present.
+# That file causes unpackaged runs from the build tree to search
+# for plugins under <build>/plugins instead of the Qt installation.
+file(REMOVE "${CMAKE_CURRENT_BINARY_DIR}/qt.conf")
 
 # Stage Wayland plugins + QtWayland libs into AppDir BEFORE linuxdeploy harvests dependencies.
 set(_stage_wayland_script "${CMAKE_CURRENT_BINARY_DIR}/stage_wayland_support.cmake")
