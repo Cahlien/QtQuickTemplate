@@ -13,22 +13,25 @@
     \brief Unified navigation manager exposed to QML as the \c NavigationController singleton.
 
     Maintains a single back-stack of lightweight \c Entry records — each storing
-    only a URL, optional initial properties, and a chrome-visibility flag.  No
+    a URL, optional initial properties, a chrome-visibility flag, and the
+    \c activeTabIndex that was current when the entry was on screen.  No
     QQuickItem references are held; pages are (re)hydrated on demand by the QML
     \c Loader via \c Loader::setSource(url, props).
 
-    QML reacts declaratively to property changes:
+    Every visible page change — whether via \c push(), \c navigateTab(), or
+    \c pop() — adds or removes a history entry.  QML reacts declaratively
+    to property changes:
 
     \list
     \li \c currentUrl / \c currentProps / \c currentShowChrome drive the active \c Loader.
     \li \c canGoBack controls whether the back button triggers a pop or a root signal.
-    \li \c activeTabIndex tracks the selected top-level tab without changing when
-        sub-pages (e.g.\ License) are pushed on top.
+    \li \c activeTabIndex tracks the selected top-level tab; it is restored
+        automatically when entries are popped.
     \endlist
 
-    Top-level tab navigation uses \c navigateTab() which clears the back-stack
-    and updates \c activeTabIndex.  Sub-page navigation uses \c push() which
-    preserves the tab highlight and adds a back-stack entry.
+    Tab navigation uses \c navigateTab() which updates \c activeTabIndex and
+    adds a back-stack entry.  Sub-page navigation uses \c push() which
+    preserves the current tab highlight and also adds a back-stack entry.
 
     The \c backAtRoot signal fires when \c pop() is called with an empty back-stack;
     QML uses it to minimise the app on Android or do nothing on desktop.
@@ -65,10 +68,8 @@ public:
 
     /// Push a new page onto the back-stack.  The first call seeds the home
     /// entry without adding to the back-stack, so back from the home page
-    /// never returns to a blank state.
-    ///
-    /// \note Does not change \c activeTabIndex — use \c navigateTab() for
-    /// top-level tab switches.
+    /// never returns to a blank state.  The current \c activeTabIndex is
+    /// preserved in the entry so that \c pop() can restore it.
     Q_INVOKABLE void push(const QString     &url,
                           const QVariantMap &props      = {},
                           bool               showChrome = true);
@@ -83,9 +84,10 @@ public:
 
     /// Switch to a top-level tab page.
     ///
-    /// Clears the back-stack (tabs are siblings, not stacked) and sets
-    /// \c activeTabIndex so the QML \c TabBar highlight stays in sync without
-    /// requiring URL-parsing bindings.  No-ops if already on the given tab/URL.
+    /// Pushes the current entry onto the back-stack (so every visible page
+    /// change is recorded in history) and sets \c activeTabIndex so the QML
+    /// \c TabBar highlight stays in sync.  No-ops if already on the given
+    /// tab/URL.
     Q_INVOKABLE void navigateTab(int                tabIndex,
                                  const QString     &url,
                                  const QVariantMap &props      = {},
@@ -104,7 +106,7 @@ public:
 
 signals:
     void currentChanged();
-    /// Emitted when \c activeTabIndex changes (only via \c navigateTab()).
+    /// Emitted when \c activeTabIndex changes (via \c navigateTab() or \c pop()).
     void activeTabChanged();
     /// Fired when \c pop() is called with an empty back-stack.
     void backAtRoot();
@@ -116,6 +118,7 @@ private:
         QString     url;
         QVariantMap props;
         bool        showChrome = true;
+        int         tabIndex   = 0;
     };
 
     QStack<Entry> m_back;

@@ -49,7 +49,7 @@ void NavigationController::push(const QString     &url,
     if (!m_current.url.isEmpty())
         m_back.push(m_current);
 
-    m_current = { url, props, showChrome };
+    m_current = { url, props, showChrome, m_activeTabIndex };
     qDebug() << "NC::push  url=" << url << "  backSize=" << m_back.size();
     emit currentChanged();
 
@@ -69,7 +69,15 @@ void NavigationController::pop()
         return;
     }
     m_current = m_back.pop();
-    qDebug() << "NC::pop   → restored url=" << m_current.url;
+
+    const bool tabChanged = (m_activeTabIndex != m_current.tabIndex);
+    m_activeTabIndex = m_current.tabIndex;
+
+    qDebug() << "NC::pop   → restored url=" << m_current.url
+             << "  tab=" << m_activeTabIndex;
+
+    if (tabChanged)
+        emit activeTabChanged();
     emit currentChanged();
 
     m_navigating = false;
@@ -82,7 +90,7 @@ void NavigationController::replace(const QString     &url,
     if (m_navigating) return;
     m_navigating = true;
 
-    m_current = { url, props, showChrome };
+    m_current = { url, props, showChrome, m_activeTabIndex };
     qDebug() << "NC::replace  url=" << url;
     emit currentChanged();
 
@@ -103,11 +111,12 @@ void NavigationController::navigateTab(int                tabIndex,
         return;
     }
 
-    // Tabs are top-level siblings: clear any sub-page back-stack entries
-    // so that "back" from a tab always reaches the root.
-    m_back.clear();
+    // Every visible page change is recorded in history so that pop()
+    // can retrace the user's exact navigation path.
+    if (!m_current.url.isEmpty())
+        m_back.push(m_current);
 
-    m_current = { url, props, showChrome };
+    m_current = { url, props, showChrome, tabIndex };
 
     const bool tabChanged = (m_activeTabIndex != tabIndex);
     m_activeTabIndex = tabIndex;
