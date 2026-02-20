@@ -12,7 +12,11 @@ macro(bootstrap_clang_scan_deps)
             set(_scan_hints)
             foreach (_ndk_var ANDROID_NDK_ROOT ANDROID_NDK_HOME ANDROID_NDK)
                 if (DEFINED ENV{${_ndk_var}})
-                    list(APPEND _scan_hints "$ENV{${_ndk_var}}/toolchains/llvm/prebuilt/linux-x86_64/bin")
+                    list(APPEND _scan_hints
+                        "$ENV{${_ndk_var}}/toolchains/llvm/prebuilt/linux-x86_64/bin"
+                        "$ENV{${_ndk_var}}/toolchains/llvm/prebuilt/darwin-x86_64/bin"
+                        "$ENV{${_ndk_var}}/toolchains/llvm/prebuilt/windows-x86_64/bin"
+                    )
                 endif ()
             endforeach ()
             find_program(_bootstrap_clang_scan_deps clang-scan-deps HINTS ${_scan_hints})

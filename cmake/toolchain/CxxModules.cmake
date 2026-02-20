@@ -1,13 +1,21 @@
 include_guard(GLOBAL)
 
 function(is_apple_target out_var)
-    if (APPLE)
-        set(${out_var} TRUE PARENT_SCOPE)
-    elseif (DEFINED CMAKE_SYSTEM_NAME AND (CMAKE_SYSTEM_NAME STREQUAL "Darwin"
-        OR CMAKE_SYSTEM_NAME STREQUAL "iOS"
-        OR CMAKE_SYSTEM_NAME STREQUAL "tvOS"
-        OR CMAKE_SYSTEM_NAME STREQUAL "watchOS"
-        OR CMAKE_SYSTEM_NAME STREQUAL "visionOS"))
+    # When CMAKE_SYSTEM_NAME is defined (e.g. by a cross-compilation toolchain
+    # file), use it as the source of truth.  The APPLE variable reflects the
+    # *host* platform before project() is called, so checking it first would
+    # incorrectly flag an Android target as Apple when building on macOS.
+    if (DEFINED CMAKE_SYSTEM_NAME)
+        if (CMAKE_SYSTEM_NAME STREQUAL "Darwin"
+            OR CMAKE_SYSTEM_NAME STREQUAL "iOS"
+            OR CMAKE_SYSTEM_NAME STREQUAL "tvOS"
+            OR CMAKE_SYSTEM_NAME STREQUAL "watchOS"
+            OR CMAKE_SYSTEM_NAME STREQUAL "visionOS")
+            set(${out_var} TRUE PARENT_SCOPE)
+        else ()
+            set(${out_var} FALSE PARENT_SCOPE)
+        endif ()
+    elseif (APPLE)
         set(${out_var} TRUE PARENT_SCOPE)
     else ()
         set(${out_var} FALSE PARENT_SCOPE)
