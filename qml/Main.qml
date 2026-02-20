@@ -13,10 +13,13 @@ import dev.crowell.AppTheme
 
     Navigation architecture
     -----------------------
-    All navigation flows through the C++ \c NavigationController singleton via
-    three methods: \c push(), \c pop(), and \c replace().  Each call stores only
-    a URL, optional initial properties, and a chrome-visibility flag — no
-    QQuickItem references are retained.
+    All navigation flows through the C++ \c NavigationController singleton.
+    Top-level tab switches use \c navigateTab() (which clears the back-stack
+    and updates \c activeTabIndex), while sub-pages like License use \c push()
+    (which preserves the tab highlight and adds a back-stack entry).  \c pop()
+    and \c replace() round out the API.  Each entry stores only a URL, optional
+    initial properties, and a chrome-visibility flag — no QQuickItem references
+    are retained.
 
     A pair of \c Loader items (\l loaderA and \l loaderB) alternate as the
     active page.  When \c NavigationController.currentChanged fires, the
@@ -115,10 +118,10 @@ ApplicationWindow {
             close.accepted = false
     }
 
-    // Seed the home page.  This is the first push so no back-stack entry is
-    // created — pressing back from here fires backAtRoot instead.
+    // Seed the home page via navigateTab so activeTabIndex is correct from the
+    // start.  Back-stack stays empty — pressing back from here fires backAtRoot.
     Component.onCompleted: {
-        NavigationController.push(Qt.resolvedUrl("Readme.qml").toString())
+        NavigationController.navigateTab(0, Qt.resolvedUrl("Readme.qml").toString())
     }
 
     // ── Back navigation: root reached ────────────────────────────────────
@@ -181,15 +184,18 @@ ApplicationWindow {
         id: navBarItem
         visible: root._displayedShowChrome
 
-        onReadmeRequested:   NavigationController.push(Qt.resolvedUrl("Readme.qml").toString())
-        onControlsRequested: NavigationController.push(Qt.resolvedUrl("StyleShowcase.qml").toString())
+        onReadmeRequested:   NavigationController.navigateTab(0, Qt.resolvedUrl("Readme.qml").toString())
+        onControlsRequested: NavigationController.navigateTab(1, Qt.resolvedUrl("StyleShowcase.qml").toString())
     }
 
-    // Keep the NavBar tab highlight in sync with every URL change.
+    // Keep the NavBar tab highlight in sync with the active tab.
+    // activeTabIndex is only changed by navigateTab(), so pushing a sub-page
+    // (e.g. License) never alters the highlight — preventing the iOS glitch
+    // where a programmatic currentIndex change spuriously re-activates a tab.
     Binding {
         target:   navBarItem
         property: "currentIndex"
-        value:    NavigationController.currentUrl.indexOf("StyleShowcase.qml") !== -1 ? 1 : 0
+        value:    NavigationController.activeTabIndex
     }
 
     Footer {
