@@ -73,10 +73,6 @@ ApplicationWindow {
     // layout resize that hides/shows chrome is never visible mid-transition.
     property bool _displayedShowChrome: true
 
-    // Persist the last tab selected on chrome pages. Full-screen pages
-    // (showChrome=false, e.g. License) should not force the tab highlight.
-    property int _navTabIndex: 0
-
     // ── Window setup ──────────────────────────────────────────────────────
 
     color: Theme.background
@@ -184,21 +180,16 @@ ApplicationWindow {
     NavBar {
         id: navBarItem
         visible: root._displayedShowChrome
-        currentIndex: root._navTabIndex
 
         onReadmeRequested:   NavigationController.push(Qt.resolvedUrl("Readme.qml").toString())
         onControlsRequested: NavigationController.push(Qt.resolvedUrl("StyleShowcase.qml").toString())
     }
 
-    // Keep the NavBar tab highlight in sync with chrome pages only.
-    Connections {
-        target: NavigationController
-        function onCurrentChanged() {
-            if (!NavigationController.currentShowChrome)
-                return
-
-            root._navTabIndex = NavigationController.currentUrl.indexOf("StyleShowcase.qml") !== -1 ? 1 : 0
-        }
+    // Keep the NavBar tab highlight in sync with every URL change.
+    Binding {
+        target:   navBarItem
+        property: "currentIndex"
+        value:    NavigationController.currentUrl.indexOf("StyleShowcase.qml") !== -1 ? 1 : 0
     }
 
     Footer {
