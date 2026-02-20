@@ -31,11 +31,11 @@ NavigationController *NavigationController::create(QQmlEngine * /*engine*/,
 // ── Navigation ────────────────────────────────────────────────────────────────
 //
 // Every mutating method is guarded by m_navigating to prevent re-entrant
-// calls during signal emission.  On iOS the QML Binding that syncs the
-// TabBar highlight can cause a programmatic currentIndex change which,
-// through UIKit touch-event handling, spuriously activates a TabButton
-// and triggers a second push() inside the first push()'s signal cascade.
-// The guard silently drops the nested call so the intended navigation wins.
+// calls during signal emission.  On iOS a QML Binding that syncs a TabBar
+// highlight can cause a programmatic currentIndex change which, through
+// UIKit touch-event handling, spuriously activates a button and triggers
+// a second push() inside the first push()'s signal cascade.  The guard
+// silently drops the nested call so the intended navigation wins.
 
 void NavigationController::push(const QString     &url,
                                 const QVariantMap &props,
@@ -49,7 +49,7 @@ void NavigationController::push(const QString     &url,
     if (!m_current.url.isEmpty())
         m_back.push(m_current);
 
-    m_current = { url, props, showChrome, m_activeTabIndex };
+    m_current = { url, props, showChrome };
     qDebug() << "NC::push  url=" << url << "  backSize=" << m_back.size();
     emit currentChanged();
 
@@ -69,15 +69,7 @@ void NavigationController::pop()
         return;
     }
     m_current = m_back.pop();
-
-    const bool tabChanged = (m_activeTabIndex != m_current.tabIndex);
-    m_activeTabIndex = m_current.tabIndex;
-
-    qDebug() << "NC::pop   → restored url=" << m_current.url
-             << "  tab=" << m_activeTabIndex;
-
-    if (tabChanged)
-        emit activeTabChanged();
+    qDebug() << "NC::pop   → restored url=" << m_current.url;
     emit currentChanged();
 
     m_navigating = false;
@@ -90,42 +82,8 @@ void NavigationController::replace(const QString     &url,
     if (m_navigating) return;
     m_navigating = true;
 
-    m_current = { url, props, showChrome, m_activeTabIndex };
+    m_current = { url, props, showChrome };
     qDebug() << "NC::replace  url=" << url;
-    emit currentChanged();
-
-    m_navigating = false;
-}
-
-void NavigationController::navigateTab(int                tabIndex,
-                                       const QString     &url,
-                                       const QVariantMap &props,
-                                       bool               showChrome)
-{
-    if (m_navigating) return;
-    m_navigating = true;
-
-    // Already on this exact tab/page — nothing to do.
-    if (url == m_current.url && tabIndex == m_activeTabIndex) {
-        m_navigating = false;
-        return;
-    }
-
-    // Every visible page change is recorded in history so that pop()
-    // can retrace the user's exact navigation path.
-    if (!m_current.url.isEmpty())
-        m_back.push(m_current);
-
-    m_current = { url, props, showChrome, tabIndex };
-
-    const bool tabChanged = (m_activeTabIndex != tabIndex);
-    m_activeTabIndex = tabIndex;
-
-    qDebug() << "NC::navigateTab  tab=" << tabIndex
-             << "  url=" << url << "  backSize=" << m_back.size();
-
-    if (tabChanged)
-        emit activeTabChanged();
     emit currentChanged();
 
     m_navigating = false;
@@ -166,9 +124,4 @@ bool NavigationController::currentShowChrome() const
 bool NavigationController::canGoBack() const
 {
     return !m_back.isEmpty();
-}
-
-int NavigationController::activeTabIndex() const
-{
-    return m_activeTabIndex;
 }
