@@ -202,6 +202,7 @@ ApplicationWindow {
         when:     NavigationController.currentUrl.indexOf("Readme.qml")        !== -1
                || NavigationController.currentUrl.indexOf("StyleShowcase.qml") !== -1
         value:    NavigationController.currentUrl.indexOf("StyleShowcase.qml") !== -1 ? 1 : 0
+        restoreMode: Binding.RestoreNone
     }
 
     Footer {
