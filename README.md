@@ -152,43 +152,142 @@ Optional:
 
 ---
 
-## Building (Desktop)
+## Linux: build, package, sign
 
-### Plain CMake
+### Build (local desktop binary)
 
 ```bash
-cmake -S . -B build -DCMAKE_BUILD_TYPE=Debug
-cmake --build build -j
+cmake -S . -B build/linux-debug -DCMAKE_BUILD_TYPE=Debug
+cmake --build build/linux-debug -j
 ```
 
-Run (examples):
-- macOS/Windows typically produce `QtQuickTemplate` as an app/bundle.
-- On Linux (and other non-Apple UNIX), the output name is prefixed with `app` (e.g. `appQtQuickTemplate`).
+For release builds:
 
-### Using Conan (optional)
+```bash
+cmake -S . -B build/linux-release -DCMAKE_BUILD_TYPE=Release
+cmake --build build/linux-release -j
+```
 
-This recipe currently doesn't declare third-party deps, but it wires up `CMakeToolchain` + `CMakeDeps`, so adding deps later is painless.
+Run on Linux:
+
+```bash
+./build/linux-debug/appQtQuickTemplate
+```
+
+### Build with Conan (optional)
 
 ```bash
 conan install . -s build_type=Debug --build=missing -of build/conan
-cmake -S . -B build -DCMAKE_TOOLCHAIN_FILE=build/conan/conan_toolchain.cmake
-cmake --build build -j
+cmake -S . -B build/linux-debug -DCMAKE_TOOLCHAIN_FILE=build/conan/conan_toolchain.cmake
+cmake --build build/linux-debug -j
+```
+
+### Package (AppImage)
+
+AppImage packaging is provided by `cmake/AppImage.cmake` and requires:
+
+- `linuxdeploy`
+- `linuxdeploy-plugin-qt`
+- `linuxdeploy-plugin-appimage`
+
+If they are installed in `~/applications`, `~/.local/bin`, or `/usr/local/bin`, CMake auto-detects them and enables the `AppImage` target.
+
+```bash
+cmake -S . -B build/linux-release -DCMAKE_BUILD_TYPE=Release
+cmake --build build/linux-release --target AppImage -j
+```
+
+Output:
+
+```text
+build/linux-release/AppImageBuild/QtQuickTemplate-<version>-x86_64.AppImage
+```
+
+### Sign (AppImage)
+
+AppImage signing is integrated into the same `AppImage` target. Provide a key ID at configure time:
+
+```bash
+cmake -S . -B build/linux-release \
+  -DCMAKE_BUILD_TYPE=Release \
+  -DGPG_KEY_ID=<YOUR_KEY_ID>
+cmake --build build/linux-release --target AppImage -j
+```
+
+If `GPG_KEY_ID` is not set, the AppImage plugin uses your default GPG secret key.
+
+### Verify (AppImage)
+
+After packaging, verify the embedded signature with the `validate` tool from AppImageUpdate:
+
+```bash
+wget -O validate https://github.com/AppImageCommunity/AppImageUpdate/releases/download/continuous/validate-x86_64.AppImage
+chmod +x validate
+./validate ./build/linux-release/AppImageBuild/QtQuickTemplate-<version>-x86_64.AppImage
 ```
 
 ---
 
-## Building (Android)
+## Android: build, package, sign
 
-This repo is set up to be built using a Qt Android kit (Qt Creator is the smoothest path):
+This repo is configured for Qt Android deployment (`QT_ANDROID_PACKAGE_SOURCE_DIR=platforms/android`).
 
-- `QT_ANDROID_PACKAGE_SOURCE_DIR` points at `platforms/android/`, so Qt's Android deployment tooling will pick up the Gradle project and resources automatically.
-- The Android activity shows a splash overlay and removes it once Qt reports its first rendered frame.
+### Build
 
-If you need to change the Android app id / namespace, start in:
+Use a Qt Android kit in Qt Creator (recommended). The build also regenerates:
+
+- `platforms/android/version.properties`
+
+from project version values via the `GenerateAndroidVersion` CMake target.
+
+If you need to change app identifiers or Android metadata, start here:
+
 - `platforms/android/build.gradle` (namespace)
 - `platforms/android/src/main/kotlin/.../MainActivity.kt` (package)
 - `platforms/android/AndroidManifest.xml`
-- `platforms/android/version.properties` (versionName/versionCode)
+
+### Package
+
+From Qt Creator, build with your Android kit using Debug/Release as needed.
+
+From command line, use the generated Gradle project in your Android build folder (usually `<build-dir>/android-build`):
+
+```bash
+./gradlew assembleDebug
+./gradlew assembleRelease
+./gradlew bundleRelease
+```
+
+Typical outputs:
+
+- APKs: `android-build/build/outputs/apk/<variant>/`
+- AAB: `android-build/build/outputs/bundle/release/`
+
+### Sign
+
+Create a keystore (one-time):
+
+```bash
+keytool -genkeypair -v -keystore release.keystore -alias app-release -keyalg RSA -keysize 4096 -validity 10000
+```
+
+#### Sign APK manually
+
+```bash
+zipalign -p 4 app-release-unsigned.apk app-release-aligned.apk
+apksigner sign --ks release.keystore --ks-key-alias app-release app-release-aligned.apk
+apksigner verify --verbose --print-certs app-release-aligned.apk
+```
+
+#### Sign AAB manually
+
+```bash
+jarsigner -verbose -sigalg SHA256withRSA -digestalg SHA-256 \
+  -keystore release.keystore app-release.aab app-release
+jarsigner -verify -verbose app-release.aab
+```
+
+`zipalign` and `apksigner` are in Android SDK Build-Tools. Configure your shell `PATH` or use absolute paths.
 
 ---
 
