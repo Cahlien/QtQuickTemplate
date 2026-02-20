@@ -44,6 +44,13 @@ void NavigationController::push(const QString     &url,
     if (m_navigating) return;
     m_navigating = true;
 
+    // Already showing this exact page — nothing to do.
+    if (url == m_current.url && props == m_current.props
+            && showChrome == m_current.showChrome) {
+        m_navigating = false;
+        return;
+    }
+
     // First push seeds the home entry without touching the back-stack, so the
     // back button from the home page never returns to a blank state.
     if (!m_current.url.isEmpty())

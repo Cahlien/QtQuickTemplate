@@ -62,7 +62,9 @@ public:
 
     // ── Navigation API ────────────────────────────────────────────────────
 
-    /// Push a new page onto the back-stack.  The first call seeds the home
+    /// Push a new page onto the back-stack.  No-ops if the URL, props, and
+    /// showChrome all match the current entry (prevents duplicate history
+    /// from re-clicking the active link).  The first call seeds the home
     /// entry without adding to the back-stack, so back from the home page
     /// never returns to a blank state.
     Q_INVOKABLE void push(const QString     &url,
