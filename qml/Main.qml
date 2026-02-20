@@ -77,6 +77,28 @@ ApplicationWindow {
     // (showChrome=false, e.g. License) should not force the tab highlight.
     property int _navTabIndex: 0
 
+    // Staged navigation target, committed only after fade-out completes.
+    property string _pendingUrl: ""
+    property var _pendingProps: ({})
+    property bool _pendingShowChrome: true
+    property int _pendingNavTabIndex: 0
+
+    function stageNavigationTarget() {
+        _pendingUrl = NavigationController.currentUrl
+        _pendingProps = NavigationController.currentProps
+        _pendingShowChrome = NavigationController.currentShowChrome
+        if (_pendingShowChrome)
+            _pendingNavTabIndex = _pendingUrl.indexOf("StyleShowcase.qml") !== -1 ? 1 : 0
+        else
+            _pendingNavTabIndex = _navTabIndex
+    }
+
+    function applyStagedNavigationTarget() {
+        _displayedShowChrome = _pendingShowChrome
+        _navTabIndex = _pendingNavTabIndex
+        pageLoader.setSource(_pendingUrl, _pendingProps)
+    }
+
     // ── Window setup ──────────────────────────────────────────────────────
 
     color: Theme.background
@@ -190,17 +212,6 @@ ApplicationWindow {
         onControlsRequested: NavigationController.push(Qt.resolvedUrl("StyleShowcase.qml").toString())
     }
 
-    // Keep the NavBar tab highlight in sync with chrome pages only.
-    Connections {
-        target: NavigationController
-        function onCurrentChanged() {
-            if (!NavigationController.currentShowChrome)
-                return
-
-            root._navTabIndex = NavigationController.currentUrl.indexOf("StyleShowcase.qml") !== -1 ? 1 : 0
-        }
-    }
-
     Footer {
         id: footerItem
         visible: root._displayedShowChrome
@@ -237,11 +248,6 @@ ApplicationWindow {
                 // Wire up any page-level close button to NavigationController.pop().
                 if (item && typeof item["closeRequested"] !== "undefined")
                     item.closeRequested.connect(NavigationController.pop)
-
-                // Update chrome visibility now that opacity is 0 — the layout
-                // resize is invisible and the incoming page sizes itself correctly
-                // before fading in.
-                root._displayedShowChrome = NavigationController.currentShowChrome
                 fadeIn.restart()
             }
         }
@@ -249,11 +255,12 @@ ApplicationWindow {
         Connections {
             target: NavigationController
             function onCurrentChanged() {
+                root.stageNavigationTarget()
+
                 if (pageLoader.status === Loader.Null) {
                     // Initial load — start transparent so onLoaded fades in.
                     pageLoader.opacity = 0
-                    pageLoader.setSource(NavigationController.currentUrl,
-                                         NavigationController.currentProps)
+                    root.applyStagedNavigationTarget()
                 } else {
                     fadeOut.restart()
                 }
@@ -268,8 +275,7 @@ ApplicationWindow {
             to:       0
             duration: 120
             easing.type: Easing.InQuad
-            onFinished: pageLoader.setSource(NavigationController.currentUrl,
-                                             NavigationController.currentProps)
+            onFinished: root.applyStagedNavigationTarget()
         }
 
         // Step 2: triggered by Loader.onLoaded — fade the new page in.
