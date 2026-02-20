@@ -55,7 +55,7 @@ target_include_directories(${TARGET} PUBLIC
     ${CMAKE_CURRENT_BINARY_DIR}/include
 )
 
-target_compile_features(${TARGET} PUBLIC cxx_std_26)
+target_compile_features(${TARGET} PUBLIC cxx_std_23)
 
 apply_android_max_page_size(${TARGET})
 

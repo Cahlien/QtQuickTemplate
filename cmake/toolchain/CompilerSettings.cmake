@@ -5,7 +5,7 @@ include("${CMAKE_CURRENT_LIST_DIR}/CxxModules.cmake")
 # Project-wide compiler settings. Must be a macro so set() propagates to the
 # calling directory scope.
 macro(configure_compiler_settings)
-    set(CMAKE_CXX_STANDARD 26)
+    set(CMAKE_CXX_STANDARD 23)
     set(CMAKE_CXX_STANDARD_REQUIRED ON)
     set(CMAKE_CXX_EXTENSIONS OFF)
     set(CMAKE_POSITION_INDEPENDENT_CODE ON)
