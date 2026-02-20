@@ -19,6 +19,11 @@ function(configure_main_app)
         APP_VERSION_STRING="${PROJECT_VERSION}"
     )
 
+    get_property(_helloworld_modules_enabled GLOBAL PROPERTY QTQUICKTEMPLATE_HELLOWORLD_MODULE_ENABLED)
+    if (_helloworld_modules_enabled)
+        target_compile_definitions(${PROJECT_NAME} PRIVATE QTQUICKTEMPLATE_USE_HELLOWORLD_MODULE=1)
+    endif ()
+
     setup_app_qml_module(${PROJECT_NAME})
 
     if (NOT ANDROID AND NOT APPLE)

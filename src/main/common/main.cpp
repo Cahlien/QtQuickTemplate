@@ -5,7 +5,11 @@
 #include <QQuickWindow>
 #include <memory>
 
+#if defined(QTQUICKTEMPLATE_USE_HELLOWORLD_MODULE)
 import helloworld;
+#else
+#include <helloworld.h>
+#endif
 
 #include "platform_init.h"
 
@@ -59,7 +63,7 @@ int main(int argc, char *argv[])
 
     HelloWorld helloWorld{};
 
-    // Demonstrating successful use of the HelloWorld class from the helloworld module
+    // Demonstrating successful use of the HelloWorld library API.
     qDebug() << helloWorld.formatMessage();
 
     engine.loadFromModule("dev.crowell.QtQuickTemplate", "Main");

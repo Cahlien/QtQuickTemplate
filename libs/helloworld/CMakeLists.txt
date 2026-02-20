@@ -1,15 +1,11 @@
 set(TARGET helloworld)
 
-if (IOS)
-    add_library(${TARGET}  STATIC)
-else ()
-    add_library(${TARGET}  SHARED)
-    include(GenerateExportHeader)
-    generate_export_header(${TARGET}
-        BASE_NAME HELLOWORLD
-        EXPORT_FILE_NAME ${CMAKE_CURRENT_BINARY_DIR}/include/helloworld_export.h
-    )
-endif ()
+include("${CMAKE_CURRENT_LIST_DIR}/../../cmake/libs/LibraryCommon.cmake")
+
+add_portable_cpp_library(${TARGET} HELLOWORLD HELLOWORLD_EXPORT_HEADER)
+
+set(HELLOWORLD_MODULES_ENABLED ${QTQUICKTEMPLATE_CXX_MODULES_SUPPORTED})
+set_property(GLOBAL PROPERTY QTQUICKTEMPLATE_HELLOWORLD_MODULE_ENABLED ${HELLOWORLD_MODULES_ENABLED})
 
 set(HELLOWORLD_SOURCES
     src/helloworld.cpp
@@ -19,21 +15,11 @@ set(HELLOWORLD_HEADERS
     include/helloworld.h
 )
 
-if (NOT IOS)
-    list(APPEND HELLOWORLD_HEADERS ${CMAKE_CURRENT_BINARY_DIR}/include/helloworld_export.h)
+if (HELLOWORLD_EXPORT_HEADER)
+    list(APPEND HELLOWORLD_HEADERS ${HELLOWORLD_EXPORT_HEADER})
 endif ()
 
-if (APPLE)
-    target_sources(${TARGET}
-        PRIVATE
-            ${HELLOWORLD_SOURCES}
-        PUBLIC
-            FILE_SET HEADERS
-                BASE_DIRS include ${CMAKE_CURRENT_BINARY_DIR}/include
-                FILES
-                    ${HELLOWORLD_HEADERS}
-    )
-else ()
+if (HELLOWORLD_MODULES_ENABLED)
     target_sources(${TARGET}
         PRIVATE
             ${HELLOWORLD_SOURCES}
@@ -45,16 +31,23 @@ else ()
                 FILES
                     ${HELLOWORLD_HEADERS}
     )
+else ()
+    target_sources(${TARGET}
+        PRIVATE
+            ${HELLOWORLD_SOURCES}
+        PUBLIC
+            FILE_SET HEADERS
+                BASE_DIRS include ${CMAKE_CURRENT_BINARY_DIR}/include
+                FILES
+                    ${HELLOWORLD_HEADERS}
+    )
 endif ()
 
-# ─────────────────────────────────────────────
-# Build configuration summary
-# ─────────────────────────────────────────────
-if (APPLE)
+if (HELLOWORLD_MODULES_ENABLED)
+    message(STATUS "[helloworld] Linking C++20 module with traditional backing library")
+else ()
     get_target_property(_lib_type ${TARGET} TYPE)
     message(STATUS "[helloworld] Linking backing library (${_lib_type})")
-else ()
-    message(STATUS "[helloworld] Linking C++20 module")
 endif ()
 
 target_include_directories(${TARGET} PUBLIC
@@ -64,13 +57,7 @@ target_include_directories(${TARGET} PUBLIC
 
 target_compile_features(${TARGET} PUBLIC cxx_std_26)
 
-# ─────────────────────────────────────────────
-# ELF alignment for Android 15 (16 KB page size)
-# ─────────────────────────────────────────────
-if (ANDROID)
-    set_target_properties(${TARGET} PROPERTIES LINK_FLAGS "-Wl,-z,max-page-size=16384")
-endif()
-
+apply_android_max_page_size(${TARGET})
 
 find_package(Threads REQUIRED)
 target_link_libraries(${TARGET} PUBLIC Threads::Threads)

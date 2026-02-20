@@ -1,9 +1,16 @@
 include_guard(GLOBAL)
 
+include("${CMAKE_CURRENT_LIST_DIR}/CxxModules.cmake")
+
 # Seed clang-scan-deps as early as possible so first configure pass has it.
 # This avoids requiring a second configure/build cycle in some Android setups.
 # Must be called BEFORE project().
 macro(bootstrap_clang_scan_deps)
+    is_apple_target(_is_apple_target)
+    if (_is_apple_target)
+        return()
+    endif ()
+
     if (NOT CMAKE_CXX_COMPILER_CLANG_SCAN_DEPS OR CMAKE_CXX_COMPILER_CLANG_SCAN_DEPS MATCHES "-NOTFOUND$")
         set(_scan_hints)
         foreach (_ndk_var ANDROID_NDK_ROOT ANDROID_NDK_HOME ANDROID_NDK)
@@ -23,7 +30,12 @@ endmacro()
 # Some toolchains leave CMAKE_CXX_COMPILER_CLANG_SCAN_DEPS unset.
 # Must be called AFTER project().
 macro(configure_clang_scan_deps)
-    if (CMAKE_CXX_COMPILER_ID MATCHES "Clang")
+    is_apple_target(_is_apple_target)
+    if (_is_apple_target)
+        return()
+    endif ()
+
+    if (CMAKE_CXX_COMPILER_ID STREQUAL "Clang")
         if (NOT CMAKE_CXX_COMPILER_CLANG_SCAN_DEPS OR CMAKE_CXX_COMPILER_CLANG_SCAN_DEPS MATCHES "-NOTFOUND$")
             get_filename_component(_cxx_compiler_dir "${CMAKE_CXX_COMPILER}" DIRECTORY)
             find_program(_clang_scan_deps clang-scan-deps HINTS "${_cxx_compiler_dir}")

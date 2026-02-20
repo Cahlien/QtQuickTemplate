@@ -1,23 +1,16 @@
 set(TARGET qtquicktemplatecore)
 
-if (IOS)
-    qt_add_library(${TARGET} STATIC)
-else ()
-    qt_add_library(${TARGET} SHARED)
-    include(GenerateExportHeader)
-    generate_export_header(${TARGET}
-        BASE_NAME QTQUICKTEMPLATECORE
-        EXPORT_FILE_NAME ${CMAKE_CURRENT_BINARY_DIR}/include/qtquicktemplatecore_export.h
-    )
-endif ()
+include("${CMAKE_CURRENT_LIST_DIR}/../../cmake/libs/LibraryCommon.cmake")
+
+add_portable_qt_library(${TARGET} QTQUICKTEMPLATECORE QTQUICKTEMPLATECORE_EXPORT_HEADER)
 
 set(CORE_HEADERS
     include/app_info.h
     include/navigation/navigation_controller.h
 )
 
-if (NOT IOS)
-    list(APPEND CORE_HEADERS ${CMAKE_CURRENT_BINARY_DIR}/include/qtquicktemplatecore_export.h)
+if (QTQUICKTEMPLATECORE_EXPORT_HEADER)
+    list(APPEND CORE_HEADERS ${QTQUICKTEMPLATECORE_EXPORT_HEADER})
 endif ()
 
 target_sources(${TARGET}
@@ -46,8 +39,4 @@ target_link_libraries(${TARGET} PUBLIC
     Qt6::Qml
 )
 
-if (ANDROID)
-    set_target_properties(${TARGET} PROPERTIES
-        LINK_FLAGS "-Wl,-z,max-page-size=16384"
-    )
-endif ()
+apply_android_max_page_size(${TARGET})
