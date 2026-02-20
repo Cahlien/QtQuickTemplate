@@ -45,6 +45,19 @@ class NavigationController : public QObject
 public:
     ~NavigationController() override = default;
 
+    enum class ActionType {
+        Push,
+        Pop,
+        Replace
+    };
+
+    struct Action {
+        ActionType  type = ActionType::Push;
+        QString     url;
+        QVariantMap props;
+        bool        showChrome = true;
+    };
+
     // ── Singleton plumbing ────────────────────────────────────────────────
 
     static NavigationController *create(QQmlEngine *engine, QJSEngine *scriptEngine);
@@ -66,6 +79,9 @@ public:
                              const QVariantMap &props      = {},
                              bool               showChrome = true);
 
+    /// Commit the pending transition after QML loads the new page.
+    Q_INVOKABLE void completeTransition();
+
     /// Move the app to the background (Android only; no-op elsewhere).
     Q_INVOKABLE void minimizeApp();
 
@@ -77,12 +93,20 @@ public:
     [[nodiscard]] bool        canGoBack()           const;
 
 signals:
+    /// Emitted when QML should transition to a new target page.
+    void transitionRequested(const QString &url,
+                             const QVariantMap &props,
+                             bool showChrome);
+
     void currentChanged();
     /// Fired when \c pop() is called with an empty back-stack.
     void backAtRoot();
 
 private:
     explicit NavigationController(QObject *parent = nullptr);
+
+    void requestTransition(Action action);
+    bool startTransition(const Action &action);
 
     struct Entry {
         QString     url;
@@ -92,4 +116,11 @@ private:
 
     QStack<Entry> m_back;
     Entry         m_current;
+
+    bool   m_transitionInProgress = false;
+    Action m_pendingAction;
+    Entry  m_pendingEntry;
+
+    bool   m_hasQueuedAction = false;
+    Action m_queuedAction;
 };

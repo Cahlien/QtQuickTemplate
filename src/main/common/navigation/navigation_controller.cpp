@@ -3,6 +3,7 @@
 #include <QJSEngine>
 #include <QQmlEngine>
 #include <QDebug>
+#include <utility>
 
 #if defined(Q_OS_ANDROID) && __has_include(<QJniObject>)
 #include <QCoreApplication>
@@ -34,35 +35,92 @@ void NavigationController::push(const QString     &url,
                                 const QVariantMap &props,
                                 bool               showChrome)
 {
-    // First push seeds the home entry without touching the back-stack, so the
-    // back button from the home page never returns to a blank state.
-    if (!m_current.url.isEmpty())
-        m_back.push(m_current);
-
-    m_current = { url, props, showChrome };
-    qDebug() << "NC::push  url=" << url << "  backSize=" << m_back.size();
-    emit currentChanged();
+    requestTransition({ ActionType::Push, url, props, showChrome });
 }
 
 void NavigationController::pop()
 {
-    qDebug() << "NC::pop   backSize=" << m_back.size();
-    if (m_back.isEmpty()) {
-        qDebug() << "NC::pop   → backAtRoot";
-        emit backAtRoot();
-        return;
-    }
-    m_current = m_back.pop();
-    qDebug() << "NC::pop   → restored url=" << m_current.url;
-    emit currentChanged();
+    requestTransition({ ActionType::Pop, {}, {}, true });
 }
 
 void NavigationController::replace(const QString     &url,
                                    const QVariantMap &props,
                                    bool               showChrome)
 {
-    m_current = { url, props, showChrome };
+    requestTransition({ ActionType::Replace, url, props, showChrome });
+}
+
+void NavigationController::completeTransition()
+{
+    if (!m_transitionInProgress)
+        return;
+
+    switch (m_pendingAction.type) {
+    case ActionType::Push:
+        if (!m_current.url.isEmpty())
+            m_back.push(m_current);
+        m_current = m_pendingEntry;
+        qDebug() << "NC::commit push  url=" << m_current.url << "  backSize=" << m_back.size();
+        break;
+
+    case ActionType::Pop:
+        if (m_back.isEmpty()) {
+            m_transitionInProgress = false;
+            return;
+        }
+        m_current = m_back.pop();
+        qDebug() << "NC::commit pop   url=" << m_current.url << "  backSize=" << m_back.size();
+        break;
+
+    case ActionType::Replace:
+        m_current = m_pendingEntry;
+        qDebug() << "NC::commit replace url=" << m_current.url << "  backSize=" << m_back.size();
+        break;
+    }
+
+    m_transitionInProgress = false;
     emit currentChanged();
+
+    if (m_hasQueuedAction) {
+        const Action queued = m_queuedAction;
+        m_hasQueuedAction = false;
+        startTransition(queued);
+    }
+}
+
+void NavigationController::requestTransition(Action action)
+{
+    if (m_transitionInProgress) {
+        m_queuedAction = std::move(action);
+        m_hasQueuedAction = true;
+        return;
+    }
+
+    startTransition(action);
+}
+
+bool NavigationController::startTransition(const Action &action)
+{
+    if (action.type == ActionType::Pop) {
+        qDebug() << "NC::pop request  backSize=" << m_back.size();
+        if (m_back.isEmpty()) {
+            qDebug() << "NC::pop request  → backAtRoot";
+            emit backAtRoot();
+            return false;
+        }
+        m_pendingEntry = m_back.top();
+    } else {
+        m_pendingEntry = { action.url, action.props, action.showChrome };
+    }
+
+    m_pendingAction = action;
+    m_transitionInProgress = true;
+
+    qDebug() << "NC::transition request  url=" << m_pendingEntry.url;
+    emit transitionRequested(m_pendingEntry.url,
+                             m_pendingEntry.props,
+                             m_pendingEntry.showChrome);
+    return true;
 }
 
 void NavigationController::minimizeApp()
