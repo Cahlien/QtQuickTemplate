@@ -68,41 +68,10 @@ ApplicationWindow {
     readonly property bool isMobile: Qt.platform.os === "android"
                                   || Qt.platform.os === "ios"
 
-    // Displayed chrome state updates only when the staged navigation target is
-    // committed after fade-out, keeping transition timing deterministic.
+    // Lags one navigation behind NavigationController.currentShowChrome.
+    // Updated in pageLoader.onLoaded (when opacity is already 0) so the
+    // layout resize that hides/shows chrome is never visible mid-transition.
     property bool _displayedShowChrome: true
-
-    // Displayed navigation state (what the user currently sees).
-    property string _displayedUrl: ""
-    property var _displayedProps: ({})
-    property int _displayedNavTabIndex: 0
-
-    // Staged navigation state (latest controller target).
-    property string _stagedUrl: ""
-    property var _stagedProps: ({})
-    property bool _stagedShowChrome: true
-    property int _stagedNavTabIndex: 0
-
-    function tabIndexForUrl(url) {
-        return url.indexOf("StyleShowcase.qml") !== -1 ? 1 : 0
-    }
-
-    function stageNavigationTarget() {
-        _stagedUrl = NavigationController.currentUrl
-        _stagedProps = NavigationController.currentProps
-        _stagedShowChrome = NavigationController.currentShowChrome
-        _stagedNavTabIndex = _stagedShowChrome
-                                ? tabIndexForUrl(_stagedUrl)
-                                : _displayedNavTabIndex
-    }
-
-    function applyStagedNavigationTarget() {
-        _displayedUrl = _stagedUrl
-        _displayedProps = _stagedProps
-        _displayedShowChrome = _stagedShowChrome
-        _displayedNavTabIndex = _stagedNavTabIndex
-        pageLoader.setSource(_displayedUrl, _displayedProps)
-    }
 
     // ── Window setup ──────────────────────────────────────────────────────
 
@@ -211,10 +180,16 @@ ApplicationWindow {
     NavBar {
         id: navBarItem
         visible: root._displayedShowChrome
-        currentIndex: root._displayedNavTabIndex
 
         onReadmeRequested:   NavigationController.push(Qt.resolvedUrl("Readme.qml").toString())
         onControlsRequested: NavigationController.push(Qt.resolvedUrl("StyleShowcase.qml").toString())
+    }
+
+    // Keep the NavBar tab highlight in sync with every URL change.
+    Binding {
+        target:   navBarItem
+        property: "currentIndex"
+        value:    NavigationController.currentUrl.indexOf("StyleShowcase.qml") !== -1 ? 1 : 0
     }
 
     Footer {
@@ -239,7 +214,7 @@ ApplicationWindow {
     // onLoaded fades the new page back in.
     //
     // Rapid navigation is safe: fadeOut.restart() resets the timer each time,
-    // and onFinished applies the latest staged navigation target.
+    // and onFinished always reads the latest currentUrl/currentProps.
 
     Item {
         id: pageArea
@@ -253,6 +228,11 @@ ApplicationWindow {
                 // Wire up any page-level close button to NavigationController.pop().
                 if (item && typeof item["closeRequested"] !== "undefined")
                     item.closeRequested.connect(NavigationController.pop)
+
+                // Update chrome visibility now that opacity is 0 — the layout
+                // resize is invisible and the incoming page sizes itself correctly
+                // before fading in.
+                root._displayedShowChrome = NavigationController.currentShowChrome
                 fadeIn.restart()
             }
         }
@@ -260,12 +240,11 @@ ApplicationWindow {
         Connections {
             target: NavigationController
             function onCurrentChanged() {
-                root.stageNavigationTarget()
-
                 if (pageLoader.status === Loader.Null) {
                     // Initial load — start transparent so onLoaded fades in.
                     pageLoader.opacity = 0
-                    root.applyStagedNavigationTarget()
+                    pageLoader.setSource(NavigationController.currentUrl,
+                                         NavigationController.currentProps)
                 } else {
                     fadeOut.restart()
                 }
@@ -280,7 +259,8 @@ ApplicationWindow {
             to:       0
             duration: 120
             easing.type: Easing.InQuad
-            onFinished: root.applyStagedNavigationTarget()
+            onFinished: pageLoader.setSource(NavigationController.currentUrl,
+                                             NavigationController.currentProps)
         }
 
         // Step 2: triggered by Loader.onLoaded — fade the new page in.
