@@ -161,8 +161,12 @@ ApplicationWindow {
         }
 
         // Mouse Button 4 = XButton1 = browser "Back" on most mice.
+        // acceptedDevices is required because Qt's acceptedButtons filter
+        // does not reject touch/touchpad events (they carry Qt.NoButton,
+        // which bypasses the bitmask check in QQuickPointerHandler).
         TapHandler {
             acceptedButtons: Qt.BackButton
+            acceptedDevices: PointerDevice.Mouse
             onTapped: {
                 if (Qt.platform.os !== "android")
                     NavigationController.pop()
