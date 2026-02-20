@@ -68,19 +68,10 @@ ApplicationWindow {
     readonly property bool isMobile: Qt.platform.os === "android"
                                   || Qt.platform.os === "ios"
 
-    // Displayed chrome state is applied only when the transition commits.
+    // Lags one navigation behind NavigationController.currentShowChrome.
+    // Updated in pageLoader.onLoaded (when opacity is already 0) so the
+    // layout resize that hides/shows chrome is never visible mid-transition.
     property bool _displayedShowChrome: true
-
-    property int _displayedNavTabIndex: 0
-
-    property string _pendingUrl: ""
-    property var _pendingProps: ({})
-    property bool _pendingShowChrome: true
-    property int _pendingNavTabIndex: 0
-
-    function tabIndexForUrl(url) {
-        return url.indexOf("StyleShowcase.qml") !== -1 ? 1 : 0
-    }
 
     // ── Window setup ──────────────────────────────────────────────────────
 
@@ -189,10 +180,16 @@ ApplicationWindow {
     NavBar {
         id: navBarItem
         visible: root._displayedShowChrome
-        currentIndex: root._displayedNavTabIndex
 
         onReadmeRequested:   NavigationController.push(Qt.resolvedUrl("Readme.qml").toString())
         onControlsRequested: NavigationController.push(Qt.resolvedUrl("StyleShowcase.qml").toString())
+    }
+
+    // Keep the NavBar tab highlight in sync with every URL change.
+    Binding {
+        target:   navBarItem
+        property: "currentIndex"
+        value:    NavigationController.currentUrl.indexOf("StyleShowcase.qml") !== -1 ? 1 : 0
     }
 
     Footer {
@@ -214,10 +211,10 @@ ApplicationWindow {
     //
     // Transition: fade out current page → setSource in onFinished (props are
     // delivered atomically before the new component's Component.onCompleted) →
-    // onLoaded commits UI state and notifies C++ → fades the new page back in.
+    // onLoaded fades the new page back in.
     //
-    // Rapid navigation is safe: C++ serializes requests and emits
-    // transitionRequested in-order; fadeOut.restart() still resets timing.
+    // Rapid navigation is safe: fadeOut.restart() resets the timer each time,
+    // and onFinished always reads the latest currentUrl/currentProps.
 
     Item {
         id: pageArea
@@ -232,28 +229,22 @@ ApplicationWindow {
                 if (item && typeof item["closeRequested"] !== "undefined")
                     item.closeRequested.connect(NavigationController.pop)
 
-                root._displayedShowChrome = root._pendingShowChrome
-                root._displayedNavTabIndex = root._pendingNavTabIndex
-                NavigationController.completeTransition()
+                // Update chrome visibility now that opacity is 0 — the layout
+                // resize is invisible and the incoming page sizes itself correctly
+                // before fading in.
+                root._displayedShowChrome = NavigationController.currentShowChrome
                 fadeIn.restart()
             }
         }
 
         Connections {
             target: NavigationController
-            function onTransitionRequested(url, props, showChrome) {
-                root._pendingUrl = url
-                root._pendingProps = props
-                root._pendingShowChrome = showChrome
-                root._pendingNavTabIndex = showChrome
-                                         ? root.tabIndexForUrl(url)
-                                         : root._displayedNavTabIndex
-
+            function onCurrentChanged() {
                 if (pageLoader.status === Loader.Null) {
                     // Initial load — start transparent so onLoaded fades in.
                     pageLoader.opacity = 0
-                    pageLoader.setSource(root._pendingUrl,
-                                         root._pendingProps)
+                    pageLoader.setSource(NavigationController.currentUrl,
+                                         NavigationController.currentProps)
                 } else {
                     fadeOut.restart()
                 }
@@ -268,8 +259,8 @@ ApplicationWindow {
             to:       0
             duration: 120
             easing.type: Easing.InQuad
-            onFinished: pageLoader.setSource(root._pendingUrl,
-                                             root._pendingProps)
+            onFinished: pageLoader.setSource(NavigationController.currentUrl,
+                                             NavigationController.currentProps)
         }
 
         // Step 2: triggered by Loader.onLoaded — fade the new page in.
