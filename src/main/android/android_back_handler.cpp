@@ -12,9 +12,7 @@
 
 #include "navigation_controller.h"
 
-#include <QCoreApplication>  // pulls in qcoreapplication_platform.h → QNativeInterface::QAndroidApplication
 #include <QDebug>
-#include <QJniObject>
 #include <QMetaObject>
 #include <jni.h>
 
@@ -38,24 +36,3 @@ Java_dev_crowell_app_template_activities_MainActivity_nativeBackRequested(
 }
 
 } // extern "C"
-
-// ── Platform implementation of NavigationController::minimizeApp() ────────────
-//
-// This file is compiled only for Android (see CMakeLists.txt target_sources).
-// platform_init_default.cpp provides the no-op for all other platforms.
-
-void NavigationController::minimizeApp()
-{
-    // Move the task to the background rather than finishing the Activity.
-    // Must be called on the Android UI thread — runOnAndroidMainThread ensures
-    // correct dispatch regardless of which thread QML calls us from.
-    QNativeInterface::QAndroidApplication::runOnAndroidMainThread([]() {
-        QJniObject activity = QJniObject::callStaticObjectMethod(
-            "org/qtproject/qt/android/QtNative",
-            "activity",
-            "()Landroid/app/Activity;");
-
-        if (activity.isValid())
-            activity.callMethod<jboolean>("moveTaskToBack", "(Z)Z", true);
-    });
-}

@@ -2,9 +2,9 @@
 
 A cross-platform **Qt 6 / Qt Quick (QML)** starter repo that aims to be "just enough structure" to begin a real app:
 
-- A clean QML app shell with **portrait + landscape** layouts and a C++ navigation controller.
+- A clean QML app shell with **portrait + landscape** layouts and a C++ navigation controller singleton.
 - A centralized **Theme** singleton (design tokens) and a custom **Qt Quick Controls 2 style** (`AppStyle`).
-- A place for reusable native/C++ code (including a small **C++20 module** example library).
+- A place for reusable native/C++ code (including a sample library that exports a **C++20 module** when supported, with a header-based fallback).
 - Platform packaging hooks for **Android, Windows, macOS, and Linux**.
 - Optional **QDoc** targets for documentation generation.
 
@@ -21,30 +21,17 @@ A cross-platform **Qt 6 / Qt Quick (QML)** starter repo that aims to be "just en
 - A sample set of pages (`Readme`, `StyleShowcase`, `License`) and simple `Header`/`Footer` components.
 
 ### Navigation architecture
-The `NavigationController` exposes two independent navigation stacks:
+The `NavigationController` maintains a single back stack of lightweight entries (`url`, `props`, `showChrome`) and exposes a small API used by QML:
 
-- **Overlay stack** — Full-screen pages like `License.qml` that sit on top of the main layout. Managed via imperative calls:
-  ```qml
-  NavigationController.push("qrc:/qt/qml/.../License.qml")
-  NavigationController.pop()
-  ```
+- `push(url, props, showChrome)` adds a new entry.
+- `replace(url, props, showChrome)` replaces the current entry without touching history.
+- `pop()` restores the previous entry, or emits `backAtRoot()` when history is empty.
+- `currentUrl`, `currentProps`, and `currentShowChrome` drive declarative `Loader` updates.
 
-- **Content stack** — Tab content like `Readme` ↔ `StyleShowcase` loaded via `Loader`. Supports declarative bindings:
-  ```qml
-  // Navigate to content
-  NavigationController.navigateTo(Qt.resolvedUrl("StyleShowcase.qml").toString())
+Back handling and app minimization are split cleanly:
 
-  // Declarative binding - Loader updates automatically
-  Loader { source: NavigationController.currentContentUrl }
-
-  // Back/forward navigation
-  NavigationController.contentBack()
-  NavigationController.contentForward()
-  ```
-
-- **Back navigation** — Platform-specific handling:
-  - Android 13+: System back gesture via JNI → `NavigationController.pop()`
-  - Desktop/iOS: Keyboard (Backspace, hardware Back key) + mouse (Button 4)
+- Android 13+: system back gesture enters C++ via JNI and queues `NavigationController.pop()` onto the Qt thread.
+- `NavigationController::minimizeApp()` now lives in `navigation_controller.cpp` with `#ifdef`-guarded platform behavior (Android moves task to back, other platforms no-op).
 
 ### Styling
 - `AppTheme` module: `Theme.qml` singleton holds colors, typography, spacing, radii, animations, etc.
@@ -58,7 +45,15 @@ The `NavigationController` exposes two independent navigation stacks:
 - `include/main/common/` holds the public headers for that code.
 - `src/main/common/navigation/` contains the `NavigationController` implementation.
 - Platform specialization lives next to the app:
-  - `src/main/android/` contains Android-specific C++ glue (including back gesture handling).
+  - `src/main/android/` contains Android-specific C++ glue (JNI back gesture + startup integration).
+
+### Build/CMake architecture
+- Root `CMakeLists.txt` delegates setup to focused modules under `cmake/`.
+- Toolchain logic is centralized under `cmake/toolchain/`:
+  - `CompilerSettings.cmake` sets language/toolchain defaults (project default is C++23).
+  - `CxxModules.cmake` detects whether C++ modules are supported for the active compiler + generator + platform.
+  - `ClangScanDeps.cmake` configures `clang-scan-deps` only where needed (disabled on Apple targets).
+- Shared library helper chunks live in `cmake/libs/LibraryCommon.cmake` to keep per-library `CMakeLists.txt` readable.
 
 ### Platform bootstrapping (Android splash)
 - Android uses a `QtActivity` subclass that shows a lightweight overlay and fades it out when Qt renders its first frame.
@@ -75,6 +70,13 @@ The `NavigationController` exposes two independent navigation stacks:
 ```text
 .
 ├── CMakeLists.txt
+├── cmake/
+│   ├── toolchain/
+│   │   ├── CompilerSettings.cmake
+│   │   ├── CxxModules.cmake
+│   │   └── ClangScanDeps.cmake
+│   └── libs/
+│       └── LibraryCommon.cmake
 ├── conanfile.py
 ├── README.md
 ├── doc/
@@ -145,7 +147,10 @@ The `NavigationController` exposes two independent navigation stacks:
 - **Qt 6.10+** (Core, Quick, QuickControls2, Qml)
 - **CMake 3.28+**
 - A C++23-capable compiler
-- If using **Clang + C++20 modules**, you need `clang-scan-deps` available (the project tries hard to find it automatically, including from Android NDK paths).
+- Optional module path requirements:
+  - On supported non-Apple toolchains/generators, `helloworld` exports a C++20 module.
+  - On Apple targets (and unsupported generators/toolchains), the app automatically uses the header/library path.
+  - If using Clang with modules enabled, `clang-scan-deps` must be available (the project attempts to locate it automatically, including Android NDK hints).
 
 Optional:
 - **Conan 2** (the repo includes a basic `conanfile.py`)

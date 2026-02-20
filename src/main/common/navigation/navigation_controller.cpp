@@ -4,9 +4,10 @@
 #include <QQmlEngine>
 #include <QDebug>
 
-// minimizeApp() is platform-specific and defined elsewhere:
-//   Android  → src/main/android/android_back_handler.cpp
-//   All else → src/main/common/platform_init_default.cpp
+#if defined(Q_OS_ANDROID) && __has_include(<QJniObject>)
+#include <QCoreApplication>
+#include <QJniObject>
+#endif
 
 // ── Singleton ─────────────────────────────────────────────────────────────────
 
@@ -62,6 +63,21 @@ void NavigationController::replace(const QString     &url,
 {
     m_current = { url, props, showChrome };
     emit currentChanged();
+}
+
+void NavigationController::minimizeApp()
+{
+#if defined(Q_OS_ANDROID) && __has_include(<QJniObject>)
+    QNativeInterface::QAndroidApplication::runOnAndroidMainThread([]() {
+        QJniObject activity = QJniObject::callStaticObjectMethod(
+            "org/qtproject/qt/android/QtNative",
+            "activity",
+            "()Landroid/app/Activity;");
+
+        if (activity.isValid())
+            activity.callMethod<jboolean>("moveTaskToBack", "(Z)Z", true);
+    });
+#endif
 }
 
 // ── Property accessors ────────────────────────────────────────────────────────
