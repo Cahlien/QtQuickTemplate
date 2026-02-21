@@ -47,9 +47,6 @@ endif ()
 
 if (DEFINED ENV{MACOS_APP_SIGN_IDENTITY} AND NOT "$ENV{MACOS_APP_SIGN_IDENTITY}" STREQUAL "")
     list(APPEND _cmd "-codesign=$ENV{MACOS_APP_SIGN_IDENTITY}" "-hardened-runtime" "-timestamp")
-    if (DEFINED ENV{MACOS_RELEASE_ENTITLEMENTS} AND EXISTS "$ENV{MACOS_RELEASE_ENTITLEMENTS}")
-        list(APPEND _cmd "-entitlements=$ENV{MACOS_RELEASE_ENTITLEMENTS}")
-    endif ()
 endif ()
 
 execute_process(
