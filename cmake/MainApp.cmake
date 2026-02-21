@@ -9,6 +9,7 @@ include("${CMAKE_CURRENT_LIST_DIR}/toolchain/CompilerSettings.cmake")
 include("${CMAKE_CURRENT_LIST_DIR}/packaging/AppImage.cmake")
 include("${CMAKE_CURRENT_LIST_DIR}/packaging/Install.cmake")
 include("${CMAKE_CURRENT_LIST_DIR}/packaging/MacOSDmg.cmake")
+include("${CMAKE_CURRENT_LIST_DIR}/packaging/MacOSNotarization.cmake")
 include("${CMAKE_CURRENT_LIST_DIR}/docs/QDoc.cmake")
 
 # Create and fully configure the main application target.
@@ -83,4 +84,5 @@ function(configure_main_app)
     configure_appimage(${PROJECT_NAME})
     configure_install(${PROJECT_NAME})
     configure_macos_dmg(${PROJECT_NAME})
+    configure_macos_notarization(${PROJECT_NAME})
 endfunction()
