@@ -85,4 +85,14 @@ function(configure_main_app)
     configure_install(${PROJECT_NAME})
     configure_macos_dmg(${PROJECT_NAME})
     configure_macos_notarization(${PROJECT_NAME})
+
+    if (APPLE AND NOT IOS AND TARGET VerifyAppleSigning AND TARGET NotarizeMacOS)
+        if (NOT TARGET ReleaseDistributable)
+            add_custom_target(ReleaseDistributable
+                DEPENDS VerifyAppleSigning NotarizeMacOS
+                COMMENT "Building, verifying, packaging, and notarizing macOS release artifacts"
+            )
+            message(STATUS "ReleaseDistributable target configured -> cmake --build . --target ReleaseDistributable")
+        endif ()
+    endif ()
 endfunction()
