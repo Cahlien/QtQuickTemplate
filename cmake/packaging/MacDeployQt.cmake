@@ -68,11 +68,6 @@ message(STATUS "macdeployqt completed successfully")
         return()
     endif ()
 
-    get_target_property(_release_entitlements ${target} QTQUICKTEMPLATE_MACOS_RELEASE_ENTITLEMENTS)
-    if (NOT _release_entitlements)
-        set(_release_entitlements "")
-    endif ()
-
     add_custom_target(MacDeployQt
         DEPENDS ${target}
         COMMAND ${CMAKE_COMMAND} -E env
@@ -80,7 +75,6 @@ message(STATUS "macdeployqt completed successfully")
             APP_BUNDLE_PATH=$<TARGET_BUNDLE_DIR:${target}>
             QML_DIR=${CMAKE_CURRENT_SOURCE_DIR}/qml
             MACOS_APP_SIGN_IDENTITY=${QTQUICKTEMPLATE_MACOS_APP_SIGN_IDENTITY}
-            MACOS_RELEASE_ENTITLEMENTS=${_release_entitlements}
             ${CMAKE_COMMAND} -P "${_deploy_script}"
         COMMENT "Deploying macOS app bundle with macdeployqt"
         VERBATIM

@@ -1,9 +1,5 @@
 include_guard(GLOBAL)
 
-set(QTQUICKTEMPLATE_MACOS_PACKAGE_CONFIG "Release" CACHE STRING
-    "Build configuration used when generating the macOS package"
-)
-
 set(QTQUICKTEMPLATE_MACOS_DMG_SIGN_IDENTITY "" CACHE STRING
     "Optional macOS signing identity for signing the generated DMG"
 )
@@ -36,7 +32,8 @@ function(configure_macos_dmg target)
     set(_sign_script "${CMAKE_CURRENT_BINARY_DIR}/sign_macos_dmg.cmake")
     file(WRITE "${_sign_script}" [=[
 if (NOT DEFINED ENV{CODESIGN_IDENTITY} OR "$ENV{CODESIGN_IDENTITY}" STREQUAL "")
-    message(FATAL_ERROR "CODESIGN_IDENTITY env var is required")
+    message(STATUS "Skipping DMG signing (no CODESIGN_IDENTITY configured)")
+    return()
 endif ()
 
 if (NOT DEFINED ENV{EXPECTED_DMG} OR "$ENV{EXPECTED_DMG}" STREQUAL "")
@@ -73,32 +70,20 @@ endif ()
 message(STATUS "Signed DMG: ${_dmg}")
 ]=])
 
-    if (QTQUICKTEMPLATE_MACOS_DMG_SIGN_IDENTITY)
-        add_custom_target(DMG
-            DEPENDS ${_dmg_dependency_target}
-            COMMAND ${CMAKE_CPACK_COMMAND}
-                --config "${CMAKE_BINARY_DIR}/CPackConfig.cmake"
-                -G DragNDrop
-                -C ${QTQUICKTEMPLATE_MACOS_PACKAGE_CONFIG}
-            COMMAND ${CMAKE_COMMAND} -E env
-                CODESIGN_IDENTITY=${QTQUICKTEMPLATE_MACOS_DMG_SIGN_IDENTITY}
-                EXPECTED_DMG=${_dmg_output}
-                DMG_DIR=${CMAKE_BINARY_DIR}
-                ${CMAKE_COMMAND} -P "${_sign_script}"
-            COMMENT "Packaging ${PROJECT_NAME} ${PROJECT_VERSION} as signed macOS DMG"
-            VERBATIM
-        )
-    else ()
-        add_custom_target(DMG
-            DEPENDS ${_dmg_dependency_target}
-            COMMAND ${CMAKE_CPACK_COMMAND}
-                --config "${CMAKE_BINARY_DIR}/CPackConfig.cmake"
-                -G DragNDrop
-                -C ${QTQUICKTEMPLATE_MACOS_PACKAGE_CONFIG}
-            COMMENT "Packaging ${PROJECT_NAME} ${PROJECT_VERSION} as macOS DMG"
-            VERBATIM
-        )
-    endif ()
+    add_custom_target(DMG
+        DEPENDS ${_dmg_dependency_target}
+        COMMAND ${CMAKE_CPACK_COMMAND}
+            --config "${CMAKE_BINARY_DIR}/CPackConfig.cmake"
+            -G DragNDrop
+            -C Release
+        COMMAND ${CMAKE_COMMAND} -E env
+            CODESIGN_IDENTITY=${QTQUICKTEMPLATE_MACOS_DMG_SIGN_IDENTITY}
+            EXPECTED_DMG=${_dmg_output}
+            DMG_DIR=${CMAKE_BINARY_DIR}
+            ${CMAKE_COMMAND} -P "${_sign_script}"
+        COMMENT "Packaging ${PROJECT_NAME} ${PROJECT_VERSION} as macOS DMG"
+        VERBATIM
+    )
 
     message(STATUS "DMG target configured -> cmake --build . --target DMG")
 endfunction()

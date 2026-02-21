@@ -40,18 +40,7 @@ set(_bundle "$ENV{APP_BUNDLE_PATH}")
 set(_dmg "$ENV{DMG_PATH}")
 
 if (NOT EXISTS "${_dmg}")
-    if (DEFINED ENV{DMG_FALLBACK_DIR} AND NOT "$ENV{DMG_FALLBACK_DIR}" STREQUAL "")
-        file(GLOB _dmgs "$ENV{DMG_FALLBACK_DIR}/*.dmg")
-        if (_dmgs)
-            list(SORT _dmgs)
-            list(GET _dmgs -1 _dmg)
-            message(WARNING "Configured DMG not found. Falling back to: ${_dmg}")
-        else ()
-            message(FATAL_ERROR "No DMG found to verify")
-        endif ()
-    else ()
-        message(FATAL_ERROR "DMG not found: ${_dmg}")
-    endif ()
+    message(FATAL_ERROR "DMG not found: ${_dmg}")
 endif ()
 
 if (NOT EXISTS "${_bundle}")
@@ -67,12 +56,7 @@ endif ()
 execute_process(COMMAND "${_spctl}" -a -vv -t open "${_dmg}"
     RESULT_VARIABLE _dmg_spctl_rv OUTPUT_VARIABLE _dmg_spctl_out ERROR_VARIABLE _dmg_spctl_err)
 if (NOT _dmg_spctl_rv EQUAL 0)
-    string(FIND "${_dmg_spctl_out}${_dmg_spctl_err}" "Insufficient Context" _dmg_insufficient_context_pos)
-    if (NOT _dmg_insufficient_context_pos EQUAL -1)
-        message(WARNING "DMG Gatekeeper assessment returned 'Insufficient Context'; continuing because codesign and stapler validation passed.\n${_dmg_spctl_out}\n${_dmg_spctl_err}")
-    else ()
-        message(FATAL_ERROR "DMG Gatekeeper assessment failed:\n${_dmg_spctl_out}\n${_dmg_spctl_err}")
-    endif ()
+    message(FATAL_ERROR "DMG Gatekeeper assessment failed:\n${_dmg_spctl_out}\n${_dmg_spctl_err}")
 endif ()
 
 execute_process(COMMAND "${_xcrun}" stapler validate "${_dmg}"
@@ -90,12 +74,7 @@ endif ()
 execute_process(COMMAND "${_spctl}" -a -vv -t exec "${_bundle}"
     RESULT_VARIABLE _app_spctl_rv OUTPUT_VARIABLE _app_spctl_out ERROR_VARIABLE _app_spctl_err)
 if (NOT _app_spctl_rv EQUAL 0)
-    string(FIND "${_app_spctl_out}${_app_spctl_err}" "Insufficient Context" _app_insufficient_context_pos)
-    if (NOT _app_insufficient_context_pos EQUAL -1)
-        message(WARNING "App Gatekeeper assessment returned 'Insufficient Context'; continuing because codesign and stapler validation passed.\n${_app_spctl_out}\n${_app_spctl_err}")
-    else ()
-        message(FATAL_ERROR "App Gatekeeper assessment failed:\n${_app_spctl_out}\n${_app_spctl_err}")
-    endif ()
+    message(FATAL_ERROR "App Gatekeeper assessment failed:\n${_app_spctl_out}\n${_app_spctl_err}")
 endif ()
 
 execute_process(COMMAND "${_xcrun}" stapler validate "${_bundle}"
@@ -118,7 +97,6 @@ message(STATUS "macOS package verification passed: signed, notarized, stapled, a
                 XCRUN_EXECUTABLE=${XCRUN_EXECUTABLE}
                 APP_BUNDLE_PATH=$<TARGET_BUNDLE_DIR:${target}>
                 DMG_PATH=${_expected_dmg}
-                DMG_FALLBACK_DIR=${CMAKE_BINARY_DIR}
                 ${CMAKE_COMMAND} -P "${_verify_script}"
             COMMENT "Verifying final macOS package integrity and notarization"
             VERBATIM
