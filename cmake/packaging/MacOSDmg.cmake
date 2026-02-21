@@ -28,6 +28,46 @@ function(configure_macos_dmg target)
 
     set(_dmg_output "${CMAKE_BINARY_DIR}/${CPACK_PACKAGE_FILE_NAME}.dmg")
 
+    set(_sign_script "${CMAKE_CURRENT_BINARY_DIR}/sign_macos_dmg.cmake")
+    file(WRITE "${_sign_script}" [=[
+if (NOT DEFINED ENV{CODESIGN_IDENTITY} OR "$ENV{CODESIGN_IDENTITY}" STREQUAL "")
+    message(FATAL_ERROR "CODESIGN_IDENTITY env var is required")
+endif ()
+
+if (NOT DEFINED ENV{EXPECTED_DMG} OR "$ENV{EXPECTED_DMG}" STREQUAL "")
+    message(FATAL_ERROR "EXPECTED_DMG env var is required")
+endif ()
+
+if (NOT DEFINED ENV{DMG_DIR} OR "$ENV{DMG_DIR}" STREQUAL "")
+    message(FATAL_ERROR "DMG_DIR env var is required")
+endif ()
+
+set(_dmg "$ENV{EXPECTED_DMG}")
+if (NOT EXISTS "${_dmg}")
+    file(GLOB _candidate_dmgs "$ENV{DMG_DIR}/*.dmg")
+    if (_candidate_dmgs)
+        list(SORT _candidate_dmgs)
+        list(GET _candidate_dmgs -1 _dmg)
+        message(WARNING "Expected DMG not found. Falling back to: ${_dmg}")
+    else ()
+        message(FATAL_ERROR "No DMG produced in $ENV{DMG_DIR}")
+    endif ()
+endif ()
+
+execute_process(
+    COMMAND codesign --force --sign "$ENV{CODESIGN_IDENTITY}" "${_dmg}"
+    RESULT_VARIABLE _codesign_rv
+    OUTPUT_VARIABLE _codesign_out
+    ERROR_VARIABLE _codesign_err
+)
+
+if (NOT _codesign_rv EQUAL 0)
+    message(FATAL_ERROR "Failed to sign DMG ${_dmg}:\n${_codesign_out}\n${_codesign_err}")
+endif ()
+
+message(STATUS "Signed DMG: ${_dmg}")
+]=])
+
     if (QTQUICKTEMPLATE_MACOS_DMG_SIGN_IDENTITY)
         add_custom_target(DMG
             DEPENDS ${target}
@@ -35,7 +75,11 @@ function(configure_macos_dmg target)
                 --config "${CMAKE_BINARY_DIR}/CPackConfig.cmake"
                 -G DragNDrop
                 -C ${QTQUICKTEMPLATE_MACOS_PACKAGE_CONFIG}
-            COMMAND codesign --force --sign "${QTQUICKTEMPLATE_MACOS_DMG_SIGN_IDENTITY}" "${_dmg_output}"
+            COMMAND ${CMAKE_COMMAND} -E env
+                CODESIGN_IDENTITY=${QTQUICKTEMPLATE_MACOS_DMG_SIGN_IDENTITY}
+                EXPECTED_DMG=${_dmg_output}
+                DMG_DIR=${CMAKE_BINARY_DIR}
+                ${CMAKE_COMMAND} -P "${_sign_script}"
             COMMENT "Packaging ${PROJECT_NAME} ${PROJECT_VERSION} as signed macOS DMG"
             VERBATIM
         )
