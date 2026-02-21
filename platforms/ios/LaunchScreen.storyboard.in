@@ -14,8 +14,11 @@
             <rect key="frame" x="0.0" y="0.0" width="393" height="852"/>
             <color key="backgroundColor" red="0.039" green="0.039" blue="0.047" alpha="1" colorSpace="custom" customColorSpace="sRGB"/>
             <subviews>
+              <imageView userInteractionEnabled="NO" contentMode="scaleAspectFit" translatesAutoresizingMaskIntoConstraints="NO" image="AppLogo" id="logo">
+                <rect key="frame" x="78" y="213" width="236" height="236"/>
+              </imageView>
               <label opaque="NO" userInteractionEnabled="NO" contentMode="left" horizontalHuggingPriority="251" verticalHuggingPriority="251"
-                     text="Version @PROJECT_VERSION@" textAlignment="center" lineBreakMode="tailTruncation"
+                     text="Version @PROJECT_VERSION@.@APP_BUILD_NUMBER@" textAlignment="center" lineBreakMode="tailTruncation"
                      baselineAdjustment="alignBaselines" minimumScaleFactor="0.8" translatesAutoresizingMaskIntoConstraints="NO" id="version-label">
                 <rect key="frame" x="118" y="794" width="157" height="22"/>
                 <fontDescription key="fontDescription" type="system" weight="semibold" pointSize="18"/>
@@ -24,6 +27,11 @@
             </subviews>
             <viewLayoutGuide key="safeArea" id="safe-area"/>
             <constraints>
+              <constraint firstItem="logo" firstAttribute="centerX" secondItem="root-view" secondAttribute="centerX" id="logo-centerX"/>
+              <constraint firstItem="logo" firstAttribute="top" secondItem="root-view" secondAttribute="top" multiplier="1" constant="0" id="logo-top"/>
+              <constraint firstItem="logo" firstAttribute="centerY" secondItem="root-view" secondAttribute="centerY" multiplier="0.666" id="logo-position-third"/>
+              <constraint firstItem="logo" firstAttribute="width" relation="equal" secondItem="root-view" secondAttribute="width" multiplier="0.6" id="logo-width-60pct"/>
+              <constraint firstItem="logo" firstAttribute="height" relation="equal" secondItem="logo" secondAttribute="width" multiplier="1:1" id="logo-aspect-1to1"/>
               <constraint firstItem="version-label" firstAttribute="centerX" secondItem="root-view" secondAttribute="centerX" id="label-centerX"/>
               <constraint firstItem="safe-area" firstAttribute="bottom" secondItem="version-label" secondAttribute="bottom" constant="40" id="label-bottom-40"/>
             </constraints>
@@ -34,4 +42,7 @@
       <point key="canvasLocation" x="53" y="375"/>
     </scene>
   </scenes>
+  <resources>
+    <image name="AppLogo" width="1024" height="1024"/>
+  </resources>
 </document>

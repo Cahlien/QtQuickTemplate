@@ -74,9 +74,28 @@ message(STATUS "Exported iOS IPA: ${_ipa}")
     # binary), so there are no frameworks to deploy.  xcodebuild archive
     # handles the final packaging, code signing, and resource embedding.
 
+    # Generate a version xcconfig at build time so CFBundleVersion auto-
+    # increments with each git commit (same scheme as Android).
+    set(_version_xcconfig "${CMAKE_BINARY_DIR}/ios/version.xcconfig")
+    set(_version_script "${CMAKE_CURRENT_SOURCE_DIR}/scripts/generate_version.cmake")
+
+    if (NOT TARGET GenerateIOSVersion)
+        add_custom_target(GenerateIOSVersion
+            COMMAND ${CMAKE_COMMAND}
+                -DMAJOR=${PROJECT_VERSION_MAJOR}
+                -DMINOR=${PROJECT_VERSION_MINOR}
+                -DPATCH=${PROJECT_VERSION_PATCH}
+                -DPLATFORM=ios
+                -DOUT_FILE=${_version_xcconfig}
+                -P ${_version_script}
+            COMMENT "Generating iOS version.xcconfig"
+            VERBATIM
+        )
+    endif ()
+
     if (NOT TARGET IOSArchive)
         add_custom_target(IOSArchive
-            DEPENDS ${target}
+            DEPENDS ${target} GenerateIOSVersion
             COMMAND ${CMAKE_COMMAND} -E rm -rf "${_app_bundle}" "${_dsym_bundle}"
             COMMAND "${XCODEBUILD_EXECUTABLE}"
                 -project "${CMAKE_BINARY_DIR}/${CMAKE_PROJECT_NAME}.xcodeproj"
@@ -84,6 +103,7 @@ message(STATUS "Exported iOS IPA: ${_ipa}")
                 -configuration "${_config}"
                 -destination "generic/platform=iOS"
                 -archivePath "${_archive_path}"
+                -xcconfig "${_version_xcconfig}"
                 archive
                 -allowProvisioningUpdates
                 "CODE_SIGN_STYLE=Manual"
