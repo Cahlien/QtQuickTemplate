@@ -38,24 +38,9 @@ function(configure_apple_release_code_signing target)
             XCODE_ATTRIBUTE_PROVISIONING_PROFILE_SPECIFIER ""
         )
     else ()
-        # macOS release signing is handled by macdeployqt.
         set_target_properties(${target} PROPERTIES
             XCODE_ATTRIBUTE_CODE_SIGNING_ALLOWED NO
             XCODE_ATTRIBUTE_CODE_SIGNING_REQUIRED NO
-        )
-
-        set(_release_entitlements "${CMAKE_CURRENT_BINARY_DIR}/${target}_Release.entitlements")
-        file(WRITE "${_release_entitlements}" "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n")
-        file(APPEND "${_release_entitlements}" "<!DOCTYPE plist PUBLIC \"-//Apple//DTD PLIST 1.0//EN\" \"http://www.apple.com/DTDs/PropertyList-1.0.dtd\">\n")
-        file(APPEND "${_release_entitlements}" "<plist version=\"1.0\">\n")
-        file(APPEND "${_release_entitlements}" "<dict>\n")
-        file(APPEND "${_release_entitlements}" "    <key>com.apple.security.get-task-allow</key>\n")
-        file(APPEND "${_release_entitlements}" "    <false/>\n")
-        file(APPEND "${_release_entitlements}" "</dict>\n")
-        file(APPEND "${_release_entitlements}" "</plist>\n")
-
-        set_target_properties(${target} PROPERTIES
-            QTQUICKTEMPLATE_MACOS_RELEASE_ENTITLEMENTS ${_release_entitlements}
         )
     endif ()
 endfunction()

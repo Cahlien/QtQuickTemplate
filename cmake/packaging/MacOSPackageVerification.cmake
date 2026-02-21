@@ -40,18 +40,7 @@ set(_bundle "$ENV{APP_BUNDLE_PATH}")
 set(_dmg "$ENV{DMG_PATH}")
 
 if (NOT EXISTS "${_dmg}")
-    if (DEFINED ENV{DMG_FALLBACK_DIR} AND NOT "$ENV{DMG_FALLBACK_DIR}" STREQUAL "")
-        file(GLOB _dmgs "$ENV{DMG_FALLBACK_DIR}/*.dmg")
-        if (_dmgs)
-            list(SORT _dmgs)
-            list(GET _dmgs -1 _dmg)
-            message(WARNING "Configured DMG not found. Falling back to: ${_dmg}")
-        else ()
-            message(FATAL_ERROR "No DMG found to verify")
-        endif ()
-    else ()
-        message(FATAL_ERROR "DMG not found: ${_dmg}")
-    endif ()
+    message(FATAL_ERROR "DMG not found: ${_dmg}")
 endif ()
 
 if (NOT EXISTS "${_bundle}")
@@ -118,7 +107,6 @@ message(STATUS "macOS package verification passed: signed, notarized, stapled, a
                 XCRUN_EXECUTABLE=${XCRUN_EXECUTABLE}
                 APP_BUNDLE_PATH=$<TARGET_BUNDLE_DIR:${target}>
                 DMG_PATH=${_expected_dmg}
-                DMG_FALLBACK_DIR=${CMAKE_BINARY_DIR}
                 ${CMAKE_COMMAND} -P "${_verify_script}"
             COMMENT "Verifying final macOS package integrity and notarization"
             VERBATIM

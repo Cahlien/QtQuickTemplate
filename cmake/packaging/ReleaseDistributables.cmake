@@ -3,16 +3,20 @@ include_guard(GLOBAL)
 function(configure_release_distributables target)
     if (APPLE AND NOT IOS)
         if (NOT TARGET ReleaseDistributableMacOS)
+            set(_macos_release_dep "")
+            set(_macos_release_comment "")
             if (TARGET VerifyMacOSPackage)
-                add_custom_target(ReleaseDistributableMacOS
-                    DEPENDS VerifyMacOSPackage
-                    COMMENT "Building, signing, packaging, notarizing, and fully verifying macOS release artifacts"
-                )
-                message(STATUS "ReleaseDistributableMacOS target configured -> cmake --build . --target ReleaseDistributableMacOS")
+                set(_macos_release_dep VerifyMacOSPackage)
+                set(_macos_release_comment "Building, signing, packaging, notarizing, and fully verifying macOS release artifacts")
             elseif (TARGET NotarizeMacOS)
+                set(_macos_release_dep NotarizeMacOS)
+                set(_macos_release_comment "Building, signing, packaging, and notarizing macOS release artifacts")
+            endif ()
+
+            if (_macos_release_dep)
                 add_custom_target(ReleaseDistributableMacOS
-                    DEPENDS NotarizeMacOS
-                    COMMENT "Building, signing, packaging, and notarizing macOS release artifacts"
+                    DEPENDS ${_macos_release_dep}
+                    COMMENT "${_macos_release_comment}"
                 )
                 message(STATUS "ReleaseDistributableMacOS target configured -> cmake --build . --target ReleaseDistributableMacOS")
             else ()
