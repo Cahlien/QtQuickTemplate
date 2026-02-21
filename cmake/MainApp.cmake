@@ -2,6 +2,7 @@ include_guard(GLOBAL)
 
 include("${CMAKE_CURRENT_LIST_DIR}/qt/QmlModule.cmake")
 include("${CMAKE_CURRENT_LIST_DIR}/platform/PlatformSources.cmake")
+include("${CMAKE_CURRENT_LIST_DIR}/platform/AppleCodeSigning.cmake")
 include("${CMAKE_CURRENT_LIST_DIR}/platform/AndroidVersion.cmake")
 include("${CMAKE_CURRENT_LIST_DIR}/toolchain/CompilerSettings.cmake")
 include("${CMAKE_CURRENT_LIST_DIR}/packaging/AppImage.cmake")
@@ -42,6 +43,7 @@ function(configure_main_app)
 
     add_android_version_target(${PROJECT_NAME})
     add_platform_sources(${PROJECT_NAME})
+    configure_apple_release_code_signing(${PROJECT_NAME})
 
     target_link_libraries(${PROJECT_NAME}
         PRIVATE
