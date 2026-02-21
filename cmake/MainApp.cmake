@@ -7,9 +7,12 @@ include("${CMAKE_CURRENT_LIST_DIR}/platform/AppleSigningVerification.cmake")
 include("${CMAKE_CURRENT_LIST_DIR}/platform/AndroidVersion.cmake")
 include("${CMAKE_CURRENT_LIST_DIR}/toolchain/CompilerSettings.cmake")
 include("${CMAKE_CURRENT_LIST_DIR}/packaging/AppImage.cmake")
+include("${CMAKE_CURRENT_LIST_DIR}/packaging/AndroidAab.cmake")
+include("${CMAKE_CURRENT_LIST_DIR}/packaging/AndroidApk.cmake")
 include("${CMAKE_CURRENT_LIST_DIR}/packaging/Install.cmake")
 include("${CMAKE_CURRENT_LIST_DIR}/packaging/MacOSDmg.cmake")
 include("${CMAKE_CURRENT_LIST_DIR}/packaging/MacOSNotarization.cmake")
+include("${CMAKE_CURRENT_LIST_DIR}/packaging/ReleaseDistributables.cmake")
 include("${CMAKE_CURRENT_LIST_DIR}/docs/QDoc.cmake")
 
 # Create and fully configure the main application target.
@@ -82,27 +85,11 @@ function(configure_main_app)
     add_qdoc_target(docs "${CMAKE_CURRENT_SOURCE_DIR}/doc/qtquicktemplate.qdocconf")
 
     configure_appimage(${PROJECT_NAME})
+    configure_android_release_aab(${PROJECT_NAME})
+    configure_android_release_apk(${PROJECT_NAME})
     configure_install(${PROJECT_NAME})
     configure_macos_dmg(${PROJECT_NAME})
     configure_macos_notarization(${PROJECT_NAME})
 
-    if (APPLE AND NOT IOS AND TARGET VerifyAppleSigning AND TARGET NotarizeMacOS)
-        if (NOT TARGET ReleaseDistributableMacOS)
-            add_custom_target(ReleaseDistributableMacOS
-                DEPENDS VerifyAppleSigning NotarizeMacOS
-                COMMENT "Building, verifying, packaging, and notarizing macOS release artifacts"
-            )
-            message(STATUS "ReleaseDistributableMacOS target configured -> cmake --build . --target ReleaseDistributableMacOS")
-        endif ()
-    endif ()
-
-    if (APPLE AND IOS AND TARGET VerifyAppleSigning)
-        if (NOT TARGET ReleaseDistributableIOS)
-            add_custom_target(ReleaseDistributableIOS
-                DEPENDS VerifyAppleSigning
-                COMMENT "Building and verifying iOS release artifacts"
-            )
-            message(STATUS "ReleaseDistributableIOS target configured -> cmake --build . --target ReleaseDistributableIOS")
-        endif ()
-    endif ()
+    configure_release_distributables(${PROJECT_NAME})
 endfunction()

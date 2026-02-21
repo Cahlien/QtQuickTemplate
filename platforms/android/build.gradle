@@ -30,6 +30,33 @@ dependencies {
     implementation libs.androidx.core.splashscreen
 }
 
+def readSigningValue = { key ->
+    def envValue = System.getenv(key)
+    if (envValue != null && !envValue.trim().isEmpty()) {
+        return envValue.trim()
+    }
+    if (project.hasProperty(key)) {
+        def propValue = project.property(key)?.toString()?.trim()
+        if (propValue != null && !propValue.isEmpty()) {
+            return propValue
+        }
+    }
+    return null
+}
+
+def releaseStoreFile = readSigningValue('QT_ANDROID_KEYSTORE_PATH')
+def releaseStorePassword = readSigningValue('QT_ANDROID_KEYSTORE_PASSWORD')
+def releaseKeyAlias = readSigningValue('QT_ANDROID_KEY_ALIAS')
+def releaseKeyPassword = readSigningValue('QT_ANDROID_KEY_PASSWORD')
+
+def hasReleaseSigning = releaseStoreFile && releaseStorePassword && releaseKeyAlias && releaseKeyPassword
+
+if (hasReleaseSigning) {
+    println "[Android] Release signing enabled for AAB/APK outputs"
+} else {
+    println "[Android] Release signing credentials are incomplete; release artifacts may be unsigned"
+}
+
 android {
     namespace = androidPackageName
     compileSdkVersion androidCompileSdkVersion
@@ -83,6 +110,27 @@ android {
 
     buildFeatures {
         buildConfig = true
+    }
+
+    if (hasReleaseSigning) {
+        signingConfigs {
+            release {
+                storeFile file(releaseStoreFile)
+                storePassword releaseStorePassword
+                keyAlias releaseKeyAlias
+                keyPassword releaseKeyPassword
+                enableV1Signing true
+                enableV2Signing true
+            }
+        }
+    }
+
+    buildTypes {
+        release {
+            if (hasReleaseSigning) {
+                signingConfig signingConfigs.release
+            }
+        }
     }
 }
 
