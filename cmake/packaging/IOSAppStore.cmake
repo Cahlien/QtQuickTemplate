@@ -23,80 +23,35 @@ function(configure_ios_app_store_release target)
     set(_archive_path "${CMAKE_BINARY_DIR}/ios/${PROJECT_NAME}.xcarchive")
     set(_export_path "${CMAKE_BINARY_DIR}/ios/export")
     set(_export_options_plist "${CMAKE_CURRENT_BINARY_DIR}/${target}_ExportOptions.plist")
+    set(_config "${QTQUICKTEMPLATE_IOS_ARCHIVE_CONFIGURATION}")
 
-    file(WRITE "${_export_options_plist}" "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n")
-    file(APPEND "${_export_options_plist}" "<!DOCTYPE plist PUBLIC \"-//Apple//DTD PLIST 1.0//EN\" \"http://www.apple.com/DTDs/PropertyList-1.0.dtd\">\n")
-    file(APPEND "${_export_options_plist}" "<plist version=\"1.0\">\n")
-    file(APPEND "${_export_options_plist}" "<dict>\n")
-    file(APPEND "${_export_options_plist}" "    <key>method</key>\n")
-    file(APPEND "${_export_options_plist}" "    <string>app-store</string>\n")
-    file(APPEND "${_export_options_plist}" "    <key>signingStyle</key>\n")
-    file(APPEND "${_export_options_plist}" "    <string>automatic</string>\n")
-    file(APPEND "${_export_options_plist}" "    <key>teamID</key>\n")
-    file(APPEND "${_export_options_plist}" "    <string>${QTQUICKTEMPLATE_APPLE_DEVELOPMENT_TEAM}</string>\n")
-    file(APPEND "${_export_options_plist}" "    <key>stripSwiftSymbols</key>\n")
-    file(APPEND "${_export_options_plist}" "    <true/>\n")
-    file(APPEND "${_export_options_plist}" "    <key>compileBitcode</key>\n")
-    file(APPEND "${_export_options_plist}" "    <true/>\n")
-    file(APPEND "${_export_options_plist}" "</dict>\n")
-    file(APPEND "${_export_options_plist}" "</plist>\n")
+    # Build output paths that xcodebuild archive contaminates with symlinks
+    # into Xcode DerivedData.  These must be cleaned before and after the
+    # archive step to prevent broken symlinks from blocking subsequent builds.
+    set(_app_bundle "${CMAKE_BINARY_DIR}/${_config}-iphoneos/${target}.app")
+    set(_dsym_bundle "${CMAKE_BINARY_DIR}/${_config}-iphoneos/${target}.app.dSYM")
 
-    get_target_property(_qmake_path Qt6::qmake IMPORTED_LOCATION)
-    if (_qmake_path)
-        get_filename_component(_qt_bin_dir "${_qmake_path}" DIRECTORY)
-    else ()
-        set(_qt_bin_dir "")
-    endif ()
-
-    find_program(MACDEPLOYQT_EXECUTABLE
-        NAMES macdeployqt
-        HINTS ${_qt_bin_dir}
-    )
-
-    set(_archive_dep_target ${target})
-    if (MACDEPLOYQT_EXECUTABLE)
-        set(_deploy_script "${CMAKE_CURRENT_BINARY_DIR}/run_ios_macdeployqt.cmake")
-        file(WRITE "${_deploy_script}" [=[
-if (NOT DEFINED ENV{MACDEPLOYQT_EXECUTABLE} OR "$ENV{MACDEPLOYQT_EXECUTABLE}" STREQUAL "")
-    message(FATAL_ERROR "MACDEPLOYQT_EXECUTABLE env var is required")
-endif ()
-
-if (NOT DEFINED ENV{APP_BUNDLE_PATH} OR "$ENV{APP_BUNDLE_PATH}" STREQUAL "")
-    message(FATAL_ERROR "APP_BUNDLE_PATH env var is required")
-endif ()
-
-set(_bundle "$ENV{APP_BUNDLE_PATH}")
-if (NOT EXISTS "${_bundle}")
-    message(FATAL_ERROR "App bundle not found for macdeployqt: ${_bundle}")
-endif ()
-
-execute_process(
-    COMMAND "$ENV{MACDEPLOYQT_EXECUTABLE}" "${_bundle}" "-verbose=1"
-    RESULT_VARIABLE _deploy_rv
-    OUTPUT_VARIABLE _deploy_out
-    ERROR_VARIABLE _deploy_err
-)
-
-if (NOT _deploy_rv EQUAL 0)
-    message(FATAL_ERROR "macdeployqt failed for iOS app bundle:\n${_deploy_out}\n${_deploy_err}")
-endif ()
-
-message(STATUS "macdeployqt completed for iOS app bundle")
+    # Generate ExportOptions.plist for App Store distribution.
+    # Note: compileBitcode is intentionally omitted -- Apple deprecated
+    # bitcode in Xcode 14 and App Store Connect ignores it.
+    file(WRITE "${_export_options_plist}"
+[=[<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+    <key>method</key>
+    <string>app-store</string>
+    <key>signingStyle</key>
+    <string>automatic</string>
+    <key>teamID</key>
+    <string>]=] "${QTQUICKTEMPLATE_APPLE_DEVELOPMENT_TEAM}" [=[</string>
+    <key>stripSwiftSymbols</key>
+    <true/>
+</dict>
+</plist>
 ]=])
 
-        add_custom_target(IOSDeployQt
-            DEPENDS ${target}
-            COMMAND ${CMAKE_COMMAND} -E env
-                MACDEPLOYQT_EXECUTABLE=${MACDEPLOYQT_EXECUTABLE}
-                APP_BUNDLE_PATH=$<TARGET_BUNDLE_DIR:${target}>
-                ${CMAKE_COMMAND} -P "${_deploy_script}"
-            COMMENT "Deploying iOS app bundle with macdeployqt"
-            VERBATIM
-        )
-        message(STATUS "IOSDeployQt target configured -> cmake --build . --target IOSDeployQt")
-        set(_archive_dep_target IOSDeployQt)
-    endif ()
-
+    # IPA verification script.
     set(_verify_script "${CMAKE_CURRENT_BINARY_DIR}/verify_ios_ipa.cmake")
     file(WRITE "${_verify_script}" [=[
 if (NOT DEFINED ENV{IOS_EXPORT_PATH} OR "$ENV{IOS_EXPORT_PATH}" STREQUAL "")
@@ -114,17 +69,27 @@ list(GET _ipas -1 _ipa)
 message(STATUS "Exported iOS IPA: ${_ipa}")
 ]=])
 
+    # Note: macdeployqt is intentionally NOT used for iOS.  Qt is statically
+    # linked on iOS (all libraries and QML modules are compiled into the
+    # binary), so there are no frameworks to deploy.  xcodebuild archive
+    # handles the final packaging, code signing, and resource embedding.
+
     if (NOT TARGET IOSArchive)
         add_custom_target(IOSArchive
-            DEPENDS ${_archive_dep_target}
+            DEPENDS ${target}
+            COMMAND ${CMAKE_COMMAND} -E rm -rf "${_app_bundle}" "${_dsym_bundle}"
             COMMAND "${XCODEBUILD_EXECUTABLE}"
                 -project "${CMAKE_BINARY_DIR}/${CMAKE_PROJECT_NAME}.xcodeproj"
                 -scheme "${target}"
-                -configuration "${QTQUICKTEMPLATE_IOS_ARCHIVE_CONFIGURATION}"
+                -configuration "${_config}"
                 -destination "generic/platform=iOS"
                 -archivePath "${_archive_path}"
                 archive
                 -allowProvisioningUpdates
+                "CODE_SIGN_STYLE=Manual"
+                "CODE_SIGN_IDENTITY=Apple Distribution"
+                "DEVELOPMENT_TEAM=${QTQUICKTEMPLATE_APPLE_DEVELOPMENT_TEAM}"
+            COMMAND ${CMAKE_COMMAND} -E rm -rf "${_app_bundle}" "${_dsym_bundle}"
             COMMENT "Archiving iOS app for App Store distribution"
             VERBATIM
         )

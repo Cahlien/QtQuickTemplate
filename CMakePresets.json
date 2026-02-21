@@ -1,0 +1,48 @@
+{
+    "version": 6,
+    "cmakeMinimumRequired": {
+        "major": 3,
+        "minor": 28,
+        "patch": 0
+    },
+    "configurePresets": [
+        {
+            "name": "ios-release",
+            "displayName": "iOS Release (Xcode)",
+            "description": "Configure for iOS using the Xcode generator and Qt's iOS toolchain. Requires QT_IOS_ROOT and APPLE_DEVELOPMENT_TEAM environment variables.",
+            "generator": "Xcode",
+            "binaryDir": "${sourceDir}/build/Qt_6_10_2_for_iOS",
+            "cacheVariables": {
+                "CMAKE_SYSTEM_NAME": "iOS",
+                "CMAKE_TOOLCHAIN_FILE": "$env{QT_IOS_ROOT}/lib/cmake/Qt6/qt.toolchain.cmake",
+                "QTQUICKTEMPLATE_APPLE_DEVELOPMENT_TEAM": "$env{APPLE_DEVELOPMENT_TEAM}",
+                "QTQUICKTEMPLATE_IOS_PROVISIONING_PROFILE": "$env{IOS_PROVISIONING_PROFILE}",
+                "QTQUICKTEMPLATE_IOS_ARCHIVE_CONFIGURATION": "Release"
+            },
+            "condition": {
+                "type": "equals",
+                "lhs": "${hostSystemName}",
+                "rhs": "Darwin"
+            }
+        }
+    ],
+    "buildPresets": [
+        {
+            "name": "ios-app",
+            "displayName": "iOS App (build only)",
+            "description": "Build the app for iOS without packaging.",
+            "configurePreset": "ios-release",
+            "configuration": "Release",
+            "nativeToolOptions": ["-allowProvisioningUpdates", "CODE_SIGNING_ALLOWED=NO"]
+        },
+        {
+            "name": "ios-distributable",
+            "displayName": "iOS Release Distributable",
+            "description": "Full iOS pipeline: build, archive, export IPA, and verify. The outer build disables signing; the nested xcodebuild archive handles code signing with the distribution profile.",
+            "configurePreset": "ios-release",
+            "configuration": "Release",
+            "targets": ["ReleaseDistributableIOS"],
+            "nativeToolOptions": ["-allowProvisioningUpdates", "CODE_SIGNING_ALLOWED=NO"]
+        }
+    ]
+}

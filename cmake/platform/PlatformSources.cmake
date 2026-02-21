@@ -23,6 +23,27 @@ function(add_platform_sources target)
             ${CMAKE_CURRENT_BINARY_DIR}/app.rc
             ${_src_dir}/platforms/windows/app.manifest
         )
+    elseif (IOS)
+        target_sources(${target} PRIVATE
+            src/main/common/platform_init_default.cpp
+        )
+        set_target_properties(${target} PROPERTIES
+            MACOSX_BUNDLE_INFO_PLIST ${_src_dir}/platforms/ios/Info.plist
+            XCODE_ATTRIBUTE_MARKETING_VERSION "${PROJECT_VERSION_MAJOR}.${PROJECT_VERSION_MINOR}"
+            XCODE_ATTRIBUTE_CURRENT_PROJECT_VERSION "${PROJECT_VERSION}"
+        )
+        # Asset catalog for app icons (required by App Store).
+        # Xcode compiles the .xcassets into the app bundle automatically.
+        set(_xcassets "${_src_dir}/platforms/ios/Assets.xcassets")
+        if (EXISTS "${_xcassets}")
+            target_sources(${target} PRIVATE "${_xcassets}")
+            set_source_files_properties("${_xcassets}" PROPERTIES
+                MACOSX_PACKAGE_LOCATION Resources
+            )
+            set_target_properties(${target} PROPERTIES
+                XCODE_ATTRIBUTE_ASSETCATALOG_COMPILER_APPICON_NAME AppIcon
+            )
+        endif ()
     elseif (APPLE AND NOT IOS)
         target_sources(${target} PRIVATE
             src/main/common/platform_init_default.cpp
