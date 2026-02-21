@@ -39,7 +39,7 @@ if (NOT EXISTS "${_bundle}")
     message(FATAL_ERROR "App bundle not found for macdeployqt: ${_bundle}")
 endif ()
 
-set(_cmd "$ENV{MACDEPLOYQT_EXECUTABLE}" "${_bundle}" "-always-overwrite" "-release" "-verbose=1")
+set(_cmd "$ENV{MACDEPLOYQT_EXECUTABLE}" "${_bundle}" "-always-overwrite" "-verbose=1")
 
 if (DEFINED ENV{QML_DIR} AND EXISTS "$ENV{QML_DIR}")
     list(APPEND _cmd "-qmldir=$ENV{QML_DIR}")
