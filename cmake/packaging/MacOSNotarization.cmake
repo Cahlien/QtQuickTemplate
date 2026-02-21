@@ -32,6 +32,18 @@ function(configure_macos_notarization target)
         return()
     endif ()
 
+    find_program(CODESIGN_EXECUTABLE codesign)
+    if (NOT CODESIGN_EXECUTABLE)
+        message(WARNING "codesign not found; NotarizeMacOS target is unavailable.")
+        return()
+    endif ()
+
+    find_program(SPCTL_EXECUTABLE spctl)
+    if (NOT SPCTL_EXECUTABLE)
+        message(WARNING "spctl not found; NotarizeMacOS target is unavailable.")
+        return()
+    endif ()
+
     set(_default_artifact "${CMAKE_BINARY_DIR}/${PROJECT_NAME}-${PROJECT_VERSION}-macOS.dmg")
     if (QTQUICKTEMPLATE_MACOS_NOTARIZE_ARTIFACT)
         set(_artifact "${QTQUICKTEMPLATE_MACOS_NOTARIZE_ARTIFACT}")
@@ -70,6 +82,8 @@ if (NOT DEFINED ENV{APP_BUNDLE_PATH})
 endif ()
 
 set(_xcrun "$ENV{XCRUN_EXECUTABLE}")
+set(_codesign "$ENV{CODESIGN_EXECUTABLE}")
+set(_spctl "$ENV{SPCTL_EXECUTABLE}")
 set(_artifact "$ENV{NOTARIZE_ARTIFACT}")
 set(_bundle "$ENV{APP_BUNDLE_PATH}")
 
@@ -137,6 +151,54 @@ if ("$ENV{STAPLE_APP}" STREQUAL "1")
         message(WARNING "App bundle for stapling not found: ${_bundle}")
     endif ()
 endif ()
+
+execute_process(
+    COMMAND "${_codesign}" --verify --verbose=2 "${_artifact}"
+    RESULT_VARIABLE _artifact_codesign_rv
+    OUTPUT_VARIABLE _artifact_codesign_out
+    ERROR_VARIABLE _artifact_codesign_err
+)
+
+if (NOT _artifact_codesign_rv EQUAL 0)
+    message(FATAL_ERROR "DMG codesign verification failed:\n${_artifact_codesign_out}\n${_artifact_codesign_err}")
+endif ()
+
+execute_process(
+    COMMAND "${_spctl}" -a -vv "${_artifact}"
+    RESULT_VARIABLE _artifact_spctl_rv
+    OUTPUT_VARIABLE _artifact_spctl_out
+    ERROR_VARIABLE _artifact_spctl_err
+)
+
+if (NOT _artifact_spctl_rv EQUAL 0)
+    message(FATAL_ERROR "DMG spctl assessment failed:\n${_artifact_spctl_out}\n${_artifact_spctl_err}")
+endif ()
+
+if (EXISTS "${_bundle}")
+    execute_process(
+        COMMAND "${_codesign}" --verify --deep --strict --verbose=2 "${_bundle}"
+        RESULT_VARIABLE _bundle_codesign_rv
+        OUTPUT_VARIABLE _bundle_codesign_out
+        ERROR_VARIABLE _bundle_codesign_err
+    )
+
+    if (NOT _bundle_codesign_rv EQUAL 0)
+        message(FATAL_ERROR "App bundle codesign verification failed:\n${_bundle_codesign_out}\n${_bundle_codesign_err}")
+    endif ()
+
+    execute_process(
+        COMMAND "${_spctl}" -a -vv "${_bundle}"
+        RESULT_VARIABLE _bundle_spctl_rv
+        OUTPUT_VARIABLE _bundle_spctl_out
+        ERROR_VARIABLE _bundle_spctl_err
+    )
+
+    if (NOT _bundle_spctl_rv EQUAL 0)
+        message(FATAL_ERROR "App bundle spctl assessment failed:\n${_bundle_spctl_out}\n${_bundle_spctl_err}")
+    endif ()
+endif ()
+
+message(STATUS "Notarized artifact and app signature verification passed")
 ]=])
 
     if (TARGET NotarizeMacOS)
@@ -148,6 +210,8 @@ endif ()
         DEPENDS DMG
         COMMAND ${CMAKE_COMMAND} -E env
             XCRUN_EXECUTABLE=${XCRUN_EXECUTABLE}
+            CODESIGN_EXECUTABLE=${CODESIGN_EXECUTABLE}
+            SPCTL_EXECUTABLE=${SPCTL_EXECUTABLE}
             NOTARIZE_ARTIFACT=${_artifact}
             APP_BUNDLE_PATH=$<TARGET_BUNDLE_DIR:${target}>
             NOTARY_KEYCHAIN_PROFILE=${QTQUICKTEMPLATE_MACOS_NOTARY_KEYCHAIN_PROFILE}
