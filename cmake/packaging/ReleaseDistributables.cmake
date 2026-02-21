@@ -1,28 +1,31 @@
 include_guard(GLOBAL)
 
 function(configure_release_distributables target)
-    if (APPLE AND NOT IOS AND TARGET VerifyAppleSigning AND TARGET NotarizeMacOS)
+    if (APPLE AND NOT IOS)
         if (NOT TARGET ReleaseDistributableMacOS)
             if (TARGET VerifyMacOSPackage)
                 add_custom_target(ReleaseDistributableMacOS
-                    DEPENDS VerifyAppleSigning DMG NotarizeMacOS VerifyMacOSPackage
+                    DEPENDS VerifyMacOSPackage
                     COMMENT "Building, signing, packaging, notarizing, and fully verifying macOS release artifacts"
                 )
-            else ()
+                message(STATUS "ReleaseDistributableMacOS target configured -> cmake --build . --target ReleaseDistributableMacOS")
+            elseif (TARGET NotarizeMacOS)
                 add_custom_target(ReleaseDistributableMacOS
-                    DEPENDS VerifyAppleSigning DMG NotarizeMacOS
-                    COMMENT "Building, verifying, packaging, and notarizing macOS release artifacts"
+                    DEPENDS NotarizeMacOS
+                    COMMENT "Building, signing, packaging, and notarizing macOS release artifacts"
                 )
+                message(STATUS "ReleaseDistributableMacOS target configured -> cmake --build . --target ReleaseDistributableMacOS")
+            else ()
+                message(WARNING "NotarizeMacOS target not found; ReleaseDistributableMacOS target is unavailable.")
             endif ()
-            message(STATUS "ReleaseDistributableMacOS target configured -> cmake --build . --target ReleaseDistributableMacOS")
         endif ()
     endif ()
 
-    if (APPLE AND IOS AND TARGET VerifyAppleSigning)
+    if (APPLE AND IOS)
         if (NOT TARGET ReleaseDistributableIOS)
             add_custom_target(ReleaseDistributableIOS
-                DEPENDS VerifyAppleSigning
-                COMMENT "Building and verifying iOS release artifacts"
+                DEPENDS ${target}
+                COMMENT "Building iOS release artifacts"
             )
             message(STATUS "ReleaseDistributableIOS target configured -> cmake --build . --target ReleaseDistributableIOS")
         endif ()

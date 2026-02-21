@@ -28,6 +28,11 @@ function(configure_macos_dmg target)
 
     set(_dmg_output "${CMAKE_BINARY_DIR}/${CPACK_PACKAGE_FILE_NAME}.dmg")
 
+    set(_dmg_dependency_target ${target})
+    if (TARGET MacDeployQt)
+        set(_dmg_dependency_target MacDeployQt)
+    endif ()
+
     set(_sign_script "${CMAKE_CURRENT_BINARY_DIR}/sign_macos_dmg.cmake")
     file(WRITE "${_sign_script}" [=[
 if (NOT DEFINED ENV{CODESIGN_IDENTITY} OR "$ENV{CODESIGN_IDENTITY}" STREQUAL "")
@@ -70,7 +75,7 @@ message(STATUS "Signed DMG: ${_dmg}")
 
     if (QTQUICKTEMPLATE_MACOS_DMG_SIGN_IDENTITY)
         add_custom_target(DMG
-            DEPENDS ${target}
+            DEPENDS ${_dmg_dependency_target}
             COMMAND ${CMAKE_CPACK_COMMAND}
                 --config "${CMAKE_BINARY_DIR}/CPackConfig.cmake"
                 -G DragNDrop
@@ -85,7 +90,7 @@ message(STATUS "Signed DMG: ${_dmg}")
         )
     else ()
         add_custom_target(DMG
-            DEPENDS ${target}
+            DEPENDS ${_dmg_dependency_target}
             COMMAND ${CMAKE_CPACK_COMMAND}
                 --config "${CMAKE_BINARY_DIR}/CPackConfig.cmake"
                 -G DragNDrop
