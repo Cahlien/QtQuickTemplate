@@ -300,6 +300,7 @@ jarsigner -verify -verbose app-release.aab
 
 iOS App Store packaging is automated with Xcode generator targets:
 
+- `IOSDeployQt` (when `macdeployqt` is available)
 - `IOSArchive`
 - `IOSExportIPA`
 - `VerifyIOSIPA`
@@ -312,8 +313,7 @@ cmake -S . -B build/ios-release -G Xcode \
   -DCMAKE_SYSTEM_NAME=iOS \
   -DCMAKE_OSX_ARCHITECTURES=arm64 \
   -DQTQUICKTEMPLATE_APPLE_DEVELOPMENT_TEAM=<TEAM_ID> \
-  -DQTQUICKTEMPLATE_APPLE_BUNDLE_IDENTIFIER=<BUNDLE_ID> \
-  -DQTQUICKTEMPLATE_IOS_CODE_SIGN_STYLE=Automatic
+  -DQTQUICKTEMPLATE_APPLE_BUNDLE_IDENTIFIER=<BUNDLE_ID>
 ```
 
 Build an App Store-ready IPA:
@@ -326,14 +326,9 @@ Useful iOS CMake cache variables:
 
 - `QTQUICKTEMPLATE_APPLE_DEVELOPMENT_TEAM` (required)
 - `QTQUICKTEMPLATE_APPLE_BUNDLE_IDENTIFIER` (required)
-- `QTQUICKTEMPLATE_IOS_CODE_SIGN_STYLE` (`Automatic` or `Manual`)
-- `QTQUICKTEMPLATE_IOS_PROVISIONING_PROFILE_SPECIFIER` (required when using manual signing)
-- `QTQUICKTEMPLATE_IOS_CODE_SIGN_IDENTITY` (optional, for example `Apple Distribution`)
-- `QTQUICKTEMPLATE_IOS_ALLOW_PROVISIONING_UPDATES` (`ON`/`OFF`)
-- `QTQUICKTEMPLATE_IOS_EXPORT_METHOD` (defaults to `app-store`)
-- `QTQUICKTEMPLATE_IOS_ARCHIVE_PATH`
-- `QTQUICKTEMPLATE_IOS_EXPORT_PATH`
-- `QTQUICKTEMPLATE_IOS_EXPORT_OPTIONS_PLIST` (optional override)
+- `QTQUICKTEMPLATE_IOS_ARCHIVE_CONFIGURATION` (defaults to `Release`)
+
+`IOSArchive` and `IOSExportIPA` always use automatic signing and App Store export mode.
 
 ---
 

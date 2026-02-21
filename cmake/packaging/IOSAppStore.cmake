@@ -4,26 +4,6 @@ set(QTQUICKTEMPLATE_IOS_ARCHIVE_CONFIGURATION "Release" CACHE STRING
     "Build configuration used for iOS archive/export"
 )
 
-set(QTQUICKTEMPLATE_IOS_ARCHIVE_PATH "${CMAKE_BINARY_DIR}/ios/${PROJECT_NAME}.xcarchive" CACHE PATH
-    "Output path for the generated iOS .xcarchive"
-)
-
-set(QTQUICKTEMPLATE_IOS_EXPORT_PATH "${CMAKE_BINARY_DIR}/ios/export" CACHE PATH
-    "Output directory for exported iOS artifacts (.ipa)"
-)
-
-set(QTQUICKTEMPLATE_IOS_EXPORT_OPTIONS_PLIST "" CACHE FILEPATH
-    "Optional existing ExportOptions.plist path; generated automatically when empty"
-)
-
-set(QTQUICKTEMPLATE_IOS_ALLOW_PROVISIONING_UPDATES ON CACHE BOOL
-    "Allow xcodebuild to auto-manage provisioning updates during archive/export"
-)
-
-set(QTQUICKTEMPLATE_IOS_EXPORT_METHOD "app-store" CACHE STRING
-    "xcodebuild -exportArchive method for iOS export"
-)
-
 function(configure_ios_app_store_release target)
     if (NOT APPLE OR NOT IOS OR NOT CMAKE_GENERATOR STREQUAL "Xcode")
         return()
@@ -40,53 +20,81 @@ function(configure_ios_app_store_release target)
         return()
     endif ()
 
-    set(_archive_path "${QTQUICKTEMPLATE_IOS_ARCHIVE_PATH}")
-    set(_export_path "${QTQUICKTEMPLATE_IOS_EXPORT_PATH}")
-    set(_export_options_plist "${QTQUICKTEMPLATE_IOS_EXPORT_OPTIONS_PLIST}")
-    string(TOLOWER "${QTQUICKTEMPLATE_IOS_CODE_SIGN_STYLE}" _ios_signing_style_lower)
-    if (NOT _ios_signing_style_lower STREQUAL "automatic" AND NOT _ios_signing_style_lower STREQUAL "manual")
-        message(FATAL_ERROR "QTQUICKTEMPLATE_IOS_CODE_SIGN_STYLE must be Automatic or Manual")
+    set(_archive_path "${CMAKE_BINARY_DIR}/ios/${PROJECT_NAME}.xcarchive")
+    set(_export_path "${CMAKE_BINARY_DIR}/ios/export")
+    set(_export_options_plist "${CMAKE_CURRENT_BINARY_DIR}/${target}_ExportOptions.plist")
+
+    file(WRITE "${_export_options_plist}" "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n")
+    file(APPEND "${_export_options_plist}" "<!DOCTYPE plist PUBLIC \"-//Apple//DTD PLIST 1.0//EN\" \"http://www.apple.com/DTDs/PropertyList-1.0.dtd\">\n")
+    file(APPEND "${_export_options_plist}" "<plist version=\"1.0\">\n")
+    file(APPEND "${_export_options_plist}" "<dict>\n")
+    file(APPEND "${_export_options_plist}" "    <key>method</key>\n")
+    file(APPEND "${_export_options_plist}" "    <string>app-store</string>\n")
+    file(APPEND "${_export_options_plist}" "    <key>signingStyle</key>\n")
+    file(APPEND "${_export_options_plist}" "    <string>automatic</string>\n")
+    file(APPEND "${_export_options_plist}" "    <key>teamID</key>\n")
+    file(APPEND "${_export_options_plist}" "    <string>${QTQUICKTEMPLATE_APPLE_DEVELOPMENT_TEAM}</string>\n")
+    file(APPEND "${_export_options_plist}" "    <key>stripSwiftSymbols</key>\n")
+    file(APPEND "${_export_options_plist}" "    <true/>\n")
+    file(APPEND "${_export_options_plist}" "    <key>compileBitcode</key>\n")
+    file(APPEND "${_export_options_plist}" "    <true/>\n")
+    file(APPEND "${_export_options_plist}" "</dict>\n")
+    file(APPEND "${_export_options_plist}" "</plist>\n")
+
+    get_target_property(_qmake_path Qt6::qmake IMPORTED_LOCATION)
+    if (_qmake_path)
+        get_filename_component(_qt_bin_dir "${_qmake_path}" DIRECTORY)
+    else ()
+        set(_qt_bin_dir "")
     endif ()
 
-    if (_ios_signing_style_lower STREQUAL "manual" AND NOT QTQUICKTEMPLATE_IOS_PROVISIONING_PROFILE_SPECIFIER)
-        message(WARNING "QTQUICKTEMPLATE_IOS_PROVISIONING_PROFILE_SPECIFIER is required for manual iOS signing; iOS App Store targets are unavailable.")
-        return()
-    endif ()
+    find_program(MACDEPLOYQT_EXECUTABLE
+        NAMES macdeployqt
+        HINTS ${_qt_bin_dir}
+    )
 
-    if (NOT _export_options_plist)
-        set(_export_options_plist "${CMAKE_CURRENT_BINARY_DIR}/${target}_ExportOptions.plist")
-        file(WRITE "${_export_options_plist}" "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n")
-        file(APPEND "${_export_options_plist}" "<!DOCTYPE plist PUBLIC \"-//Apple//DTD PLIST 1.0//EN\" \"http://www.apple.com/DTDs/PropertyList-1.0.dtd\">\n")
-        file(APPEND "${_export_options_plist}" "<plist version=\"1.0\">\n")
-        file(APPEND "${_export_options_plist}" "<dict>\n")
-        file(APPEND "${_export_options_plist}" "    <key>method</key>\n")
-        file(APPEND "${_export_options_plist}" "    <string>${QTQUICKTEMPLATE_IOS_EXPORT_METHOD}</string>\n")
-        file(APPEND "${_export_options_plist}" "    <key>signingStyle</key>\n")
-        file(APPEND "${_export_options_plist}" "    <string>${_ios_signing_style_lower}</string>\n")
-        file(APPEND "${_export_options_plist}" "    <key>teamID</key>\n")
-        file(APPEND "${_export_options_plist}" "    <string>${QTQUICKTEMPLATE_APPLE_DEVELOPMENT_TEAM}</string>\n")
-        if (_ios_signing_style_lower STREQUAL "manual")
-            file(APPEND "${_export_options_plist}" "    <key>provisioningProfiles</key>\n")
-            file(APPEND "${_export_options_plist}" "    <dict>\n")
-            file(APPEND "${_export_options_plist}" "        <key>${QTQUICKTEMPLATE_APPLE_BUNDLE_IDENTIFIER}</key>\n")
-            file(APPEND "${_export_options_plist}" "        <string>${QTQUICKTEMPLATE_IOS_PROVISIONING_PROFILE_SPECIFIER}</string>\n")
-            file(APPEND "${_export_options_plist}" "    </dict>\n")
-        endif ()
-        if (QTQUICKTEMPLATE_IOS_CODE_SIGN_IDENTITY)
-            file(APPEND "${_export_options_plist}" "    <key>signingCertificate</key>\n")
-            file(APPEND "${_export_options_plist}" "    <string>${QTQUICKTEMPLATE_IOS_CODE_SIGN_IDENTITY}</string>\n")
-        endif ()
-        file(APPEND "${_export_options_plist}" "    <key>stripSwiftSymbols</key>\n")
-        file(APPEND "${_export_options_plist}" "    <true/>\n")
-        file(APPEND "${_export_options_plist}" "    <key>compileBitcode</key>\n")
-        file(APPEND "${_export_options_plist}" "    <true/>\n")
-        file(APPEND "${_export_options_plist}" "</dict>\n")
-        file(APPEND "${_export_options_plist}" "</plist>\n")
-    endif ()
+    set(_archive_dep_target ${target})
+    if (MACDEPLOYQT_EXECUTABLE)
+        set(_deploy_script "${CMAKE_CURRENT_BINARY_DIR}/run_ios_macdeployqt.cmake")
+        file(WRITE "${_deploy_script}" [=[
+if (NOT DEFINED ENV{MACDEPLOYQT_EXECUTABLE} OR "$ENV{MACDEPLOYQT_EXECUTABLE}" STREQUAL "")
+    message(FATAL_ERROR "MACDEPLOYQT_EXECUTABLE env var is required")
+endif ()
 
-    set(_allow_updates_arg "")
-    if (QTQUICKTEMPLATE_IOS_ALLOW_PROVISIONING_UPDATES)
-        set(_allow_updates_arg "-allowProvisioningUpdates")
+if (NOT DEFINED ENV{APP_BUNDLE_PATH} OR "$ENV{APP_BUNDLE_PATH}" STREQUAL "")
+    message(FATAL_ERROR "APP_BUNDLE_PATH env var is required")
+endif ()
+
+set(_bundle "$ENV{APP_BUNDLE_PATH}")
+if (NOT EXISTS "${_bundle}")
+    message(FATAL_ERROR "App bundle not found for macdeployqt: ${_bundle}")
+endif ()
+
+execute_process(
+    COMMAND "$ENV{MACDEPLOYQT_EXECUTABLE}" "${_bundle}" "-verbose=1"
+    RESULT_VARIABLE _deploy_rv
+    OUTPUT_VARIABLE _deploy_out
+    ERROR_VARIABLE _deploy_err
+)
+
+if (NOT _deploy_rv EQUAL 0)
+    message(FATAL_ERROR "macdeployqt failed for iOS app bundle:\n${_deploy_out}\n${_deploy_err}")
+endif ()
+
+message(STATUS "macdeployqt completed for iOS app bundle")
+]=])
+
+        add_custom_target(IOSDeployQt
+            DEPENDS ${target}
+            COMMAND ${CMAKE_COMMAND} -E env
+                MACDEPLOYQT_EXECUTABLE=${MACDEPLOYQT_EXECUTABLE}
+                APP_BUNDLE_PATH=$<TARGET_BUNDLE_DIR:${target}>
+                ${CMAKE_COMMAND} -P "${_deploy_script}"
+            COMMENT "Deploying iOS app bundle with macdeployqt"
+            VERBATIM
+        )
+        message(STATUS "IOSDeployQt target configured -> cmake --build . --target IOSDeployQt")
+        set(_archive_dep_target IOSDeployQt)
     endif ()
 
     set(_verify_script "${CMAKE_CURRENT_BINARY_DIR}/verify_ios_ipa.cmake")
@@ -108,7 +116,7 @@ message(STATUS "Exported iOS IPA: ${_ipa}")
 
     if (NOT TARGET IOSArchive)
         add_custom_target(IOSArchive
-            DEPENDS ${target}
+            DEPENDS ${_archive_dep_target}
             COMMAND "${XCODEBUILD_EXECUTABLE}"
                 -project "${CMAKE_BINARY_DIR}/${CMAKE_PROJECT_NAME}.xcodeproj"
                 -scheme "${target}"
@@ -116,7 +124,7 @@ message(STATUS "Exported iOS IPA: ${_ipa}")
                 -destination "generic/platform=iOS"
                 -archivePath "${_archive_path}"
                 archive
-                ${_allow_updates_arg}
+                -allowProvisioningUpdates
             COMMENT "Archiving iOS app for App Store distribution"
             VERBATIM
         )
@@ -132,7 +140,7 @@ message(STATUS "Exported iOS IPA: ${_ipa}")
                 -archivePath "${_archive_path}"
                 -exportPath "${_export_path}"
                 -exportOptionsPlist "${_export_options_plist}"
-                ${_allow_updates_arg}
+                -allowProvisioningUpdates
             COMMENT "Exporting signed iOS IPA for App Store submission"
             VERBATIM
         )
