@@ -52,6 +52,7 @@ function(configure_apple_release_code_signing target)
             XCODE_ATTRIBUTE_ENABLE_HARDENED_RUNTIME "$<$<CONFIG:Release>:YES>$<$<NOT:$<CONFIG:Release>>:NO>"
             XCODE_ATTRIBUTE_OTHER_CODE_SIGN_FLAGS "$<$<CONFIG:Release>:--timestamp>"
             XCODE_ATTRIBUTE_CODE_SIGN_ENTITLEMENTS "$<$<CONFIG:Release>:${_release_entitlements}>"
+            XCODE_ATTRIBUTE_CODE_SIGN_INJECT_BASE_ENTITLEMENTS "$<$<CONFIG:Release>:NO>$<$<NOT:$<CONFIG:Release>>:YES>"
         )
 
         if (QTQUICKTEMPLATE_MACOS_APP_SIGN_IDENTITY)

@@ -15,7 +15,7 @@
         <string>${MACOSX_BUNDLE_ICON_FILE}</string>
 
         <key>CFBundleIdentifier</key>
-        <string>dev.crowell.app.template</string>
+        <string>$(PRODUCT_BUNDLE_IDENTIFIER)</string>
 
         <key>CFBundleInfoDictionaryVersion</key>
         <string>6.0</string>
