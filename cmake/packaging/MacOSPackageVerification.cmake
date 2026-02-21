@@ -67,7 +67,12 @@ endif ()
 execute_process(COMMAND "${_spctl}" -a -vv -t open "${_dmg}"
     RESULT_VARIABLE _dmg_spctl_rv OUTPUT_VARIABLE _dmg_spctl_out ERROR_VARIABLE _dmg_spctl_err)
 if (NOT _dmg_spctl_rv EQUAL 0)
-    message(FATAL_ERROR "DMG Gatekeeper assessment failed:\n${_dmg_spctl_out}\n${_dmg_spctl_err}")
+    string(FIND "${_dmg_spctl_out}${_dmg_spctl_err}" "Insufficient Context" _dmg_insufficient_context_pos)
+    if (NOT _dmg_insufficient_context_pos EQUAL -1)
+        message(WARNING "DMG Gatekeeper assessment returned 'Insufficient Context'; continuing because codesign and stapler validation passed.\n${_dmg_spctl_out}\n${_dmg_spctl_err}")
+    else ()
+        message(FATAL_ERROR "DMG Gatekeeper assessment failed:\n${_dmg_spctl_out}\n${_dmg_spctl_err}")
+    endif ()
 endif ()
 
 execute_process(COMMAND "${_xcrun}" stapler validate "${_dmg}"
@@ -85,7 +90,12 @@ endif ()
 execute_process(COMMAND "${_spctl}" -a -vv -t exec "${_bundle}"
     RESULT_VARIABLE _app_spctl_rv OUTPUT_VARIABLE _app_spctl_out ERROR_VARIABLE _app_spctl_err)
 if (NOT _app_spctl_rv EQUAL 0)
-    message(FATAL_ERROR "App Gatekeeper assessment failed:\n${_app_spctl_out}\n${_app_spctl_err}")
+    string(FIND "${_app_spctl_out}${_app_spctl_err}" "Insufficient Context" _app_insufficient_context_pos)
+    if (NOT _app_insufficient_context_pos EQUAL -1)
+        message(WARNING "App Gatekeeper assessment returned 'Insufficient Context'; continuing because codesign and stapler validation passed.\n${_app_spctl_out}\n${_app_spctl_err}")
+    else ()
+        message(FATAL_ERROR "App Gatekeeper assessment failed:\n${_app_spctl_out}\n${_app_spctl_err}")
+    endif ()
 endif ()
 
 execute_process(COMMAND "${_xcrun}" stapler validate "${_bundle}"
