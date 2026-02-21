@@ -296,6 +296,42 @@ jarsigner -verify -verbose app-release.aab
 
 ---
 
+## iOS: archive, sign, export (App Store)
+
+iOS App Store packaging is automated with Xcode generator targets:
+
+- `IOSDeployQt` (when `macdeployqt` is available)
+- `IOSArchive`
+- `IOSExportIPA`
+- `VerifyIOSIPA`
+- `ReleaseDistributableIOS`
+
+Configure with Xcode and your Apple signing details:
+
+```bash
+cmake -S . -B build/ios-release -G Xcode \
+  -DCMAKE_SYSTEM_NAME=iOS \
+  -DCMAKE_OSX_ARCHITECTURES=arm64 \
+  -DQTQUICKTEMPLATE_APPLE_DEVELOPMENT_TEAM=<TEAM_ID> \
+  -DQTQUICKTEMPLATE_APPLE_BUNDLE_IDENTIFIER=<BUNDLE_ID>
+```
+
+Build an App Store-ready IPA:
+
+```bash
+cmake --build build/ios-release --target ReleaseDistributableIOS --config Release
+```
+
+Useful iOS CMake cache variables:
+
+- `QTQUICKTEMPLATE_APPLE_DEVELOPMENT_TEAM` (required)
+- `QTQUICKTEMPLATE_APPLE_BUNDLE_IDENTIFIER` (required)
+- `QTQUICKTEMPLATE_IOS_ARCHIVE_CONFIGURATION` (defaults to `Release`)
+
+`IOSArchive` and `IOSExportIPA` always use automatic signing and App Store export mode.
+
+---
+
 ## QML modules & resource layout
 
 This project intentionally **flattens QML resource paths** using `QT_RESOURCE_ALIAS` so that pages/components can be referenced by simple filenames (e.g. `Qt.resolvedUrl("Readme.qml")`) even if they live under `qml/pages/` in the source tree.

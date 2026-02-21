@@ -73,5 +73,11 @@
 
         <key>ITSAppUsesNonExemptEncryption</key>
         <false/>
+
+        <key>CFBundleIconName</key>
+        <string>AppIcon</string>
+
+        <key>CFBundleAllowMixedLocalizations</key>
+        <true/>
     </dict>
 </plist>
