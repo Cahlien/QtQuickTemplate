@@ -73,10 +73,6 @@ if (NOT DEFINED ENV{NOTARIZE_ARTIFACT})
     message(FATAL_ERROR "NOTARIZE_ARTIFACT env var is required")
 endif ()
 
-if (NOT EXISTS "$ENV{NOTARIZE_ARTIFACT}")
-    message(FATAL_ERROR "Artifact not found: $ENV{NOTARIZE_ARTIFACT}")
-endif ()
-
 if (NOT DEFINED ENV{APP_BUNDLE_PATH})
     message(FATAL_ERROR "APP_BUNDLE_PATH env var is required")
 endif ()
@@ -86,6 +82,21 @@ set(_codesign "$ENV{CODESIGN_EXECUTABLE}")
 set(_spctl "$ENV{SPCTL_EXECUTABLE}")
 set(_artifact "$ENV{NOTARIZE_ARTIFACT}")
 set(_bundle "$ENV{APP_BUNDLE_PATH}")
+
+if (NOT EXISTS "${_artifact}")
+    if (DEFINED ENV{NOTARIZE_FALLBACK_DIR} AND NOT "$ENV{NOTARIZE_FALLBACK_DIR}" STREQUAL "")
+        file(GLOB _fallback_dmgs "$ENV{NOTARIZE_FALLBACK_DIR}/*.dmg")
+        if (_fallback_dmgs)
+            list(SORT _fallback_dmgs)
+            list(GET _fallback_dmgs -1 _artifact)
+            message(WARNING "Configured DMG not found. Falling back to: ${_artifact}")
+        else ()
+            message(FATAL_ERROR "Artifact not found: $ENV{NOTARIZE_ARTIFACT}")
+        endif ()
+    else ()
+        message(FATAL_ERROR "Artifact not found: $ENV{NOTARIZE_ARTIFACT}")
+    endif ()
+endif ()
 
 if (DEFINED ENV{NOTARY_KEYCHAIN_PROFILE} AND NOT "$ENV{NOTARY_KEYCHAIN_PROFILE}" STREQUAL "")
     execute_process(
@@ -213,6 +224,7 @@ message(STATUS "Notarized artifact and app signature verification passed")
             CODESIGN_EXECUTABLE=${CODESIGN_EXECUTABLE}
             SPCTL_EXECUTABLE=${SPCTL_EXECUTABLE}
             NOTARIZE_ARTIFACT=${_artifact}
+            NOTARIZE_FALLBACK_DIR=${CMAKE_BINARY_DIR}
             APP_BUNDLE_PATH=$<TARGET_BUNDLE_DIR:${target}>
             NOTARY_KEYCHAIN_PROFILE=${QTQUICKTEMPLATE_MACOS_NOTARY_KEYCHAIN_PROFILE}
             NOTARY_TEAM_ID=${_team_id}
