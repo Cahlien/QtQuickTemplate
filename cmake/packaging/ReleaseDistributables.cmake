@@ -27,9 +27,27 @@ function(configure_release_distributables target)
 
     if (APPLE AND IOS)
         if (NOT TARGET ReleaseDistributableIOS)
+            set(_ios_release_dep "")
+            set(_ios_release_comment "")
+            if (TARGET VerifyIOSIPA)
+                set(_ios_release_dep VerifyIOSIPA)
+                set(_ios_release_comment "Building, exporting, and verifying App Store-ready iOS IPA artifacts")
+            elseif (TARGET IOSExportIPA)
+                set(_ios_release_dep IOSExportIPA)
+                set(_ios_release_comment "Building and exporting App Store-ready iOS IPA artifacts")
+            elseif (TARGET IOSArchive)
+                set(_ios_release_dep IOSArchive)
+                set(_ios_release_comment "Building App Store-ready iOS archive artifacts")
+            endif ()
+
+            if (NOT _ios_release_dep)
+                set(_ios_release_dep ${target})
+                set(_ios_release_comment "Building iOS release artifacts")
+            endif ()
+
             add_custom_target(ReleaseDistributableIOS
-                DEPENDS ${target}
-                COMMENT "Building iOS release artifacts"
+                DEPENDS ${_ios_release_dep}
+                COMMENT "${_ios_release_comment}"
             )
             message(STATUS "ReleaseDistributableIOS target configured -> cmake --build . --target ReleaseDistributableIOS")
         endif ()
