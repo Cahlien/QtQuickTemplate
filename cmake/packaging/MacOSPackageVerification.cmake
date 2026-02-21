@@ -64,7 +64,7 @@ if (NOT _dmg_codesign_rv EQUAL 0)
     message(FATAL_ERROR "DMG codesign verification failed:\n${_dmg_codesign_out}\n${_dmg_codesign_err}")
 endif ()
 
-execute_process(COMMAND "${_spctl}" -a -vv "${_dmg}"
+execute_process(COMMAND "${_spctl}" -a -vv -t open "${_dmg}"
     RESULT_VARIABLE _dmg_spctl_rv OUTPUT_VARIABLE _dmg_spctl_out ERROR_VARIABLE _dmg_spctl_err)
 if (NOT _dmg_spctl_rv EQUAL 0)
     message(FATAL_ERROR "DMG Gatekeeper assessment failed:\n${_dmg_spctl_out}\n${_dmg_spctl_err}")
@@ -82,7 +82,7 @@ if (NOT _app_codesign_rv EQUAL 0)
     message(FATAL_ERROR "App codesign verification failed:\n${_app_codesign_out}\n${_app_codesign_err}")
 endif ()
 
-execute_process(COMMAND "${_spctl}" -a -vv "${_bundle}"
+execute_process(COMMAND "${_spctl}" -a -vv -t exec "${_bundle}"
     RESULT_VARIABLE _app_spctl_rv OUTPUT_VARIABLE _app_spctl_out ERROR_VARIABLE _app_spctl_err)
 if (NOT _app_spctl_rv EQUAL 0)
     message(FATAL_ERROR "App Gatekeeper assessment failed:\n${_app_spctl_out}\n${_app_spctl_err}")
