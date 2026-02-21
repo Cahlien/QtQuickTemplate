@@ -55,7 +55,7 @@ if (NOT EXISTS "${_dmg}")
 endif ()
 
 execute_process(
-    COMMAND codesign --force --sign "$ENV{CODESIGN_IDENTITY}" "${_dmg}"
+    COMMAND codesign --force --timestamp --sign "$ENV{CODESIGN_IDENTITY}" "${_dmg}"
     RESULT_VARIABLE _codesign_rv
     OUTPUT_VARIABLE _codesign_out
     ERROR_VARIABLE _codesign_err

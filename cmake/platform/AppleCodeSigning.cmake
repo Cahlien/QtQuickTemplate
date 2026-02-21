@@ -38,6 +38,22 @@ function(configure_apple_release_code_signing target)
             XCODE_ATTRIBUTE_PROVISIONING_PROFILE_SPECIFIER ""
         )
     else ()
+        set(_release_entitlements "${CMAKE_CURRENT_BINARY_DIR}/${target}_Release.entitlements")
+        file(WRITE "${_release_entitlements}" "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n")
+        file(APPEND "${_release_entitlements}" "<!DOCTYPE plist PUBLIC \"-//Apple//DTD PLIST 1.0//EN\" \"http://www.apple.com/DTDs/PropertyList-1.0.dtd\">\n")
+        file(APPEND "${_release_entitlements}" "<plist version=\"1.0\">\n")
+        file(APPEND "${_release_entitlements}" "<dict>\n")
+        file(APPEND "${_release_entitlements}" "    <key>com.apple.security.get-task-allow</key>\n")
+        file(APPEND "${_release_entitlements}" "    <false/>\n")
+        file(APPEND "${_release_entitlements}" "</dict>\n")
+        file(APPEND "${_release_entitlements}" "</plist>\n")
+
+        set_target_properties(${target} PROPERTIES
+            XCODE_ATTRIBUTE_ENABLE_HARDENED_RUNTIME "$<$<CONFIG:Release>:YES>$<$<NOT:$<CONFIG:Release>>:NO>"
+            XCODE_ATTRIBUTE_OTHER_CODE_SIGN_FLAGS "$<$<CONFIG:Release>:--timestamp>"
+            XCODE_ATTRIBUTE_CODE_SIGN_ENTITLEMENTS "$<$<CONFIG:Release>:${_release_entitlements}>"
+        )
+
         if (QTQUICKTEMPLATE_MACOS_APP_SIGN_IDENTITY)
             set_target_properties(${target} PROPERTIES
                 XCODE_ATTRIBUTE_CODE_SIGN_STYLE "$<$<CONFIG:Release>:Manual>$<$<NOT:$<CONFIG:Release>>:Automatic>"
