@@ -23,11 +23,17 @@ function(setup_app_qml_module target)
         qml/organisms/Header.qml
         qml/organisms/Footer.qml
         qml/organisms/NavBar.qml
+        qml/templates/AdaptiveLayout.qml
+        qml/templates/NavigationStack.qml
         qml/templates/MainPortraitLayout.qml
         qml/templates/MainLandscapeLayout.qml
+        qml/pages/BasePage.qml
         qml/pages/Readme.qml
         qml/pages/License.qml
         qml/pages/StyleShowcase.qml
+        qml/pages/content/ReadmeContent.qml
+        qml/pages/content/LicenseContent.qml
+        qml/pages/content/StyleShowcaseContent.qml
     )
     set_qml_resource_aliases(_qml_all_files)
 
