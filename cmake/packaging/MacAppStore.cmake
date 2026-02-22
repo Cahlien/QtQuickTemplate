@@ -229,7 +229,7 @@ list(GET _pkgs -1 _pkg)
 message(STATUS "Exported macOS PKG: ${_pkg}")
 ]=])
 
-    # Version xcconfig — same format as iOS; reuses generate_version.cmake with PLATFORM=ios.
+    # Version xcconfig — macOS uses 3-part CURRENT_PROJECT_VERSION (no build number).
     set(_version_xcconfig "${CMAKE_BINARY_DIR}/macos/version.xcconfig")
     set(_version_script "${CMAKE_CURRENT_SOURCE_DIR}/scripts/generate_version.cmake")
 
@@ -239,7 +239,7 @@ message(STATUS "Exported macOS PKG: ${_pkg}")
                 -DMAJOR=${PROJECT_VERSION_MAJOR}
                 -DMINOR=${PROJECT_VERSION_MINOR}
                 -DPATCH=${PROJECT_VERSION_PATCH}
-                -DPLATFORM=ios
+                -DPLATFORM=macos
                 -DOUT_FILE=${_version_xcconfig}
                 -P ${_version_script}
             COMMENT "Generating macOS App Store version.xcconfig"
