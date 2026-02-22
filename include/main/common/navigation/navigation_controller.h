@@ -3,7 +3,7 @@
 #include <QJSEngine>
 #include <QObject>
 #include <QQmlEngine>
-#include <QStack>
+#include <QVector>
 #include <QString>
 #include <QVariantMap>
 #include <QtQml/qqmlregistration.h>
@@ -12,31 +12,22 @@
     \class NavigationController
     \brief Unified navigation manager exposed to QML as the \c NavigationController singleton.
 
-    Maintains a single back-stack of lightweight \c Entry records — each storing
-    only a URL, optional initial properties, and a chrome-visibility flag.  No
-    QQuickItem references are held; pages are (re)hydrated on demand by the QML
-    \c Loader via \c Loader::setSource(url, props).
+    Emits navigation requests (\c pushRequested, \c popRequested,
+    \c replaceRequested) consumed by a QML \c StackView, and mirrors the
+    current top-page state so QML can still bind to a single singleton.
 
-    Every visible page change — whether via \c push() or \c pop() — creates
-    or removes a history entry.  QML reacts declaratively to property changes:
+    QML reacts declaratively to property changes:
 
     \list
     \li \c currentUrl / \c currentProps / \c currentShowChrome drive the active \c Loader.
     \li \c canGoBack controls whether the back button triggers a pop or a root signal.
     \endlist
 
-    The navigation contract is uniform: every caller uses the same three-field
-    tuple (\c url, \c props, \c showChrome).  Presentation concerns like
-    tab-bar highlights are derived from \c currentUrl in QML — the controller
-    has no concept of tabs, indices, or any other UI chrome.
+    The navigation contract remains uniform: every caller uses the same
+    three-field tuple (\c url, \c props, \c showChrome).
 
     The \c backAtRoot signal fires when \c pop() is called with an empty back-stack;
     QML uses it to minimise the app on Android or do nothing on desktop.
-
-    All mutating methods are guarded against re-entrant calls during signal
-    emission, which prevents platform-specific cascading pushes triggered by
-    QML \c Binding side-effects (e.g.\ a \c TabBar \c currentIndex change
-    spuriously activating a button on iOS).
 
     Thread safety: \c pop() is always invoked on the Qt main thread via
     \c Qt::QueuedConnection from the JNI back-handler, so no mutex is required.
@@ -51,6 +42,8 @@ class NavigationController : public QObject
     Q_PROPERTY(QVariantMap currentProps       READ currentProps       NOTIFY currentChanged FINAL)
     Q_PROPERTY(bool        currentShowChrome  READ currentShowChrome  NOTIFY currentChanged FINAL)
     Q_PROPERTY(bool        canGoBack          READ canGoBack          NOTIFY currentChanged FINAL)
+    Q_PROPERTY(bool        canGoForward       READ canGoForward       NOTIFY currentChanged FINAL)
+    Q_PROPERTY(int         historyLimit       READ historyLimit       CONSTANT FINAL)
 
 public:
     ~NavigationController() override = default;
@@ -62,22 +55,27 @@ public:
 
     // ── Navigation API ────────────────────────────────────────────────────
 
-    /// Push a new page onto the back-stack.  No-ops if the URL, props, and
-    /// showChrome all match the current entry (prevents duplicate history
-    /// from re-clicking the active link).  The first call seeds the home
-    /// entry without adding to the back-stack, so back from the home page
-    /// never returns to a blank state.
+    /// Request that QML pushes a page onto StackView.
     Q_INVOKABLE void push(const QString     &url,
                           const QVariantMap &props      = {},
                           bool               showChrome = true);
 
-    /// Pop the top entry.  Emits \c backAtRoot if the stack is already empty.
+    /// Request a pop. Emits \c backAtRoot if there is no page to pop.
     Q_INVOKABLE void pop();
 
-    /// Replace the current entry in-place (back-stack is unaffected).
+    /// Request a forward navigation if forward history exists.
+    Q_INVOKABLE void forward();
+
+    /// Request that QML replaces the top page.
     Q_INVOKABLE void replace(const QString     &url,
                              const QVariantMap &props      = {},
                              bool               showChrome = true);
+
+    /// Called by QML whenever StackView top page changes.
+    Q_INVOKABLE void setCurrent(const QString     &url,
+                                const QVariantMap &props,
+                                bool               showChrome,
+                                int                stackDepth);
 
     /// Move the app to the background (Android only; no-op elsewhere).
     Q_INVOKABLE void minimizeApp();
@@ -88,9 +86,14 @@ public:
     [[nodiscard]] QVariantMap currentProps()       const;
     [[nodiscard]] bool        currentShowChrome()  const;
     [[nodiscard]] bool        canGoBack()          const;
+    [[nodiscard]] bool        canGoForward()       const;
+    [[nodiscard]] int         historyLimit()       const;
 
 signals:
     void currentChanged();
+    void pushRequested(const QString &url, const QVariantMap &props, bool showChrome);
+    void popRequested();
+    void replaceRequested(const QString &url, const QVariantMap &props, bool showChrome);
     /// Fired when \c pop() is called with an empty back-stack.
     void backAtRoot();
 
@@ -103,7 +106,11 @@ private:
         bool        showChrome = true;
     };
 
-    QStack<Entry> m_back;
-    Entry         m_current;
-    bool          m_navigating = false;
+    QString     m_currentUrl;
+    QVariantMap m_currentProps;
+    bool        m_currentShowChrome = true;
+    bool        m_canGoBack = false;
+    int         m_stackDepth = 0;
+    int         m_historyLimit = 1;
+    QVector<Entry> m_forward;
 };
