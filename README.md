@@ -296,39 +296,99 @@ jarsigner -verify -verbose app-release.aab
 
 ---
 
-## iOS: archive, sign, export (App Store)
+## iOS: build, archive, sign, export, upload (App Store)
 
-iOS App Store packaging is automated with Xcode generator targets:
+The full pipeline — build → archive → sign → export IPA → verify → upload to App Store Connect — runs with a single CMake build preset.
 
-- `IOSDeployQt` (when `macdeployqt` is available)
-- `IOSArchive`
-- `IOSExportIPA`
-- `VerifyIOSIPA`
-- `ReleaseDistributableIOS`
+### Prerequisites
 
-Configure with Xcode and your Apple signing details:
+- **Xcode** with command-line tools (`xcode-select --install`)
+- **Qt 6.10+** for iOS (e.g. `~/Qt/6.10.2/ios`)
+- An **Apple Developer** account with:
+  - "Apple Distribution" certificate in your Keychain
+  - App Store distribution provisioning profile for your bundle ID
+  - App Store Connect API key (`.p8` file in `~/.appstoreconnect/private_keys/`)
 
-```bash
-cmake -S . -B build/ios-release -G Xcode \
-  -DCMAKE_SYSTEM_NAME=iOS \
-  -DCMAKE_OSX_ARCHITECTURES=arm64 \
-  -DQTQUICKTEMPLATE_APPLE_DEVELOPMENT_TEAM=<TEAM_ID> \
-  -DQTQUICKTEMPLATE_APPLE_BUNDLE_IDENTIFIER=<BUNDLE_ID>
+### Setup
+
+`CMakeUserPresets.json` is gitignored. Create it at the repo root with your local signing details:
+
+```json
+{
+    "version": 6,
+    "configurePresets": [
+        {
+            "name": "ios-release-local",
+            "inherits": "ios-release",
+            "environment": {
+                "QT_IOS_ROOT": "/path/to/Qt/6.10.2/ios",
+                "APPLE_DEVELOPMENT_TEAM": "<10-char Team ID>",
+                "IOS_PROVISIONING_PROFILE": "<Provisioning profile name>",
+                "ASC_API_KEY_ID": "<Key ID, e.g. NV3YP3T2C5>",
+                "ASC_API_ISSUER_ID": "<Issuer UUID>"
+            },
+            "cacheVariables": {
+                "CMAKE_OSX_ARCHITECTURES": "arm64",
+                "CMAKE_OSX_DEPLOYMENT_TARGET": "17.0",
+                "QTQUICKTEMPLATE_APPLE_BUNDLE_IDENTIFIER": "com.example.yourapp"
+            }
+        }
+    ],
+    "buildPresets": [
+        {
+            "name": "ios-app-local",
+            "inherits": "ios-app",
+            "configurePreset": "ios-release-local"
+        },
+        {
+            "name": "ios-distributable-local",
+            "inherits": "ios-distributable",
+            "configurePreset": "ios-release-local"
+        }
+    ]
+}
 ```
 
-Build an App Store-ready IPA:
+The `AuthKey_<KEY_ID>.p8` file must be in `~/.appstoreconnect/private_keys/` — the standard path that `altool` searches automatically.
+
+### Full pipeline (one command after first configure)
 
 ```bash
-cmake --build build/ios-release --target ReleaseDistributableIOS --config Release
+# Configure (once, or after CMake changes)
+cmake --preset ios-release-local
+
+# Build → archive → sign → export IPA → verify → upload to App Store Connect
+cmake --build --preset ios-distributable-local
 ```
 
-Useful iOS CMake cache variables:
+Output IPA: `build/Qt_6_10_2_for_iOS/ios/export/QtQuickTemplate.ipa`
 
-- `QTQUICKTEMPLATE_APPLE_DEVELOPMENT_TEAM` (required)
-- `QTQUICKTEMPLATE_APPLE_BUNDLE_IDENTIFIER` (required)
-- `QTQUICKTEMPLATE_IOS_ARCHIVE_CONFIGURATION` (defaults to `Release`)
+### Individual targets
 
-`IOSArchive` and `IOSExportIPA` always use automatic signing and App Store export mode.
+| Target | What it does |
+|--------|-------------|
+| `IOSArchive` | Runs `xcodebuild archive` with the Apple Distribution identity |
+| `IOSExportIPA` | Exports the archive as a signed `.ipa` (App Store method) |
+| `VerifyIOSIPA` | Confirms the `.ipa` was created successfully |
+| `IOSUploadASC` | Uploads the `.ipa` to App Store Connect via `xcrun altool` |
+| `ReleaseDistributableIOS` | Meta-target: runs all of the above in order |
+
+To build without uploading:
+
+```bash
+cmake --build --preset ios-app-local
+```
+
+### CMake cache variables
+
+| Variable | Purpose | Default |
+|----------|---------|---------|
+| `QTQUICKTEMPLATE_APPLE_DEVELOPMENT_TEAM` | 10-char Team ID | (from `APPLE_DEVELOPMENT_TEAM` env) |
+| `QTQUICKTEMPLATE_APPLE_BUNDLE_IDENTIFIER` | Bundle identifier | `dev.crowell.qtquicktemplate` |
+| `QTQUICKTEMPLATE_IOS_PROVISIONING_PROFILE` | Provisioning profile name | (from `IOS_PROVISIONING_PROFILE` env) |
+| `QTQUICKTEMPLATE_IOS_ARCHIVE_CONFIGURATION` | Xcode build configuration | `Release` |
+| `QTQUICKTEMPLATE_ASC_API_KEY_ID` | App Store Connect API key ID | (from `ASC_API_KEY_ID` env) |
+| `QTQUICKTEMPLATE_ASC_API_ISSUER_ID` | App Store Connect API issuer UUID | (from `ASC_API_ISSUER_ID` env) |
 
 ---
 
