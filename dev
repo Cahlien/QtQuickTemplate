@@ -1,0 +1,289 @@
+#!/usr/bin/env bash
+
+set -euo pipefail
+
+PYTHON_PREFERRED="3.14.3t"
+PYTHON_FALLBACK="3.14.3"
+POETRY_VERSION="1.8.3"
+CONAN_VERSION="2.12.2"
+CMAKE_VERSION="4.2.1"
+BUILD_TYPE="Release"
+
+ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+UV_DIR="$ROOT/.uv"
+UV_BIN="$UV_DIR/uv"
+UV_INSTALL_SH="https://astral.sh/uv/install.sh"
+VENV_DIR="$ROOT/.venv"
+VENV_PYTHON="$VENV_DIR/bin/python"
+VENV_POETRY="$VENV_DIR/bin/poetry"
+VENV_CONAN="$VENV_DIR/bin/conan"
+VENV_CMAKE="$VENV_DIR/bin/cmake"
+BUILD_DIR="$ROOT/build"
+CONAN_OUT_DIR="$BUILD_DIR/conan"
+PYTHON_SPEC_FILE="$VENV_DIR/.python-build-spec"
+
+export UV_TOOL_DIR="$UV_DIR/tools"
+export UV_PYTHON_INSTALL_DIR="$UV_DIR/python"
+export UV_CACHE_DIR="$UV_DIR/cache"
+
+section() {
+  printf "\n==> %s\n" "$1"
+}
+
+die() {
+  printf "\nERROR: %s\n" "$1" >&2
+  exit 1
+}
+
+ensure_dirs() {
+  mkdir -p "$UV_DIR" "$UV_TOOL_DIR" "$UV_PYTHON_INSTALL_DIR" "$UV_CACHE_DIR"
+}
+
+ensure_uv() {
+  ensure_dirs
+
+  if [ -x "$UV_BIN" ]; then
+    return 0
+  fi
+
+  if [ -x "$UV_DIR/bin/uv" ]; then
+    ln -sf "$UV_DIR/bin/uv" "$UV_BIN"
+    return 0
+  fi
+
+  section "Installing local uv"
+  if command -v curl >/dev/null 2>&1; then
+    curl -LsSf "$UV_INSTALL_SH" | env UV_INSTALL_DIR="$UV_DIR" sh
+  elif command -v wget >/dev/null 2>&1; then
+    wget -qO- "$UV_INSTALL_SH" | env UV_INSTALL_DIR="$UV_DIR" sh
+  else
+    die "Neither curl nor wget is available; install one to bootstrap uv"
+  fi
+
+  if [ -x "$UV_DIR/bin/uv" ]; then
+    ln -sf "$UV_DIR/bin/uv" "$UV_BIN"
+  fi
+
+  [ -x "$UV_BIN" ] || die "uv install failed; expected executable at $UV_BIN"
+}
+
+venv_tool_version() {
+  local tool_bin="$1"
+  local output
+  if [ ! -x "$tool_bin" ]; then
+    return 1
+  fi
+  output="$($tool_bin --version 2>/dev/null || true)"
+  if [[ "$output" =~ ([0-9]+\.[0-9]+\.[0-9]+) ]]; then
+    printf "%s\n" "${BASH_REMATCH[1]}"
+  fi
+}
+
+ensure_python_and_venv() {
+  ensure_uv
+  section "Provisioning Python and virtual environment"
+
+  local chosen_python="$PYTHON_PREFERRED"
+  if ! "$UV_BIN" python install "$PYTHON_PREFERRED" >/dev/null 2>&1; then
+    chosen_python="$PYTHON_FALLBACK"
+    "$UV_BIN" python install "$PYTHON_FALLBACK"
+  fi
+
+  local want_version
+  want_version="${chosen_python%t}"
+  local recreate_venv="0"
+
+  if [ ! -x "$VENV_PYTHON" ]; then
+    recreate_venv="1"
+  elif [ ! -f "$PYTHON_SPEC_FILE" ]; then
+    recreate_venv="1"
+  else
+    local current_spec
+    current_spec="$(cat "$PYTHON_SPEC_FILE" 2>/dev/null || true)"
+    if [ "$current_spec" != "$chosen_python" ]; then
+      recreate_venv="1"
+    else
+      local current_version
+      current_version="$($VENV_PYTHON -c 'import platform; print(platform.python_version())' 2>/dev/null || true)"
+      if [ "$current_version" != "$want_version" ]; then
+        recreate_venv="1"
+      fi
+    fi
+  fi
+
+  if [ "$recreate_venv" = "1" ]; then
+    rm -rf "$VENV_DIR"
+    "$UV_BIN" venv --python "$chosen_python" "$VENV_DIR"
+    printf "%s\n" "$chosen_python" >"$PYTHON_SPEC_FILE"
+  fi
+}
+
+ensure_tools() {
+  section "Installing pinned Python tooling"
+
+  local poetry_ok="0"
+  local conan_ok="0"
+  local cmake_ok="0"
+
+  if [ -x "$VENV_POETRY" ] && [ "$(venv_tool_version "$VENV_POETRY" || true)" = "$POETRY_VERSION" ]; then
+    poetry_ok="1"
+  fi
+  if [ -x "$VENV_CONAN" ] && [ "$(venv_tool_version "$VENV_CONAN" || true)" = "$CONAN_VERSION" ]; then
+    conan_ok="1"
+  fi
+  if [ -x "$VENV_CMAKE" ] && [ "$(venv_tool_version "$VENV_CMAKE" || true)" = "$CMAKE_VERSION" ]; then
+    cmake_ok="1"
+  fi
+
+  if [ "$poetry_ok" = "1" ] && [ "$conan_ok" = "1" ] && [ "$cmake_ok" = "1" ]; then
+    printf "Pinned tooling already installed in %s\n" "$VENV_DIR"
+    return 0
+  fi
+
+  "$UV_BIN" pip install --python "$VENV_PYTHON" \
+    "poetry==$POETRY_VERSION" \
+    "conan==$CONAN_VERSION" \
+    "cmake==$CMAKE_VERSION"
+}
+
+install_python_deps() {
+  if [ ! -f "$ROOT/pyproject.toml" ]; then
+    printf "No pyproject.toml found; skipping Poetry dependency install\n"
+    return 0
+  fi
+
+  section "Installing Python dependencies"
+  "$VENV_POETRY" config virtualenvs.in-project true --local
+  "$VENV_POETRY" install --sync
+}
+
+ensure_conan_profile() {
+  if "$VENV_CONAN" profile path default >/dev/null 2>&1; then
+    return 0
+  fi
+  "$VENV_CONAN" profile detect --force
+}
+
+cmd_setup() {
+  ensure_python_and_venv
+  ensure_tools
+  install_python_deps
+}
+
+cmd_deps() {
+  cmd_setup
+  section "Installing Conan dependencies"
+  ensure_conan_profile
+  "$VENV_CONAN" install "$ROOT" \
+    --output-folder="$CONAN_OUT_DIR" \
+    --build=missing \
+    -s build_type="$BUILD_TYPE"
+}
+
+cmd_build() {
+  cmd_deps
+  section "Configuring CMake"
+  [ -f "$CONAN_OUT_DIR/conan_toolchain.cmake" ] || die "Missing Conan toolchain: $CONAN_OUT_DIR/conan_toolchain.cmake"
+
+  "$VENV_CMAKE" -S "$ROOT" -B "$BUILD_DIR" \
+    -DCMAKE_BUILD_TYPE="$BUILD_TYPE" \
+    -DCMAKE_TOOLCHAIN_FILE="$CONAN_OUT_DIR/conan_toolchain.cmake"
+
+  section "Building"
+  "$VENV_CMAKE" --build "$BUILD_DIR" -j
+}
+
+cmd_clean() {
+  section "Cleaning build outputs"
+  rm -rf "$BUILD_DIR"
+  shopt -s nullglob
+  local build_variants=("$ROOT"/build-*)
+  shopt -u nullglob
+  if [ "${#build_variants[@]}" -gt 0 ]; then
+    rm -rf "${build_variants[@]}"
+  fi
+}
+
+cmd_nuke() {
+  section "Removing build outputs and local toolchain"
+  cmd_clean
+  rm -rf "$UV_DIR" "$VENV_DIR"
+}
+
+doctor_print_tool() {
+  local name="$1"
+  local bin="$2"
+  if [ -x "$bin" ]; then
+    printf "%-10s %s\n" "$name" "$bin"
+    "$bin" --version 2>/dev/null | sed 's/^/  /'
+  else
+    printf "%-10s %s\n" "$name" "not found"
+  fi
+}
+
+doctor_print_optional() {
+  local name="$1"
+  local cmd="$2"
+  if command -v "$cmd" >/dev/null 2>&1; then
+    local path
+    path="$(command -v "$cmd")"
+    printf "%-10s %s\n" "$name" "$path"
+    "$cmd" --version 2>/dev/null | sed 's/^/  /' | awk 'NR<=1 { print }'
+  else
+    printf "%-10s %s\n" "$name" "not found"
+  fi
+}
+
+cmd_doctor() {
+  section "Environment"
+  printf "root       %s\n" "$ROOT"
+  printf "uv dir     %s\n" "$UV_DIR"
+  printf "venv dir   %s\n" "$VENV_DIR"
+
+  section "Local toolchain"
+  doctor_print_tool "uv" "$UV_BIN"
+  doctor_print_tool "python" "$VENV_PYTHON"
+  doctor_print_tool "poetry" "$VENV_POETRY"
+  doctor_print_tool "conan" "$VENV_CONAN"
+  doctor_print_tool "cmake" "$VENV_CMAKE"
+
+  section "Qt discovery"
+  doctor_print_optional "qmake" "qmake"
+  doctor_print_optional "qtpaths" "qtpaths"
+  doctor_print_optional "qt-cmake" "qt-cmake"
+}
+
+usage() {
+  cat <<EOF
+Usage: ./dev <command>
+
+Commands:
+  setup   Bootstrap local uv + python + .venv + pinned tools + python deps
+  deps    setup, then install Conan dependencies into build/conan
+  build   deps, then configure and build with venv CMake
+  clean   Remove build outputs (build/, build-*)
+  nuke    clean + remove .uv/ and .venv/
+  doctor  Print local toolchain versions and discovered Qt tools
+EOF
+}
+
+main() {
+  local cmd="${1:-}"
+  case "$cmd" in
+  setup) cmd_setup ;;
+  deps) cmd_deps ;;
+  build) cmd_build ;;
+  clean) cmd_clean ;;
+  nuke) cmd_nuke ;;
+  doctor) cmd_doctor ;;
+  -h|--help|help|"")
+    usage
+    ;;
+  *)
+    usage
+    die "Unknown command: $cmd"
+    ;;
+  esac
+}
+
+main "$@"
