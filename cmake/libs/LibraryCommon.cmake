@@ -13,6 +13,13 @@ function(add_portable_cpp_library target base_name export_header_out)
             EXPORT_FILE_NAME ${_export_header}
         )
         set(${export_header_out} ${_export_header} PARENT_SCOPE)
+        # Prevent the dylib from being installed as a separate component in the
+        # xcarchive Products directory (e.g. Products/@rpath/libfoo.dylib).
+        # productbuild rejects @rpath as a component install path.  macdeployqt
+        # embeds the library in the app bundle during the archive step instead.
+        if (APPLE AND NOT IOS AND CMAKE_GENERATOR STREQUAL "Xcode")
+            set_target_properties(${target} PROPERTIES XCODE_ATTRIBUTE_SKIP_INSTALL YES)
+        endif ()
     endif ()
 endfunction()
 
@@ -29,6 +36,9 @@ function(add_portable_qt_library target base_name export_header_out)
             EXPORT_FILE_NAME ${_export_header}
         )
         set(${export_header_out} ${_export_header} PARENT_SCOPE)
+        if (APPLE AND NOT IOS AND CMAKE_GENERATOR STREQUAL "Xcode")
+            set_target_properties(${target} PROPERTIES XCODE_ATTRIBUTE_SKIP_INSTALL YES)
+        endif ()
     endif ()
 endfunction()
 

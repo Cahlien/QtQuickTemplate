@@ -26,6 +26,26 @@
             }
         },
         {
+            "name": "macos-appstore",
+            "displayName": "macOS App Store (Xcode)",
+            "description": "Configure for macOS App Store distribution using the Xcode generator. Requires QT_MACOS_ROOT, APPLE_DEVELOPMENT_TEAM, ASC_API_KEY_ID, and ASC_API_ISSUER_ID environment variables.",
+            "generator": "Xcode",
+            "binaryDir": "${sourceDir}/build/Qt_6_10_2_for_macOS_AppStore",
+            "cacheVariables": {
+                "CMAKE_PREFIX_PATH": "$env{QT_MACOS_ROOT}",
+                "QTQUICKTEMPLATE_APPLE_DEVELOPMENT_TEAM": "$env{APPLE_DEVELOPMENT_TEAM}",
+                "QTQUICKTEMPLATE_MACOS_APP_STORE_ARCHIVE_CONFIGURATION": "Release",
+                "QTQUICKTEMPLATE_MACOS_APP_STORE_PROVISIONING_PROFILE": "$env{MACOS_APP_STORE_PROVISIONING_PROFILE}",
+                "QTQUICKTEMPLATE_ASC_API_KEY_ID": "$env{ASC_API_KEY_ID}",
+                "QTQUICKTEMPLATE_ASC_API_ISSUER_ID": "$env{ASC_API_ISSUER_ID}"
+            },
+            "condition": {
+                "type": "equals",
+                "lhs": "${hostSystemName}",
+                "rhs": "Darwin"
+            }
+        },
+        {
             "name": "ios-release",
             "displayName": "iOS Release (Xcode)",
             "description": "Configure for iOS using the Xcode generator and Qt's iOS toolchain. Requires QT_IOS_ROOT and APPLE_DEVELOPMENT_TEAM environment variables.",
@@ -60,6 +80,23 @@
             "description": "Full macOS pipeline: build, deploy Qt, create DMG, notarize, staple, and verify.",
             "configurePreset": "macos-release",
             "targets": ["ReleaseDistributableMacOS"]
+        },
+        {
+            "name": "macos-appstore-app",
+            "displayName": "macOS App Store App (build only)",
+            "description": "Build the macOS app without App Store packaging.",
+            "configurePreset": "macos-appstore",
+            "configuration": "Release",
+            "nativeToolOptions": ["-allowProvisioningUpdates", "CODE_SIGNING_ALLOWED=NO"]
+        },
+        {
+            "name": "macos-appstore-distributable",
+            "displayName": "macOS App Store Distributable",
+            "description": "Full macOS App Store pipeline: build, archive, export PKG, verify, and upload to App Store Connect.",
+            "configurePreset": "macos-appstore",
+            "configuration": "Release",
+            "targets": ["ReleaseDistributableMacOSAppStore"],
+            "nativeToolOptions": ["-allowProvisioningUpdates", "CODE_SIGNING_ALLOWED=NO"]
         },
         {
             "name": "ios-app",

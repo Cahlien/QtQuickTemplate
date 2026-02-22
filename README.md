@@ -392,7 +392,18 @@ cmake --build --preset ios-app-local
 
 ---
 
-## macOS: build, deploy, sign, notarize, verify (DMG)
+## macOS: two distribution channels
+
+macOS has two independent pipelines sharing the same source:
+
+| Channel | Signing | Output | Destination |
+|---------|---------|--------|-------------|
+| **Direct (Developer ID)** | `Developer ID Application` | Notarized `.dmg` | Your website / direct download |
+| **Mac App Store** | `Apple Distribution` | Signed `.pkg` | App Store Connect |
+
+---
+
+## macOS — Direct distribution: build, deploy, sign, notarize, verify (DMG)
 
 The full pipeline — build → deploy Qt frameworks → sign app → create DMG → sign DMG → notarize → staple → verify — runs with a single CMake build preset.
 
@@ -489,6 +500,99 @@ cmake --build --preset macos-app-local
 | `QTQUICKTEMPLATE_MACOS_USE_MACDEPLOYQT` | Enable/disable macdeployqt deployment step | `ON` |
 
 > **Note:** Signing is optional — if identities are left empty, macdeployqt runs unsigned and DMG signing is skipped. Notarization requires a signed app and DMG, so `MACOS_APP_SIGN_IDENTITY` and `MACOS_DMG_SIGN_IDENTITY` must be set for the full pipeline to succeed.
+
+---
+
+## macOS — App Store distribution: build, archive, export, verify, upload (PKG)
+
+The Mac App Store pipeline uses the Xcode generator (separate build directory from the DMG pipeline). The full chain — build → archive → export signed `.pkg` → verify → upload to App Store Connect — runs with a single CMake build preset.
+
+### Prerequisites
+
+- **Xcode** with command-line tools
+- **Qt 6.10+** for macOS (e.g. `~/Qt/6.10.2/macos`)
+- An **Apple Developer** account with:
+  - `Apple Distribution` certificate in your Keychain (the Mac App Store signing identity — different from the `Developer ID Application` cert used for DMG distribution)
+  - App Store Connect API key (`.p8` file) at `~/.appstoreconnect/private_keys/AuthKey_<KEY_ID>.p8`
+  - Your app record created in App Store Connect
+
+### Setup
+
+`CMakeUserPresets.json` is gitignored. Add the following preset to your local copy at the repo root:
+
+```json
+{
+    "version": 6,
+    "configurePresets": [
+        {
+            "name": "macos-appstore-local",
+            "inherits": "macos-appstore",
+            "environment": {
+                "QT_MACOS_ROOT": "/path/to/Qt/6.10.2/macos",
+                "APPLE_DEVELOPMENT_TEAM": "<YOUR_TEAM_ID>",
+                "ASC_API_KEY_ID": "<YOUR_ASC_API_KEY_ID>",
+                "ASC_API_ISSUER_ID": "<YOUR_ASC_API_ISSUER_UUID>"
+            },
+            "cacheVariables": {
+                "QTQUICKTEMPLATE_APPLE_BUNDLE_IDENTIFIER": "com.example.yourapp"
+            }
+        }
+    ],
+    "buildPresets": [
+        {
+            "name": "macos-appstore-app-local",
+            "inherits": "macos-appstore-app",
+            "configurePreset": "macos-appstore-local"
+        },
+        {
+            "name": "macos-appstore-distributable-local",
+            "inherits": "macos-appstore-distributable",
+            "configurePreset": "macos-appstore-local"
+        }
+    ]
+}
+```
+
+### Full pipeline (one command after first configure)
+
+```bash
+# Configure (once, or after CMake changes)
+cmake --preset macos-appstore-local
+
+# Build → archive → export PKG → verify → upload to App Store Connect
+cmake --build --preset macos-appstore-distributable-local
+```
+
+The exported `.pkg` lands in `build/Qt_6_10_2_for_macOS_AppStore/macos/export/`.
+
+### Individual targets
+
+| Target | What it does |
+|--------|-------------|
+| `MacAppStoreArchive` | Runs `xcodebuild archive` with the `Apple Distribution` identity to produce an `.xcarchive` |
+| `MacExportPkg` | Runs `xcodebuild -exportArchive` to produce a signed `.pkg` from the archive |
+| `VerifyMacPkg` | Verifies that a `.pkg` file exists in the export directory |
+| `MacUploadASC` | Uploads the `.pkg` to App Store Connect using `xcrun altool --upload-app` with ASC API key auth |
+| `ReleaseDistributableMacOSAppStore` | Meta-target: runs all of the above in order |
+
+To build without packaging:
+
+```bash
+cmake --build --preset macos-appstore-app-local
+```
+
+### CMake cache variables
+
+| Variable | Purpose | Default |
+|----------|---------|---------|
+| `QTQUICKTEMPLATE_APPLE_DEVELOPMENT_TEAM` | Apple team ID used during archive and export | (from `APPLE_DEVELOPMENT_TEAM` env) |
+| `QTQUICKTEMPLATE_MACOS_APP_STORE_PROVISIONING_PROFILE` | Mac App Store Distribution provisioning profile name | (from `MACOS_APP_STORE_PROVISIONING_PROFILE` env) |
+| `QTQUICKTEMPLATE_ASC_API_KEY_ID` | App Store Connect API key ID | (from `ASC_API_KEY_ID` env) |
+| `QTQUICKTEMPLATE_ASC_API_ISSUER_ID` | App Store Connect API issuer UUID | (from `ASC_API_ISSUER_ID` env) |
+| `QTQUICKTEMPLATE_APPLE_BUNDLE_IDENTIFIER` | Bundle identifier | `dev.crowell.qtquicktemplate` |
+| `QTQUICKTEMPLATE_MACOS_APP_STORE_ARCHIVE_CONFIGURATION` | Build configuration for archive/export | `Release` |
+
+> **Note:** The API key file must exist at `~/.appstoreconnect/private_keys/AuthKey_<KEY_ID>.p8` on the build machine — this is where `xcrun altool` looks for it automatically.
 
 ---
 
