@@ -7,6 +7,7 @@ Item {
     id: root
 
     property string licenseContent: ""
+    readonly property string moduleRootUrl: "qrc:/qt/qml/dev/crowell/QtQuickTemplate/"
     signal closeRequested
 
     Component.onCompleted: {
@@ -17,7 +18,7 @@ Item {
                     root.licenseContent = xhr.responseText
             }
         }
-        xhr.open("GET", Qt.resolvedUrl("LICENSE"))
+        xhr.open("GET", root.moduleRootUrl + "LICENSE")
         xhr.send()
     }
 

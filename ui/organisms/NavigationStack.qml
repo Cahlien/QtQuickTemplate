@@ -5,6 +5,18 @@ Item {
     id: root
 
     property bool displayedShowChrome: true
+    property string pendingNavigationKey: ""
+
+    function navigationKey(url, props, showChrome) {
+        const nextProps = props || ({})
+        let propsKey = ""
+        try {
+            propsKey = JSON.stringify(nextProps)
+        } catch (error) {
+            propsKey = "[unserializable]"
+        }
+        return (url || "") + "|" + (showChrome ? "1" : "0") + "|" + propsKey
+    }
 
     function isCurrentPage(url, props, showChrome) {
         const currentItem = stackView.currentItem
@@ -38,6 +50,11 @@ Item {
                                 : true
 
         displayedShowChrome = currentShowChrome
+        pendingNavigationKey = root.navigationKey(
+            currentItem.navigationUrl || "",
+            currentItem.pageProps || ({}),
+            currentShowChrome
+        )
         NavigationController.setCurrent(
             currentItem.navigationUrl || "",
             currentItem.pageProps || ({}),
@@ -134,9 +151,12 @@ Item {
         target: NavigationController
 
         function onPushRequested(url, props, showChrome) {
-            if (root.isCurrentPage(url, props, showChrome))
+            const nextKey = root.navigationKey(url, props, showChrome)
+            if (root.isCurrentPage(url, props, showChrome)
+                    || root.pendingNavigationKey === nextKey)
                 return
 
+            root.pendingNavigationKey = nextKey
             stackView.push(url, {
                 navigationUrl: url,
                 pageProps: props || ({}),
@@ -145,7 +165,9 @@ Item {
         }
 
         function onReplaceRequested(url, props, showChrome) {
+            const nextKey = root.navigationKey(url, props, showChrome)
             if (stackView.depth === 0) {
+                root.pendingNavigationKey = nextKey
                 stackView.push(url, {
                     navigationUrl: url,
                     pageProps: props || ({}),
@@ -154,9 +176,11 @@ Item {
                 return
             }
 
-            if (root.isCurrentPage(url, props, showChrome))
+            if (root.isCurrentPage(url, props, showChrome)
+                    || root.pendingNavigationKey === nextKey)
                 return
 
+            root.pendingNavigationKey = nextKey
             stackView.replace(url, {
                 navigationUrl: url,
                 pageProps: props || ({}),

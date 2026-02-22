@@ -5,6 +5,7 @@ Item {
     id: root
 
     property string readmeContent: ""
+    readonly property string moduleRootUrl: "qrc:/qt/qml/dev/crowell/QtQuickTemplate/"
 
     function truncateCodeLines(text, maxChars) {
         let lines = text.split('\n')
@@ -39,7 +40,7 @@ Item {
                     root.readmeContent = xhr.responseText
             }
         }
-        xhr.open("GET", Qt.resolvedUrl("README.md"))
+        xhr.open("GET", root.moduleRootUrl + "README.md")
         xhr.send()
     }
 

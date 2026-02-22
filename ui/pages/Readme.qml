@@ -14,9 +14,7 @@ BasePage {
     Loader {
         id: contentLoader
         anchors.fill: parent
-        active: root.StackView.status === StackView.Active
-             || root.StackView.status === StackView.Activating
-             || root.StackView.status === StackView.Deactivating
-        source: Qt.resolvedUrl("ReadmeContent.qml")
+        active: root.StackView.status !== StackView.Inactive
+        source: Qt.resolvedUrl("content/ReadmeContent.qml")
     }
 }

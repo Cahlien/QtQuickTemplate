@@ -6,11 +6,7 @@ Page {
 
     property string navigationUrl: ""
     property bool showChrome: true
-
-    // Runtime navigation state supplied by StackView push/replace.
     property var pageProps: ({})
-
-    // Page-declared contract: key -> default value.
     property var requiredPageProps: ({})
 
     readonly property var resolvedPageProps: {

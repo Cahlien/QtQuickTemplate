@@ -40,7 +40,7 @@ ApplicationWindow {
             close.accepted = false
     }
 
-    Component.onCompleted: NavigationController.push(Qt.resolvedUrl("Readme.qml").toString())
+    Component.onCompleted: NavigationController.push(Qt.resolvedUrl("pages/Readme.qml").toString())
 
     Connections {
         target: NavigationController
@@ -92,8 +92,8 @@ ApplicationWindow {
         id: navBarItem
         visible: root._displayedShowChrome
 
-        onReadmeRequested:   NavigationController.push(Qt.resolvedUrl("Readme.qml").toString())
-        onControlsRequested: NavigationController.push(Qt.resolvedUrl("StyleShowcase.qml").toString())
+        onReadmeRequested:   NavigationController.push(Qt.resolvedUrl("pages/Readme.qml").toString())
+        onControlsRequested: NavigationController.push(Qt.resolvedUrl("pages/StyleShowcase.qml").toString())
     }
 
     Binding {
@@ -113,7 +113,7 @@ ApplicationWindow {
     Connections {
         target: footerItem
         function onLicenseRequested() {
-            NavigationController.push(Qt.resolvedUrl("License.qml").toString(), {}, false)
+            NavigationController.push(Qt.resolvedUrl("pages/License.qml").toString(), {}, false)
         }
     }
 
