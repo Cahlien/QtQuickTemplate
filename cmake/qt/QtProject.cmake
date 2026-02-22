@@ -8,6 +8,13 @@ macro(setup_qt_project)
     qt_policy(SET QTP0004 NEW)
     qt_standard_project_setup(REQUIRES 6.10)
 
+    # Qt 6.10's static iOS build requires FFmpeg xcframeworks to be explicitly
+    # linked.  Finding Qt6::Multimedia makes qt_add_ios_ffmpeg_libraries()
+    # available; the actual call happens in MainApp.cmake on the app target.
+    if (IOS)
+        find_package(Qt6 6.10 QUIET COMPONENTS Multimedia)
+    endif ()
+
     set(CMAKE_AUTOMOC ON)
     set(CMAKE_AUTORCC ON)
     set(CMAKE_AUTOUIC ON)

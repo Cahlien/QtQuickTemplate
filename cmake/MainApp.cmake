@@ -27,6 +27,12 @@ function(configure_main_app)
         src/main/common/main.cpp
     )
 
+    # Link FFmpeg xcframeworks on iOS using Qt's official API (tech preview).
+    # Requires find_package(Qt6 Multimedia) from QtProject.cmake.
+    if (IOS AND COMMAND qt_add_ios_ffmpeg_libraries)
+        qt_add_ios_ffmpeg_libraries(${PROJECT_NAME})
+    endif ()
+
     target_compile_definitions(${PROJECT_NAME} PRIVATE
         APP_VERSION_STRING="${PROJECT_VERSION}"
     )
