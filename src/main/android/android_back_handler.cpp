@@ -4,11 +4,11 @@
 // thread (Android 13+ / API 33+).  The symbol name MUST match the Kotlin
 // external declaration exactly:
 //
-//   package dev.crowell.app.template.activities
+//   package dev.crowell.qtquicktemplate.activities
 //   class   MainActivity
 //   method  nativeBackRequested()
 //
-// → Java_dev_crowell_app_template_activities_MainActivity_nativeBackRequested
+// → Java_dev_crowell_qtquicktemplate_activities_MainActivity_nativeBackRequested
 
 #include "navigation_controller.h"
 
@@ -18,10 +18,12 @@
 
 // ── JNI back-gesture entry-point ──────────────────────────────────────────────
 
+using dev::crowell::qtquicktemplate::NavigationController;
+
 extern "C" {
 
 JNIEXPORT void JNICALL
-Java_dev_crowell_app_template_activities_MainActivity_nativeBackRequested(
+Java_dev_crowell_qtquicktemplate_activities_MainActivity_nativeBackRequested(
     JNIEnv * /*env*/, jobject /*thiz*/)
 {
     qDebug() << "JNI: nativeBackRequested fired";

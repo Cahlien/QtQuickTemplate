@@ -97,8 +97,8 @@ function(add_platform_sources target)
             @ONLY
         )
         configure_file(
-            ${_src_dir}/platforms/linux/dev.crowell.app.template.metainfo.xml.in
-            ${CMAKE_CURRENT_BINARY_DIR}/dev.crowell.app.template.metainfo.xml
+            ${_src_dir}/platforms/linux/dev.crowell.qtquicktemplate.metainfo.xml.in
+            ${CMAKE_CURRENT_BINARY_DIR}/dev.crowell.qtquicktemplate.metainfo.xml
             @ONLY
         )
     else ()

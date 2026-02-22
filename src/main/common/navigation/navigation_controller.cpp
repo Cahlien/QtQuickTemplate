@@ -9,6 +9,8 @@
 #include <QJniObject>
 #endif
 
+namespace dev::crowell::qtquicktemplate {
+
 // ── Singleton ─────────────────────────────────────────────────────────────────
 
 NavigationController::NavigationController(QObject *parent)
@@ -163,3 +165,5 @@ int NavigationController::historyLimit() const
 {
     return m_historyLimit;
 }
+
+} // namespace dev::crowell::qtquicktemplate

@@ -3,6 +3,8 @@
 #include <QObject>
 #include <QtQml/qqmlregistration.h>
 
+namespace dev::crowell::qtquicktemplate {
+
 class AppInfo : public QObject
 {
     Q_OBJECT
@@ -15,3 +17,5 @@ public:
 
     QString version() const;
 };
+
+} // namespace dev::crowell::qtquicktemplate

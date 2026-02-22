@@ -77,7 +77,7 @@ function(configure_appimage target)
     set(_appdir "${_appimage_build_dir}/AppDir")
     set(_appimage_out "${_appimage_build_dir}/${PROJECT_NAME}-${PROJECT_VERSION}-x86_64.AppImage")
 
-    set(_icon_name "dev.crowell.app.template")
+    set(_icon_name "dev.crowell.qtquicktemplate")
     set(_icon_staging "${_appimage_build_dir}/${_icon_name}.png")
 
     # qt.conf generated at configure time

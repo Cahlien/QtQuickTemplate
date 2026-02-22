@@ -1,4 +1,4 @@
-package dev.crowell.app.template.extensions
+package dev.crowell.qtquicktemplate.extensions
 
 import android.content.res.Resources
 

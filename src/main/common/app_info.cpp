@@ -1,6 +1,8 @@
 #include "app_info.h"
 #include <QString>
 
+namespace dev::crowell::qtquicktemplate {
+
 /*!
     \class AppInfo
     \inmodule dev.crowell.QtQuickTemplate
@@ -20,3 +22,5 @@ QString AppInfo::version() const
 {
     return QStringLiteral(APP_VERSION_STRING);
 }
+
+} // namespace dev::crowell::qtquicktemplate
