@@ -324,7 +324,7 @@ The full pipeline — build → archive → sign → export IPA → verify → u
                 "QT_IOS_ROOT": "/path/to/Qt/6.10.2/ios",
                 "APPLE_DEVELOPMENT_TEAM": "<10-char Team ID>",
                 "IOS_PROVISIONING_PROFILE": "<Provisioning profile name>",
-                "ASC_API_KEY_ID": "<Key ID, e.g. NV3YP3T2C5>",
+                "ASC_API_KEY_ID": "<Key ID, e.g. ABCD123456>",
                 "ASC_API_ISSUER_ID": "<Issuer UUID>"
             },
             "cacheVariables": {
