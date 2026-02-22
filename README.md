@@ -10,36 +10,6 @@ A cross-platform **Qt 6 / Qt Quick (QML)** starter repo that aims to be "just en
 
 ---
 
-## Quick start (clone-and-run)
-
-```bash
-./dev build
-```
-
-The `dev` wrapper bootstraps everything project-locally:
-
-- local `uv` in `./.uv/`
-- local Python 3.14.3 (`3.14.3t` free-threaded when available, automatic fallback otherwise)
-- local virtual environment in `./.venv/`
-- pinned tooling in the venv: Poetry `1.8.3`, Conan `2.12.2`, CMake `4.2.1`
-- Conan toolchain/dependencies in `build/conan/`
-- CMake configure/build using `./.venv/bin/cmake`
-
-No global Poetry/Conan/CMake install is required.
-
-### `dev` commands
-
-```bash
-./dev setup   # bootstrap uv/python/.venv + pinned tooling + poetry deps
-./dev deps    # setup + conan install
-./dev build   # deps + cmake configure + cmake build
-./dev clean   # remove build outputs only
-./dev nuke    # clean + remove .uv and .venv
-./dev doctor  # print versions/paths and Qt tool discovery
-```
-
----
-
 ## What you get out of the box
 
 ### UI & QML architecture
@@ -172,23 +142,18 @@ Back handling and app minimization are split cleanly:
 
 ---
 
-## External prerequisites
+## Build prerequisites
 
 - **Qt 6.10+** (Core, Quick, QuickControls2, Qml)
+- **CMake 3.28+**
 - A C++23-capable compiler
-- POSIX shell (`bash`) and either `curl` or `wget` (for local `uv` bootstrap)
 - Optional module path requirements:
   - On supported non-Apple toolchains/generators, `helloworld` exports a C++20 module.
   - On Apple targets (and unsupported generators/toolchains), the app automatically uses the header/library path.
   - If using Clang with modules enabled, `clang-scan-deps` must be available (the project attempts to locate it automatically, including Android NDK hints).
 
-`./dev` provisions Python, Poetry, Conan, and CMake locally inside the repository.
-
-### Troubleshooting
-
-- Run `./dev doctor` to verify local tool paths/versions and Qt tool discovery.
-- If you need a full local reset, run `./dev nuke` (removes `build/`, `build-*`, `./.uv/`, and `./.venv/`).
-- For build-only cleanup, run `./dev clean`.
+Optional:
+- **Conan 2** (the repo includes a basic `conanfile.py`)
 
 ---
 

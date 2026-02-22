@@ -88,15 +88,9 @@ __pycache__/
 .rcc/
 .uic/
 /build*/
-build/
-build-*/
-.uv/
-.venv/
 
 # Conan
 CMakeUserPresets.json
-**/CMakeUserPresets.json
-**/conan-*.cmake
 
 # Gradle
 .gradle/

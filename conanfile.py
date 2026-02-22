@@ -1,5 +1,5 @@
 from conan import ConanFile
-from conan.tools.cmake import CMake
+from conan.tools.cmake import CMake, cmake_layout
 
 
 class QtQuickTemplateRecipe(ConanFile):
@@ -15,9 +15,7 @@ class QtQuickTemplateRecipe(ConanFile):
         pass
 
     def layout(self):
-        # Keep generator outputs in the explicit --output-folder location.
-        # This makes local developer flows deterministic (e.g. build/conan/).
-        self.folders.generators = "."
+        cmake_layout(self)
 
     def build(self):
         cmake = CMake(self)
