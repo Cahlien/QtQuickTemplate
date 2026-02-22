@@ -10,15 +10,14 @@
 //
 // → Java_dev_crowell_qtquicktemplate_activities_MainActivity_nativeBackRequested
 
-#include "navigation_controller.h"
+#include "navigation/navigation_controller.h"
 
-#include <QDebug>
 #include <QMetaObject>
 #include <jni.h>
 
 // ── JNI back-gesture entry-point ──────────────────────────────────────────────
 
-using dev::crowell::qtquicktemplate::NavigationController;
+using dev::crowell::qtquicktemplate::navigation::NavigationController;
 
 extern "C" {
 
@@ -26,7 +25,6 @@ JNIEXPORT void JNICALL
 Java_dev_crowell_qtquicktemplate_activities_MainActivity_nativeBackRequested(
     JNIEnv * /*env*/, jobject /*thiz*/)
 {
-    qDebug() << "JNI: nativeBackRequested fired";
     // We are on the Android UI thread here.  NavigationController::pop()
     // emits signals that drive QML/StackView mutations, which must happen on
     // the Qt main thread.  Qt::QueuedConnection posts an event across threads

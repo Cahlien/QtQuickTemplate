@@ -32,7 +32,7 @@
     Thread safety: \c pop() is always invoked on the Qt main thread via
     \c Qt::QueuedConnection from the JNI back-handler, so no mutex is required.
 */
-namespace dev::crowell::qtquicktemplate {
+namespace dev::crowell::qtquicktemplate::navigation {
 
 class NavigationController : public QObject
 {
@@ -117,4 +117,4 @@ private:
     QVector<Entry> m_forward;
 };
 
-} // namespace dev::crowell::qtquicktemplate
+} // namespace dev::crowell::qtquicktemplate::navigation

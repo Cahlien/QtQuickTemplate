@@ -1,4 +1,4 @@
-#include "navigation_controller.h"
+#include "navigation/navigation_controller.h"
 
 #include <QJSEngine>
 #include <QQmlEngine>
@@ -9,7 +9,7 @@
 #include <QJniObject>
 #endif
 
-namespace dev::crowell::qtquicktemplate {
+namespace dev::crowell::qtquicktemplate::navigation {
 
 // ── Singleton ─────────────────────────────────────────────────────────────────
 
@@ -166,4 +166,4 @@ int NavigationController::historyLimit() const
     return m_historyLimit;
 }
 
-} // namespace dev::crowell::qtquicktemplate
+} // namespace dev::crowell::qtquicktemplate::navigation
