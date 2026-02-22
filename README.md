@@ -392,6 +392,106 @@ cmake --build --preset ios-app-local
 
 ---
 
+## macOS: build, deploy, sign, notarize, verify (DMG)
+
+The full pipeline — build → deploy Qt frameworks → sign app → create DMG → sign DMG → notarize → staple → verify — runs with a single CMake build preset.
+
+### Prerequisites
+
+- **Xcode** with command-line tools (`xcode-select --install`)
+- **Qt 6.10+** for macOS (e.g. `~/Qt/6.10.2/macos`)
+- An **Apple Developer** account with:
+  - "Developer ID Application" certificate in your Keychain (for direct distribution outside the App Store)
+  - App Store Connect API key stored as a notarytool keychain profile (see below)
+
+Set up the notarytool keychain profile once (substitute your own values):
+
+```bash
+xcrun notarytool store-credentials "my-notary-profile" \
+  --key ~/.appstoreconnect/private_keys/AuthKey_<KEY_ID>.p8 \
+  --key-id <KEY_ID> \
+  --issuer <ISSUER_UUID>
+```
+
+### Setup
+
+`CMakeUserPresets.json` is gitignored. Create it at the repo root with your local signing details:
+
+```json
+{
+    "version": 6,
+    "configurePresets": [
+        {
+            "name": "macos-release-local",
+            "inherits": "macos-release",
+            "environment": {
+                "QT_MACOS_ROOT": "/path/to/Qt/6.10.2/macos",
+                "MACOS_NOTARY_KEYCHAIN_PROFILE": "<profile name from store-credentials>",
+                "MACOS_APP_SIGN_IDENTITY": "Developer ID Application: Your Name (TEAMID)",
+                "MACOS_DMG_SIGN_IDENTITY": "Developer ID Application: Your Name (TEAMID)"
+            },
+            "cacheVariables": {
+                "QTQUICKTEMPLATE_APPLE_BUNDLE_IDENTIFIER": "com.example.yourapp"
+            }
+        }
+    ],
+    "buildPresets": [
+        {
+            "name": "macos-app-local",
+            "inherits": "macos-app",
+            "configurePreset": "macos-release-local"
+        },
+        {
+            "name": "macos-distributable-local",
+            "inherits": "macos-distributable",
+            "configurePreset": "macos-release-local"
+        }
+    ]
+}
+```
+
+### Full pipeline (one command after first configure)
+
+```bash
+# Configure (once, or after CMake changes)
+cmake --preset macos-release-local
+
+# Build → deploy Qt → sign → DMG → notarize → staple → verify
+cmake --build --preset macos-distributable-local
+```
+
+Output DMG: `build/Qt_6_10_2_for_macOS/QtQuickTemplate-<version>-macOS.dmg`
+
+### Individual targets
+
+| Target | What it does |
+|--------|-------------|
+| `MacDeployQt` | Runs `macdeployqt` to bundle Qt frameworks and optionally signs the app bundle |
+| `DMG` | Runs CPack DragNDrop to create a `.dmg`, then signs it with Developer ID |
+| `NotarizeMacOS` | Submits the DMG to Apple's notary service via `xcrun notarytool --wait`, then staples the ticket to both the DMG and the app bundle |
+| `VerifyMacOSPackage` | Verifies codesign, Gatekeeper acceptance, and stapler validation of the notarized artifacts |
+| `ReleaseDistributableMacOS` | Meta-target: runs all of the above in order |
+
+To build without packaging:
+
+```bash
+cmake --build --preset macos-app-local
+```
+
+### CMake cache variables
+
+| Variable | Purpose | Default |
+|----------|---------|---------|
+| `QTQUICKTEMPLATE_MACOS_APP_SIGN_IDENTITY` | Developer ID for signing the app bundle via macdeployqt | (from `MACOS_APP_SIGN_IDENTITY` env) |
+| `QTQUICKTEMPLATE_MACOS_DMG_SIGN_IDENTITY` | Developer ID for signing the DMG | (from `MACOS_DMG_SIGN_IDENTITY` env) |
+| `QTQUICKTEMPLATE_MACOS_NOTARY_KEYCHAIN_PROFILE` | Keychain profile name for `xcrun notarytool` | (from `MACOS_NOTARY_KEYCHAIN_PROFILE` env) |
+| `QTQUICKTEMPLATE_APPLE_BUNDLE_IDENTIFIER` | Bundle identifier | `dev.crowell.qtquicktemplate` |
+| `QTQUICKTEMPLATE_MACOS_USE_MACDEPLOYQT` | Enable/disable macdeployqt deployment step | `ON` |
+
+> **Note:** Signing is optional — if identities are left empty, macdeployqt runs unsigned and DMG signing is skipped. Notarization requires a signed app and DMG, so `MACOS_APP_SIGN_IDENTITY` and `MACOS_DMG_SIGN_IDENTITY` must be set for the full pipeline to succeed.
+
+---
+
 ## QML modules & resource layout
 
 This project intentionally **flattens QML resource paths** using `QT_RESOURCE_ALIAS` so that pages/components can be referenced by simple filenames (e.g. `Qt.resolvedUrl("Readme.qml")`) even if they live under `qml/pages/` in the source tree.

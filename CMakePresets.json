@@ -7,6 +7,25 @@
     },
     "configurePresets": [
         {
+            "name": "macos-release",
+            "displayName": "macOS Release",
+            "description": "Configure for macOS release distribution using Ninja. Requires QT_MACOS_ROOT, MACOS_NOTARY_KEYCHAIN_PROFILE, MACOS_APP_SIGN_IDENTITY, and MACOS_DMG_SIGN_IDENTITY environment variables.",
+            "generator": "Ninja",
+            "binaryDir": "${sourceDir}/build/Qt_6_10_2_for_macOS",
+            "cacheVariables": {
+                "CMAKE_BUILD_TYPE": "Release",
+                "CMAKE_PREFIX_PATH": "$env{QT_MACOS_ROOT}",
+                "QTQUICKTEMPLATE_MACOS_NOTARY_KEYCHAIN_PROFILE": "$env{MACOS_NOTARY_KEYCHAIN_PROFILE}",
+                "QTQUICKTEMPLATE_MACOS_APP_SIGN_IDENTITY": "$env{MACOS_APP_SIGN_IDENTITY}",
+                "QTQUICKTEMPLATE_MACOS_DMG_SIGN_IDENTITY": "$env{MACOS_DMG_SIGN_IDENTITY}"
+            },
+            "condition": {
+                "type": "equals",
+                "lhs": "${hostSystemName}",
+                "rhs": "Darwin"
+            }
+        },
+        {
             "name": "ios-release",
             "displayName": "iOS Release (Xcode)",
             "description": "Configure for iOS using the Xcode generator and Qt's iOS toolchain. Requires QT_IOS_ROOT and APPLE_DEVELOPMENT_TEAM environment variables.",
@@ -29,6 +48,19 @@
         }
     ],
     "buildPresets": [
+        {
+            "name": "macos-app",
+            "displayName": "macOS App (build only)",
+            "description": "Build the macOS app without packaging.",
+            "configurePreset": "macos-release"
+        },
+        {
+            "name": "macos-distributable",
+            "displayName": "macOS Release Distributable",
+            "description": "Full macOS pipeline: build, deploy Qt, create DMG, notarize, staple, and verify.",
+            "configurePreset": "macos-release",
+            "targets": ["ReleaseDistributableMacOS"]
+        },
         {
             "name": "ios-app",
             "displayName": "iOS App (build only)",

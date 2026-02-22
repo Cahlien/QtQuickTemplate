@@ -16,13 +16,15 @@ function(configure_macos_dmg target)
     set(CPACK_PACKAGE_FILE_NAME "${PROJECT_NAME}-${PROJECT_VERSION}-macOS")
     set(CPACK_DMG_VOLUME_NAME "${PROJECT_NAME} ${PROJECT_VERSION}")
 
+    # Capture the output path before include(CPack) resets CPACK_PACKAGE_FILE_NAME
+    # in the CMake variable scope to its default (e.g. <name>-<ver>-Source).
+    set(_dmg_output "${CMAKE_BINARY_DIR}/${CPACK_PACKAGE_FILE_NAME}.dmg")
+
     if (EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/platforms/macos/app.icns")
         set(CPACK_PACKAGE_ICON "${CMAKE_CURRENT_SOURCE_DIR}/platforms/macos/app.icns")
     endif ()
 
     include(CPack)
-
-    set(_dmg_output "${CMAKE_BINARY_DIR}/${CPACK_PACKAGE_FILE_NAME}.dmg")
 
     set(_dmg_dependency_target ${target})
     if (TARGET MacDeployQt)
