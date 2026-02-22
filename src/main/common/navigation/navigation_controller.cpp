@@ -1,19 +1,35 @@
-#include "navigation_controller.h"
+#include "navigation/navigation_controller.h"
 
 #include <QJSEngine>
 #include <QQmlEngine>
-#include <QDebug>
+#include <QtGlobal>
 
 #if defined(Q_OS_ANDROID) && __has_include(<QJniObject>)
 #include <QCoreApplication>
 #include <QJniObject>
 #endif
 
+namespace dev::crowell::qtquicktemplate::navigation {
+
 // ── Singleton ─────────────────────────────────────────────────────────────────
 
 NavigationController::NavigationController(QObject *parent)
     : QObject(parent)
-{}
+{
+    int platformDefault = 16;
+#if defined(Q_OS_ANDROID)
+    platformDefault = 6;
+#elif defined(Q_OS_IOS)
+    platformDefault = 8;
+#endif
+
+    bool hasEnvLimit = false;
+    int envLimit = qEnvironmentVariableIntValue("APP_HISTORY_LIMIT", &hasEnvLimit);
+    if (!hasEnvLimit)
+        envLimit = qEnvironmentVariableIntValue("QTQUICKTEMPLATE_HISTORY_LIMIT", &hasEnvLimit);
+
+    m_historyLimit = hasEnvLimit ? qBound(1, envLimit, 512) : platformDefault;
+}
 
 NavigationController *NavigationController::instance()
 {
@@ -28,72 +44,79 @@ NavigationController *NavigationController::create(QQmlEngine * /*engine*/,
     return instance();
 }
 
-// ── Navigation ────────────────────────────────────────────────────────────────
-//
-// Every mutating method is guarded by m_navigating to prevent re-entrant
-// calls during signal emission.  On iOS a QML Binding that syncs a TabBar
-// highlight can cause a programmatic currentIndex change which, through
-// UIKit touch-event handling, spuriously activates a button and triggers
-// a second push() inside the first push()'s signal cascade.  The guard
-// silently drops the nested call so the intended navigation wins.
-
 void NavigationController::push(const QString     &url,
                                 const QVariantMap &props,
                                 bool               showChrome)
 {
-    if (m_navigating) return;
-    m_navigating = true;
-
-    // Already showing this exact page — nothing to do.
-    if (url == m_current.url && props == m_current.props
-            && showChrome == m_current.showChrome) {
-        m_navigating = false;
-        return;
+    if (!m_forward.isEmpty()) {
+        m_forward.clear();
+        emit currentChanged();
     }
 
-    // First push seeds the home entry without touching the back-stack, so the
-    // back button from the home page never returns to a blank state.
-    if (!m_current.url.isEmpty())
-        m_back.push(m_current);
-
-    m_current = { url, props, showChrome };
-    qDebug() << "NC::push  url=" << url << "  backSize=" << m_back.size();
-    emit currentChanged();
-
-    m_navigating = false;
+    if (m_stackDepth >= m_historyLimit)
+        emit replaceRequested(url, props, showChrome);
+    else
+        emit pushRequested(url, props, showChrome);
 }
 
 void NavigationController::pop()
 {
-    if (m_navigating) return;
-    m_navigating = true;
-
-    qDebug() << "NC::pop   backSize=" << m_back.size();
-    if (m_back.isEmpty()) {
-        qDebug() << "NC::pop   → backAtRoot";
+    if (!m_canGoBack) {
         emit backAtRoot();
-        m_navigating = false;
         return;
     }
-    m_current = m_back.pop();
-    qDebug() << "NC::pop   → restored url=" << m_current.url;
-    emit currentChanged();
 
-    m_navigating = false;
+    const bool hadForward = !m_forward.isEmpty();
+    m_forward.push_back({ m_currentUrl, m_currentProps, m_currentShowChrome });
+    if (!hadForward)
+        emit currentChanged();
+
+    emit popRequested();
+}
+
+void NavigationController::forward()
+{
+    if (m_forward.isEmpty())
+        return;
+
+    const Entry next = m_forward.takeLast();
+    emit pushRequested(next.url, next.props, next.showChrome);
+    emit currentChanged();
 }
 
 void NavigationController::replace(const QString     &url,
                                    const QVariantMap &props,
                                    bool               showChrome)
 {
-    if (m_navigating) return;
-    m_navigating = true;
+    if (!m_forward.isEmpty()) {
+        m_forward.clear();
+        emit currentChanged();
+    }
 
-    m_current = { url, props, showChrome };
-    qDebug() << "NC::replace  url=" << url;
+    emit replaceRequested(url, props, showChrome);
+}
+
+void NavigationController::setCurrent(const QString     &url,
+                                      const QVariantMap &props,
+                                      bool               showChrome,
+                                      int                stackDepth)
+{
+    const bool canGoBack = stackDepth > 1;
+
+    if (m_currentUrl == url
+            && m_currentProps == props
+            && m_currentShowChrome == showChrome
+            && m_canGoBack == canGoBack
+            && m_stackDepth == stackDepth)
+        return;
+
+    m_currentUrl = url;
+    m_currentProps = props;
+    m_currentShowChrome = showChrome;
+    m_canGoBack = canGoBack;
+    m_stackDepth = stackDepth;
+
     emit currentChanged();
-
-    m_navigating = false;
 }
 
 void NavigationController::minimizeApp()
@@ -115,20 +138,32 @@ void NavigationController::minimizeApp()
 
 QString NavigationController::currentUrl() const
 {
-    return m_current.url;
+    return m_currentUrl;
 }
 
 QVariantMap NavigationController::currentProps() const
 {
-    return m_current.props;
+    return m_currentProps;
 }
 
 bool NavigationController::currentShowChrome() const
 {
-    return m_current.showChrome;
+    return m_currentShowChrome;
 }
 
 bool NavigationController::canGoBack() const
 {
-    return !m_back.isEmpty();
+    return m_canGoBack;
 }
+
+bool NavigationController::canGoForward() const
+{
+    return !m_forward.isEmpty();
+}
+
+int NavigationController::historyLimit() const
+{
+    return m_historyLimit;
+}
+
+} // namespace dev::crowell::qtquicktemplate::navigation

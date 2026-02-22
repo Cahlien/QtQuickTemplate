@@ -3,20 +3,7 @@ import QtQuick.Controls
 import QtQuick.Layouts
 import dev.crowell.AppTheme
 
-/*!
-    \qmltype StyleShowcase
-    \inqmlmodule dev.crowell.QtQuickTemplate
-    \inherits Item
-    \brief Scrollable gallery demonstrating every AppStyle control.
-
-    StyleShowcase presents grouped examples of Button, TextField,
-    CheckBox, Switch, Slider, ProgressBar, ComboBox, TabButton,
-    and a dark-mode toggle so that the custom style can be visually
-    verified in one place.
-*/
 Item {
-    id: root
-
     Flickable {
         anchors.fill: parent
         contentHeight: content.implicitHeight + Theme.spacingXl * 2
@@ -43,7 +30,6 @@ Item {
                 Layout.leftMargin: Theme.spacingMd
             }
 
-            // ── Buttons ──
             GroupBox {
                 title: "Button"
                 Layout.fillWidth: true
@@ -62,7 +48,6 @@ Item {
                 }
             }
 
-            // ── TextField ──
             GroupBox {
                 title: "TextField"
                 Layout.fillWidth: true
@@ -78,7 +63,6 @@ Item {
                 }
             }
 
-            // ── CheckBox ──
             GroupBox {
                 title: "CheckBox"
                 Layout.fillWidth: true
@@ -92,7 +76,6 @@ Item {
                 }
             }
 
-            // ── Switch ──
             GroupBox {
                 title: "Switch"
                 Layout.fillWidth: true
@@ -106,7 +89,6 @@ Item {
                 }
             }
 
-            // ── Slider ──
             GroupBox {
                 title: "Slider"
                 Layout.fillWidth: true
@@ -121,7 +103,6 @@ Item {
                 }
             }
 
-            // ── ProgressBar ──
             GroupBox {
                 title: "ProgressBar"
                 Layout.fillWidth: true
@@ -136,7 +117,6 @@ Item {
                 }
             }
 
-            // ── ComboBox ──
             GroupBox {
                 title: "ComboBox"
                 Layout.fillWidth: true
@@ -149,7 +129,6 @@ Item {
                 }
             }
 
-            // ── TabBar + TabButton ──
             GroupBox {
                 title: "TabButton"
                 Layout.fillWidth: true
@@ -168,7 +147,6 @@ Item {
                 }
             }
 
-            // ── Dark Mode Toggle ──
             GroupBox {
                 title: "Theme"
                 Layout.fillWidth: true

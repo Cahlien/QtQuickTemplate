@@ -1,10 +1,3 @@
-cmake_minimum_required(VERSION 3.24)
-project(MyProject LANGUAGES C CXX)
-
-file(GLOB children RELATIVE "${CMAKE_CURRENT_SOURCE_DIR}" "${CMAKE_CURRENT_SOURCE_DIR}/*")
-
-foreach(child ${children})
-  if(IS_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/${child}" AND EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/${child}/CMakeLists.txt")
-    add_subdirectory("${child}")
-  endif()
-endforeach()
+add_subdirectory(apptheme)
+add_subdirectory(appstyle)
+add_subdirectory(helloworld)

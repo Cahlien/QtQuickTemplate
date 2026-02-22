@@ -14,7 +14,7 @@ function(configure_install target)
         install(FILES ${CMAKE_CURRENT_BINARY_DIR}/${PROJECT_NAME}.desktop
             DESTINATION ${CMAKE_INSTALL_DATAROOTDIR}/applications
         )
-        install(FILES ${CMAKE_CURRENT_BINARY_DIR}/dev.crowell.app.template.metainfo.xml
+        install(FILES ${CMAKE_CURRENT_BINARY_DIR}/dev.crowell.qtquicktemplate.metainfo.xml
             DESTINATION ${CMAKE_INSTALL_DATAROOTDIR}/metainfo
         )
 
@@ -26,12 +26,12 @@ function(configure_install target)
             if (_icon_name MATCHES "^([0-9]+)x([0-9]+)$")
                 install(FILES "${_icon}"
                     DESTINATION ${CMAKE_INSTALL_DATAROOTDIR}/icons/hicolor/${_icon_name}/apps
-                    RENAME dev.crowell.app.template.png
+                    RENAME dev.crowell.qtquicktemplate.png
                 )
             elseif (_icon_name STREQUAL "scalable")
                 install(FILES "${_icon}"
                     DESTINATION ${CMAKE_INSTALL_DATAROOTDIR}/icons/hicolor/scalable/apps
-                    RENAME dev.crowell.app.template.svg
+                    RENAME dev.crowell.qtquicktemplate.svg
                 )
             endif ()
         endforeach ()

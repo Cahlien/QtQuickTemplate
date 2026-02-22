@@ -3,29 +3,22 @@ import QtQuick.Controls
 import QtQuick.Effects
 import dev.crowell.AppTheme
 
-
-/*!
-    \qmltype License
-    \inqmlmodule dev.crowell.QtQuickTemplate
-    \inherits Item
-    \brief Page displaying the project LICENSE in scrollable markdown.
-*/
 Item {
     id: root
 
     property string licenseContent: ""
+    readonly property string moduleRootUrl: "qrc:/qt/qml/dev/crowell/QtQuickTemplate/"
     signal closeRequested
 
     Component.onCompleted: {
-        var xhr = new XMLHttpRequest()
+        let xhr = new XMLHttpRequest()
         xhr.onreadystatechange = function () {
             if (xhr.readyState === XMLHttpRequest.DONE) {
-                if (xhr.status === 200 || xhr.status === 0) {
+                if (xhr.status === 200 || xhr.status === 0)
                     root.licenseContent = xhr.responseText
-                }
             }
         }
-        xhr.open("GET", Qt.resolvedUrl("LICENSE"))
+        xhr.open("GET", root.moduleRootUrl + "LICENSE")
         xhr.send()
     }
 
@@ -80,7 +73,6 @@ Item {
                 blurMax: 32
                 blur: 1.0
 
-                // Masking
                 maskEnabled: true
                 maskSource: maskShape
 

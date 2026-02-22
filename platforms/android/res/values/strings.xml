@@ -1,3 +1,9 @@
 <resources>
     <string name="app_name">QtQuickTemplate</string>
+    <string name="splash_logo_content_description">App logo</string>
+    <string name="splash_title">QtQuickTemplate Demo</string>
+    <string name="splash_attribution">from Matthew Crowell and\nConfederated Technologies, Inc.</string>
+    <string name="version_unknown">unknown</string>
+    <string name="version_unknown_label">Version unknown</string>
+    <string name="version_label">Version %1$s</string>
 </resources>

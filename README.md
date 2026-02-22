@@ -370,7 +370,7 @@ A quick checklist you'll almost certainly want to do:
 - Rename the project: `project(QtQuickTemplate ...)` in `CMakeLists.txt`
 - Update `app.setOrganizationName("YourOrganization")` and other branding strings in `main.cpp`
 - Replace package identifiers:
-  - Linux metainfo + icon id: `dev.crowell.app.template`
+  - Linux metainfo + icon id: `dev.crowell.qtquicktemplate`
   - macOS bundle id: `CFBundleIdentifier`
   - Android namespace/package
 - Swap icons:

@@ -16,7 +16,7 @@ void onFirstFrame(QQuickWindow *)
             activity.callMethod<void>("onQtReady", "()V");
         } else {
             QJniObject::callStaticMethod<void>(
-                "dev/crowell/app/template/activities/MainActivity",
+                "dev/crowell/qtquicktemplate/activities/MainActivity",
                 "notifyQtReady",
                 "()V");
         }

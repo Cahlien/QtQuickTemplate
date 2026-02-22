@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <component type="desktop-application">
-    <id>dev.crowell.app.template</id>
+    <id>dev.crowell.qtquicktemplate</id>
     <metadata_license>MIT</metadata_license>
     <project_license>MIT</project_license>
     <name>QtQuick Template</name>

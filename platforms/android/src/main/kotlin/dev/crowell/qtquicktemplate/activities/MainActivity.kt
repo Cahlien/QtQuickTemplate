@@ -1,27 +1,26 @@
-package dev.crowell.app.template.activities
+package dev.crowell.qtquicktemplate.activities
 
 import android.annotation.SuppressLint
 import android.os.Build
 import android.os.Bundle
+import android.util.Log
 import android.view.View
 import android.view.ViewGroup
 import android.widget.TextView
-import android.window.OnBackInvokedDispatcher // Added
-import android.window.OnBackInvokedCallback   // Added
+import android.window.OnBackInvokedDispatcher
 import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowCompat
 import androidx.core.view.WindowInsetsCompat
+import dev.crowell.qtquicktemplate.R
+import dev.crowell.qtquicktemplate.extensions.dp
 import org.qtproject.qt.android.bindings.QtActivity
 import java.util.concurrent.atomic.AtomicBoolean
-import dev.crowell.app.template.R
-import dev.crowell.app.template.extensions.dp
-import android.util.Log
 
 class MainActivity : QtActivity() {
 
     companion object {
-        private const val TAG = "dev.crowell.app.template.activities.MainActivity"
+        private const val TAG = "dev.crowell.qtquicktemplate.activities.MainActivity"
         private val ready = AtomicBoolean(false)
 
         @JvmStatic
@@ -30,7 +29,6 @@ class MainActivity : QtActivity() {
         }
     }
 
-    // 1. Declare the native C++ function
     external fun nativeBackRequested()
 
     private var overlay: View? = null
@@ -43,17 +41,14 @@ class MainActivity : QtActivity() {
 
         super.onCreate(savedInstanceState)
 
-        // 2. Register the Back Callback (Android 13+ / API 33+)
         if (Build.VERSION.SDK_INT >= 33) {
             onBackInvokedDispatcher.registerOnBackInvokedCallback(
                 OnBackInvokedDispatcher.PRIORITY_DEFAULT
             ) {
-                // This runs when the back gesture completes
                 nativeBackRequested()
             }
         }
 
-        // --- Your existing UI logic below ---
         WindowCompat.setDecorFitsSystemWindows(window, false)
         window.statusBarColor = 0x00000000
         window.navigationBarColor = 0x00000000
@@ -78,9 +73,9 @@ class MainActivity : QtActivity() {
         val versionName = try {
             pkgMgr.getPackageInfo(packageName, 0).versionName
         } catch (e: Exception) {
-            "Version unknown"
+            getString(R.string.version_unknown)
         }
-        versionView?.text = "Version $versionName"
+        versionView?.text = getString(R.string.version_label, versionName)
 
         ViewCompat.setOnApplyWindowInsetsListener(root) { v, insets ->
             val bars = insets.getInsets(WindowInsetsCompat.Type.systemBars())
@@ -89,7 +84,7 @@ class MainActivity : QtActivity() {
             val footer = versionView
             if (footer != null) {
                 val lp = footer.layoutParams as ViewGroup.MarginLayoutParams
-                lp.bottomMargin = 40.dp + bars.bottom
+                lp.bottomMargin = 30.dp + bars.bottom
                 footer.layoutParams = lp
             }
             insets
@@ -124,23 +119,11 @@ class MainActivity : QtActivity() {
         runOnUiThread { dismissOverlay() }
     }
 
-    // ── Back-navigation guard ─────────────────────────────────────────────
-    //
-    // QtActivity's default onBackPressed() dispatches Key_Back into the Qt
-    // event loop and, when nothing handles it, finishes the Activity.
-    // We intentionally skip super so that path never runs:
-    //
-    //   • API 33+  – OnBackInvokedCallback (registered above) is the sole handler.
-    //   • API < 33 – This override routes through the same JNI bridge.
-
     @Suppress("DEPRECATION")
     @SuppressLint("MissingSuperCall")
     override fun onBackPressed() {
         if (Build.VERSION.SDK_INT < 33) {
             nativeBackRequested()
         }
-        // On API 33+ the OnBackInvokedCallback handles the back event;
-        // this override only prevents QtActivity.onBackPressed() from
-        // finishing the Activity if it is ever reached.
     }
 }

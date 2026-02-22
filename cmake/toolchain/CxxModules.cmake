@@ -37,7 +37,10 @@ function(is_cxx_modules_supported out_var)
 
     is_apple_target(_is_apple_target)
 
-    if (_generator_supports_modules AND _compiler_supports_modules AND NOT _is_apple_target)
+    if (_generator_supports_modules
+        AND _compiler_supports_modules
+        AND NOT _is_apple_target
+        AND NOT ANDROID)
         set(${out_var} TRUE PARENT_SCOPE)
     else ()
         set(${out_var} FALSE PARENT_SCOPE)
