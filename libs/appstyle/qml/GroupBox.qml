@@ -1,5 +1,6 @@
 import QtQuick
 import QtQuick.Templates as T
+import dev.crowell.AppTheme
 
 /*!
     \qmltype GroupBox

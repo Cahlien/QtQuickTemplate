@@ -1,6 +1,7 @@
 import QtQuick
 import QtQuick.Templates as T
 import QtQuick.Window
+import dev.crowell.AppTheme
 
 /*!
     \qmltype ComboBox
