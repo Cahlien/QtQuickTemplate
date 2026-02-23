@@ -13,6 +13,7 @@ qt_add_qml_module(${TARGET}
     OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/dev/crowell/AppTheme
     QML_FILES
         qml/Theme.qml
+    ENABLE_TYPE_COMPILER
 )
 
 target_link_libraries(${TARGET}
@@ -20,4 +21,7 @@ target_link_libraries(${TARGET}
         Qt6::Core
         Qt6::Qml
         Qt6::QuickControls2
+    PRIVATE
+        Qt6::QmlPrivate
+        Qt6::QuickPrivate
 )

@@ -30,4 +30,14 @@ qt_add_qml_module(${TARGET}
         ${APPSTYLE_QML_FILES}
     DEPENDENCIES
         dev.crowell.AppTheme
+    IMPORT_PATH ${CMAKE_BINARY_DIR}
+    ENABLE_TYPE_COMPILER
+    NO_GENERATE_EXTRA_QMLDIRS
+)
+
+target_link_libraries(${TARGET}
+    PRIVATE
+        Qt6::QmlPrivate
+        Qt6::QuickPrivate
+        Qt6::QuickTemplates2Private
 )
