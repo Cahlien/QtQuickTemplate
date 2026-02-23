@@ -49,12 +49,21 @@ Root `CMakeLists.txt` is minimal (14 lines) — it delegates to two entry points
 - **`cmake/ProjectSetup.cmake`** → `configure_project()`: compiler settings, Conan, Qt discovery, AUTOMOC
 - **`cmake/MainApp.cmake`** → `configure_main_app()`: creates the executable, registers QML modules, platform sources, code signing, packaging targets
 
-Deploy modules live in `cmake/deploy/` with consistent `{Platform}{Stage}.cmake` naming and define custom build targets that chain together:
+Deploy modules live in `cmake/deploy/` and define custom build targets that chain together:
 - **iOS**: `IOSArchive → IOSExportIPA → VerifyIOSIPA → IOSUploadASC → ReleaseDistributableIOS`
 - **macOS DMG**: `MacDeployQt → DMG → NotarizeMacOS → VerifyMacOSPackage → ReleaseDistributableMacOS`
 - **macOS App Store**: `MacAppStoreArchive → MacExportPkg → VerifyMacPkg → MacUploadASC → ReleaseDistributableMacOSAppStore`
 
-Build-time `-P` scripts (version generation, notarization, verification, etc.) live alongside their deploy modules in `cmake/deploy/{platform}/` subdirectories; shared scripts live in `cmake/deploy/`.
+Shared deploy helpers eliminate cross-platform duplication:
+- **`DeployPipelines.cmake`** — single entry point; includes all deploy modules and provides `configure_deploy_pipelines(target)`
+- **`AscUpload.cmake`** — unified App Store Connect upload for iOS IPA and macOS PKG
+- **`XcodeExport.cmake`** — unified `xcodebuild -exportArchive` for iOS and macOS App Store
+- **`ArtifactVerify.cmake`** / **`VerifyArtifact.cmake`** — unified artifact verification
+- **`VersionTarget.cmake`** — shared `add_version_target()` used by iOS and macOS builds
+- **`cmake/qt/FindMacDeployQt.cmake`** — shared `find_macdeployqt()` used by macOS DMG and App Store builds
+- **`cmake/platform/IOSResources.cmake`** — iOS asset catalog and launch screen setup
+
+Build-time `-P` scripts (version generation, notarization, verification, etc.) live in `cmake/deploy/{platform}/` subdirectories; shared scripts live in `cmake/deploy/`.
 
 All CMake modules use `include_guard(GLOBAL)`.
 

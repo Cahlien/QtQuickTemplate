@@ -1,5 +1,7 @@
 include_guard(GLOBAL)
 
+include("${CMAKE_CURRENT_LIST_DIR}/VersionTarget.cmake")
+
 set(QTQUICKTEMPLATE_IOS_ARCHIVE_CONFIGURATION "Release" CACHE STRING
     "Build configuration used for iOS archive/export"
 )
@@ -44,21 +46,8 @@ function(configure_ios_build target)
 ]=])
 
     set(_version_xcconfig "${CMAKE_BINARY_DIR}/ios/version.xcconfig")
-    set(_version_script "${CMAKE_CURRENT_SOURCE_DIR}/cmake/deploy/GenerateVersion.cmake")
 
-    if (NOT TARGET GenerateIOSVersion)
-        add_custom_target(GenerateIOSVersion
-            COMMAND ${CMAKE_COMMAND}
-                -DMAJOR=${PROJECT_VERSION_MAJOR}
-                -DMINOR=${PROJECT_VERSION_MINOR}
-                -DPATCH=${PROJECT_VERSION_PATCH}
-                -DPLATFORM=ios
-                -DOUT_FILE=${_version_xcconfig}
-                -P ${_version_script}
-            COMMENT "Generating iOS version.xcconfig"
-            VERBATIM
-        )
-    endif ()
+    add_version_target(GenerateIOSVersion ios "${_version_xcconfig}")
 
     if (NOT TARGET IOSArchive)
         add_custom_target(IOSArchive

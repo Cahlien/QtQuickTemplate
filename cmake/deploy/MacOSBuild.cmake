@@ -1,5 +1,7 @@
 include_guard(GLOBAL)
 
+include("${CMAKE_CURRENT_LIST_DIR}/../qt/FindMacDeployQt.cmake")
+
 option(QTQUICKTEMPLATE_MACOS_USE_MACDEPLOYQT "Use macdeployqt for macOS app deployment" ON)
 
 function(configure_macos_build target)
@@ -7,14 +9,7 @@ function(configure_macos_build target)
         return()
     endif ()
 
-    get_target_property(_qmake_path Qt6::qmake IMPORTED_LOCATION)
-    if (_qmake_path)
-        get_filename_component(_qt_bin_dir "${_qmake_path}" DIRECTORY)
-    else ()
-        set(_qt_bin_dir "")
-    endif ()
-
-    find_program(MACDEPLOYQT_EXECUTABLE macdeployqt HINTS ${_qt_bin_dir})
+    find_macdeployqt(MACDEPLOYQT_EXECUTABLE)
     if (NOT MACDEPLOYQT_EXECUTABLE)
         message(WARNING "macdeployqt not found; MacDeployQt target unavailable.")
         return()

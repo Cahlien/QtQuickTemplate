@@ -1,5 +1,8 @@
 include_guard(GLOBAL)
 
+include("${CMAKE_CURRENT_LIST_DIR}/../qt/FindMacDeployQt.cmake")
+include("${CMAKE_CURRENT_LIST_DIR}/VersionTarget.cmake")
+
 set(QTQUICKTEMPLATE_MACOS_APP_STORE_ARCHIVE_CONFIGURATION "Release" CACHE STRING
     "Build configuration used for macOS App Store archive/export"
 )
@@ -20,13 +23,7 @@ function(configure_macos_appstore_build target)
         return()
     endif ()
 
-    get_target_property(_qmake_path Qt6::qmake IMPORTED_LOCATION)
-    if (_qmake_path)
-        get_filename_component(_qt_bin_dir "${_qmake_path}" DIRECTORY)
-    else ()
-        set(_qt_bin_dir "")
-    endif ()
-    find_program(MACDEPLOYQT_EXECUTABLE macdeployqt HINTS ${_qt_bin_dir})
+    find_macdeployqt(MACDEPLOYQT_EXECUTABLE)
     if (NOT MACDEPLOYQT_EXECUTABLE)
         message(WARNING "macdeployqt not found; App Store archive will lack Qt frameworks.")
     endif ()
@@ -51,23 +48,10 @@ function(configure_macos_appstore_build target)
 ]=])
 
     set(_version_xcconfig "${CMAKE_BINARY_DIR}/macos/version.xcconfig")
-    set(_version_script "${CMAKE_CURRENT_SOURCE_DIR}/cmake/deploy/GenerateVersion.cmake")
     set(_patch_script "${CMAKE_CURRENT_SOURCE_DIR}/cmake/deploy/macos/PatchArchiveInfo.cmake")
     set(_deployqt_script "${CMAKE_CURRENT_SOURCE_DIR}/cmake/deploy/macos/RunMacDeployQt.cmake")
 
-    if (NOT TARGET GenerateMacOSVersion)
-        add_custom_target(GenerateMacOSVersion
-            COMMAND ${CMAKE_COMMAND}
-                -DMAJOR=${PROJECT_VERSION_MAJOR}
-                -DMINOR=${PROJECT_VERSION_MINOR}
-                -DPATCH=${PROJECT_VERSION_PATCH}
-                -DPLATFORM=macos
-                -DOUT_FILE=${_version_xcconfig}
-                -P ${_version_script}
-            COMMENT "Generating macOS App Store version.xcconfig"
-            VERBATIM
-        )
-    endif ()
+    add_version_target(GenerateMacOSVersion macos "${_version_xcconfig}")
 
     if (NOT TARGET MacAppStoreArchive)
         add_custom_target(MacAppStoreArchive

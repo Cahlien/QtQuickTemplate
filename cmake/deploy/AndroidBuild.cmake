@@ -38,62 +38,45 @@ function(_resolve_android_signing_vars out_ks out_ksp out_ka out_kp)
     set(${out_kp} "${_kp}" PARENT_SCOPE)
 endfunction()
 
-function(configure_android_build_aab target)
-    if (NOT ANDROID)
-        return()
-    endif ()
-
+# Private helper for AAB/APK Gradle build targets.
+function(_configure_android_gradle_build target_name depends gradle_task comment)
     set(_pkg_dir "${CMAKE_CURRENT_SOURCE_DIR}/platforms/android")
     set(_gradle "${_pkg_dir}/gradlew")
     if (NOT EXISTS "${_gradle}")
-        message(WARNING "Android Gradle wrapper not found; AndroidAAB target unavailable.")
+        message(WARNING "Android Gradle wrapper not found; ${target_name} target unavailable.")
         return()
     endif ()
 
     _resolve_android_signing_vars(_ks _ksp _ka _kp)
 
-    if (NOT TARGET AndroidAAB)
-        add_custom_target(AndroidAAB
-            DEPENDS ${target}
+    if (NOT TARGET ${target_name})
+        add_custom_target(${target_name}
+            DEPENDS ${depends}
             COMMAND ${CMAKE_COMMAND} -E env
                 QT_ANDROID_KEYSTORE_PATH=${_ks}
                 QT_ANDROID_KEYSTORE_PASSWORD=${_ksp}
                 QT_ANDROID_KEY_ALIAS=${_ka}
                 QT_ANDROID_KEY_PASSWORD=${_kp}
-                ${CMAKE_COMMAND} -E chdir "${_pkg_dir}" "${_gradle}" --no-daemon bundleRelease
-            COMMENT "Building signed Android release AAB"
+                ${CMAKE_COMMAND} -E chdir "${_pkg_dir}" "${_gradle}" --no-daemon ${gradle_task}
+            COMMENT "${comment}"
             VERBATIM
         )
-        message(STATUS "AndroidAAB target configured -> cmake --build . --target AndroidAAB")
+        message(STATUS "${target_name} target configured -> cmake --build . --target ${target_name}")
     endif ()
+endfunction()
+
+function(configure_android_build_aab target)
+    if (NOT ANDROID)
+        return()
+    endif ()
+    _configure_android_gradle_build(AndroidAAB ${target} bundleRelease
+        "Building signed Android release AAB")
 endfunction()
 
 function(configure_android_build_apk target)
     if (NOT ANDROID)
         return()
     endif ()
-
-    set(_pkg_dir "${CMAKE_CURRENT_SOURCE_DIR}/platforms/android")
-    set(_gradle "${_pkg_dir}/gradlew")
-    if (NOT EXISTS "${_gradle}")
-        message(WARNING "Android Gradle wrapper not found; AndroidAPK target unavailable.")
-        return()
-    endif ()
-
-    _resolve_android_signing_vars(_ks _ksp _ka _kp)
-
-    if (NOT TARGET AndroidAPK)
-        add_custom_target(AndroidAPK
-            DEPENDS ${target}
-            COMMAND ${CMAKE_COMMAND} -E env
-                QT_ANDROID_KEYSTORE_PATH=${_ks}
-                QT_ANDROID_KEYSTORE_PASSWORD=${_ksp}
-                QT_ANDROID_KEY_ALIAS=${_ka}
-                QT_ANDROID_KEY_PASSWORD=${_kp}
-                ${CMAKE_COMMAND} -E chdir "${_pkg_dir}" "${_gradle}" --no-daemon assembleRelease
-            COMMENT "Building signed Android release APK"
-            VERBATIM
-        )
-        message(STATUS "AndroidAPK target configured -> cmake --build . --target AndroidAPK")
-    endif ()
+    _configure_android_gradle_build(AndroidAPK ${target} assembleRelease
+        "Building signed Android release APK")
 endfunction()

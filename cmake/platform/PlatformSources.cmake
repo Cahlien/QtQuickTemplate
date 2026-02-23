@@ -1,5 +1,7 @@
 include_guard(GLOBAL)
 
+include("${CMAKE_CURRENT_LIST_DIR}/IOSResources.cmake")
+
 # Add platform-specific sources, resources, and configuration to the given target.
 function(add_platform_sources target)
     set(_src_dir "${CMAKE_CURRENT_SOURCE_DIR}")
@@ -32,42 +34,8 @@ function(add_platform_sources target)
             XCODE_ATTRIBUTE_MARKETING_VERSION "${PROJECT_VERSION}"
             XCODE_ATTRIBUTE_CURRENT_PROJECT_VERSION "${PROJECT_VERSION}.${QTQUICKTEMPLATE_BUILD_NUMBER}"
         )
-        # Asset catalog for app icons (required by App Store).
-        set(_xcassets "${_src_dir}/platforms/ios/Assets.xcassets")
-        if (EXISTS "${_xcassets}")
-            target_sources(${target} PRIVATE "${_xcassets}")
-            set_source_files_properties("${_xcassets}" PROPERTIES
-                MACOSX_PACKAGE_LOCATION Resources
-            )
-            set_target_properties(${target} PROPERTIES
-                XCODE_ATTRIBUTE_ASSETCATALOG_COMPILER_APPICON_NAME AppIcon
-            )
-        endif ()
-        # Generate LaunchScreen.storyboard from template with version text.
-        set(_ls_template "${_src_dir}/platforms/ios/LaunchScreen.storyboard.in")
-        set(_ls_output "${CMAKE_CURRENT_BINARY_DIR}/platforms/ios/LaunchScreen.storyboard")
-        if (EXISTS "${_ls_template}")
-            configure_file("${_ls_template}" "${_ls_output}" @ONLY)
-            add_custom_target(GenerateLaunchScreen ALL
-                COMMAND ${CMAKE_COMMAND}
-                    -DPROJECT_VERSION=${PROJECT_VERSION}
-                    -DAPP_BUILD_NUMBER=auto
-                    -DTEMPLATE=${_ls_template}
-                    -DOUTPUT=${_ls_output}
-                    -P ${_src_dir}/cmake/deploy/ios/GenerateLaunchScreen.cmake
-                BYPRODUCTS "${_ls_output}"
-                VERBATIM
-            )
-            add_dependencies(${target} GenerateLaunchScreen)
-            set_source_files_properties("${_ls_output}" PROPERTIES
-                MACOSX_PACKAGE_LOCATION Resources
-                XCODE_EXPLICIT_FILE_TYPE "file.storyboard"
-            )
-            target_sources(${target} PRIVATE "${_ls_output}")
-            set_target_properties(${target} PROPERTIES
-                QT_IOS_LAUNCH_SCREEN "${_ls_output}"
-            )
-        endif ()
+        configure_ios_asset_catalog(${target})
+        configure_ios_launch_screen(${target})
     elseif (APPLE AND NOT IOS)
         target_sources(${target} PRIVATE
             src/main/common/platform_init_default.cpp
