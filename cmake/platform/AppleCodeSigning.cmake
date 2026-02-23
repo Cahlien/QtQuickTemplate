@@ -12,6 +12,10 @@ set(QTQUICKTEMPLATE_IOS_PROVISIONING_PROFILE "" CACHE STRING
     "iOS provisioning profile name for App Store distribution (leave empty to let Xcode resolve automatically)"
 )
 
+set(QTQUICKTEMPLATE_MACOS_APP_STORE_PROVISIONING_PROFILE "" CACHE STRING
+    "Mac App Store Distribution provisioning profile name (leave empty to let Xcode resolve automatically)"
+)
+
 set(QTQUICKTEMPLATE_MACOS_APP_SIGN_IDENTITY "" CACHE STRING
     "Explicit macOS app signing identity for release builds (for example: Developer ID Application: Example Corp (TEAMID))"
 )
@@ -48,9 +52,33 @@ function(configure_apple_release_code_signing target)
             )
         endif ()
     else ()
+        # macOS with Xcode generator (App Store pipeline).
+        # Manual Distribution signing is set at the project level so xcodebuild
+        # archive populates ApplicationProperties in the xcarchive Info.plist.
+        # The outer cmake --build invocation passes CODE_SIGNING_ALLOWED=NO from
+        # nativeToolOptions to suppress signing during the regular build step;
+        # the archive command in MacAppStore.cmake overrides back to YES.
+        set(_macos_entitlements "${CMAKE_CURRENT_SOURCE_DIR}/platforms/macos/QtQuickTemplate.entitlements")
         set_target_properties(${target} PROPERTIES
-            XCODE_ATTRIBUTE_CODE_SIGNING_ALLOWED NO
-            XCODE_ATTRIBUTE_CODE_SIGNING_REQUIRED NO
+            XCODE_ATTRIBUTE_CODE_SIGNING_ALLOWED YES
+            XCODE_ATTRIBUTE_CODE_SIGNING_REQUIRED YES
+            XCODE_ATTRIBUTE_CODE_SIGN_STYLE Manual
+            XCODE_ATTRIBUTE_CODE_SIGN_IDENTITY "Apple Distribution"
         )
+        if (EXISTS "${_macos_entitlements}")
+            set_target_properties(${target} PROPERTIES
+                XCODE_ATTRIBUTE_CODE_SIGN_ENTITLEMENTS "${_macos_entitlements}"
+            )
+        endif ()
+        if (QTQUICKTEMPLATE_APPLE_DEVELOPMENT_TEAM)
+            set_target_properties(${target} PROPERTIES
+                XCODE_ATTRIBUTE_DEVELOPMENT_TEAM "${QTQUICKTEMPLATE_APPLE_DEVELOPMENT_TEAM}"
+            )
+        endif ()
+        if (QTQUICKTEMPLATE_MACOS_APP_STORE_PROVISIONING_PROFILE)
+            set_target_properties(${target} PROPERTIES
+                XCODE_ATTRIBUTE_PROVISIONING_PROFILE_SPECIFIER "${QTQUICKTEMPLATE_MACOS_APP_STORE_PROVISIONING_PROFILE}"
+            )
+        endif ()
     endif ()
 endfunction()

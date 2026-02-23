@@ -8,10 +8,12 @@ buildscript {
         //noinspection AndroidGradlePluginVersion
         classpath libs.plugins.android.application.get().toString()
         classpath libs.plugins.kotlin.android.get().toString()
+        classpath 'com.github.triplet.gradle:play-publisher:3.12.1'
     }
 }
 
 apply plugin: qtGradlePluginType
+apply plugin: 'com.github.triplet.play'
 
 def verProps = new Properties()
 def verFile = new File(projectDir, "version.properties")
@@ -30,7 +32,7 @@ dependencies {
     implementation libs.androidx.core.splashscreen
 }
 
-def readSigningValue = { key ->
+def readBuildValue = { key ->
     def envValue = System.getenv(key)
     if (envValue != null && !envValue.trim().isEmpty()) {
         return envValue.trim()
@@ -44,10 +46,14 @@ def readSigningValue = { key ->
     return null
 }
 
-def releaseStoreFile = readSigningValue('QT_ANDROID_KEYSTORE_PATH')
-def releaseStorePassword = readSigningValue('QT_ANDROID_KEYSTORE_PASSWORD')
-def releaseKeyAlias = readSigningValue('QT_ANDROID_KEY_ALIAS')
-def releaseKeyPassword = readSigningValue('QT_ANDROID_KEY_PASSWORD')
+def releaseStoreFile = readBuildValue('QT_ANDROID_KEYSTORE_PATH')
+def releaseStorePassword = readBuildValue('QT_ANDROID_KEYSTORE_PASSWORD')
+def releaseKeyAlias = readBuildValue('QT_ANDROID_KEY_ALIAS')
+def releaseKeyPassword = readBuildValue('QT_ANDROID_KEY_PASSWORD')
+
+def playServiceAccountFile = readBuildValue('QT_ANDROID_PLAY_SERVICE_ACCOUNT_FILE')
+def playTrack = readBuildValue('QT_ANDROID_PLAY_TRACK') ?: 'internal'
+def playReleaseStatus = readBuildValue('QT_ANDROID_PLAY_RELEASE_STATUS') ?: 'completed'
 
 def hasReleaseSigning = releaseStoreFile && releaseStorePassword && releaseKeyAlias && releaseKeyPassword
 
@@ -55,6 +61,12 @@ if (hasReleaseSigning) {
     println "[Android] Release signing enabled for AAB/APK outputs"
 } else {
     println "[Android] Release signing credentials are incomplete; release artifacts may be unsigned"
+}
+
+if (playServiceAccountFile) {
+    println "[Android] Google Play upload enabled for track='${playTrack}' status='${playReleaseStatus}'"
+} else {
+    println "[Android] Google Play upload disabled; QT_ANDROID_PLAY_SERVICE_ACCOUNT_FILE not set"
 }
 
 android {
@@ -131,6 +143,16 @@ android {
                 signingConfig signingConfigs.release
             }
         }
+    }
+
+}
+
+if (playServiceAccountFile) {
+    play {
+        serviceAccountCredentials = file(playServiceAccountFile)
+        track = playTrack
+        releaseStatus = playReleaseStatus
+        defaultToAppBundles = true
     }
 }
 

@@ -27,13 +27,10 @@ function(add_platform_sources target)
         target_sources(${target} PRIVATE
             src/main/common/platform_init_default.cpp
         )
-        # CURRENT_PROJECT_VERSION is overridden at archive time by the
-        # version xcconfig (generate_version.cmake) so App Store uploads
-        # auto-increment with each commit.  The value here is a fallback.
         set_target_properties(${target} PROPERTIES
             MACOSX_BUNDLE_INFO_PLIST ${_src_dir}/platforms/ios/Info.plist
-            XCODE_ATTRIBUTE_MARKETING_VERSION "${PROJECT_VERSION_MAJOR}.${PROJECT_VERSION_MINOR}"
-            XCODE_ATTRIBUTE_CURRENT_PROJECT_VERSION "${PROJECT_VERSION}"
+            XCODE_ATTRIBUTE_MARKETING_VERSION "${PROJECT_VERSION}"
+            XCODE_ATTRIBUTE_CURRENT_PROJECT_VERSION "${PROJECT_VERSION}.${QTQUICKTEMPLATE_BUILD_NUMBER}"
         )
         # Asset catalog for app icons (required by App Store).
         set(_xcassets "${_src_dir}/platforms/ios/Assets.xcassets")
@@ -57,7 +54,7 @@ function(add_platform_sources target)
                     -DAPP_BUILD_NUMBER=auto
                     -DTEMPLATE=${_ls_template}
                     -DOUTPUT=${_ls_output}
-                    -P ${_src_dir}/scripts/generate_launchscreen.cmake
+                    -P ${_src_dir}/cmake/deploy/ios/GenerateLaunchScreen.cmake
                 BYPRODUCTS "${_ls_output}"
                 VERBATIM
             )

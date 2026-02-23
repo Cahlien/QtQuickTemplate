@@ -79,5 +79,14 @@
 
         <key>CFBundleAllowMixedLocalizations</key>
         <true/>
+
+        <key>NSCameraUsageDescription</key>
+        <string>This app may use the camera for multimedia features.</string>
+
+        <key>NSMicrophoneUsageDescription</key>
+        <string>This app may use the microphone for multimedia features.</string>
+
+        <key>NSPhotoLibraryUsageDescription</key>
+        <string>This app may access your photo library for multimedia features.</string>
     </dict>
 </plist>
