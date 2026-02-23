@@ -44,8 +44,9 @@ CMakeLists.txt.user*
 # JetBrains IDEs
 .idea/
 
-# Junie
-.junie/
+# Junie (keep guidelines.md tracked for AI agent instructions)
+.junie/*
+!.junie/guidelines.md
 
 # xemacs temporary files
 *.flc

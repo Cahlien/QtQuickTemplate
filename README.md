@@ -654,3 +654,39 @@ See `libs/appstyle/README.md` for a deeper dive into the Theme/AppStyle approach
 ## Contributing
 
 PRs welcome—keep changes small, keep the template sharp, and try not to introduce "magic" unless it removes more pain than it adds.
+
+---
+
+## AI Use Policy
+
+AI-assisted tooling is permitted throughout the entire workflow when contributing to this repository — from initial exploration and prototyping through implementation, testing, and review — provided the following conditions are met:
+
+1. **Human accountability.** Every contribution must have an associated human contributor who is responsible for reviewing and maintaining any AI-generated or AI-assisted code and who is accountable for its correctness, security, and adherence to project conventions.
+
+2. **Active monitoring.** AI output must be actively monitored and reviewed by the contributor before submission. Do not submit AI-generated changes without reading, understanding, and verifying them.
+
+3. **Transparency.** Contributors should note AI involvement in commit messages or PR descriptions when AI played a substantial role (e.g., `Co-Authored-By` trailers).
+
+### Ideal tasks for AI assistance
+
+AI tooling is especially well-suited for:
+
+- **Deduplication** — identifying and consolidating repeated logic across the codebase
+- **Error and edge case checking** — surfacing unhandled conditions, boundary issues, and failure modes
+- **Documentation** — generating and maintaining doc comments, README sections, and inline explanations
+- **Enforcing style consistency** — applying project conventions (C++23 idioms, QML patterns, CMake module structure) uniformly
+- **Code review** — catching bugs, suggesting improvements, and verifying cross-platform correctness
+
+### AI agent configuration
+
+This repository includes instruction files for several AI coding agents:
+
+| File | Agent(s) |
+|------|----------|
+| `CLAUDE.md` | Claude Code |
+| `AGENTS.md` | OpenAI Codex, OpenCode |
+| `GEMINI.md` | Google Gemini CLI |
+| `.github/copilot-instructions.md` | GitHub Copilot |
+| `.junie/guidelines.md` | JetBrains Junie |
+
+These files contain project architecture context, build commands, and conventions to help AI agents produce correct, idiomatic contributions. Each agent is encouraged to decompose complex tasks into focused subtasks and to read existing code before proposing modifications.

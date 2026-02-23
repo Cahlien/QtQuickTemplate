@@ -1,6 +1,6 @@
-# CLAUDE.md
+# Junie Guidelines
 
-This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
+Instructions for JetBrains Junie when working in this repository.
 
 ## Project Summary
 
@@ -111,11 +111,11 @@ Libraries live in `libs/`. Helper macros in `cmake/libs/LibraryCommon.cmake`:
 
 ## Task Delegation
 
-For complex, multi-step tasks, delegate to specialized subagents:
-- **Explore**: codebase search, file discovery, architecture questions — use before modifying unfamiliar code
-- **Plan**: design implementation strategy for multi-file or cross-platform changes
-- **Bash**: build commands, git operations, platform toolchain invocations
-- **general-purpose**: multi-step research requiring investigation across many files
-- **tech-lead-orchestrator**: cross-domain work spanning C++, CMake, Qt/QML, and platform-specific code
+When tackling complex, multi-step tasks, decompose them into independent subtasks and execute in parallel where possible:
 
-Prefer parallel subagent execution for independent tasks. CMake module changes may cascade across platforms — validate the full dependency chain before committing.
+- **Codebase exploration**: search and read existing code before proposing modifications — understand the patterns already in use
+- **Cross-platform validation**: when changing CMake modules or C++ code, verify impact on each affected platform independently
+- **Build and test**: run builds and tests as separate tasks; do not block investigation on build completion
+- **Multi-domain changes**: for work spanning C++, CMake, Qt/QML, and platform-specific code, address each domain in a focused subtask
+
+CMake module changes may cascade across platforms — validate the full dependency chain before committing.
