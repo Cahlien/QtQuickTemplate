@@ -14,3 +14,10 @@ qt_add_qml_module(${TARGET}
     QML_FILES
         qml/Theme.qml
 )
+
+target_link_libraries(${TARGET}
+    PUBLIC
+        Qt6::Core
+        Qt6::Qml
+        Qt6::QuickControls2
+)

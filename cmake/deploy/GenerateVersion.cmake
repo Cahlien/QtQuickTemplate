@@ -43,15 +43,12 @@ if (PLATFORM STREQUAL "android")
 elseif (PLATFORM STREQUAL "ios")
     # MARKETING_VERSION  = CFBundleShortVersionString (shown on App Store)
     # CURRENT_PROJECT_VERSION = CFBundleVersion (must increment per upload)
-    file(WRITE "${OUT_FILE}" "MARKETING_VERSION = ${MAJOR}.${MINOR}\n")
+    file(WRITE "${OUT_FILE}" "MARKETING_VERSION = ${MAJOR}.${MINOR}.${PATCH}\n")
     file(APPEND "${OUT_FILE}" "CURRENT_PROJECT_VERSION = ${VERSION_NAME}\n")
 
-# ── macOS: version.xcconfig (3-part, no build number) ─────────────────
+# ── macOS: version.xcconfig (3-part) ──────────────────────────────────
 elseif (PLATFORM STREQUAL "macos")
-    # Apple recommends three period-separated integers for macOS
-    # CFBundleVersion.  The build number is omitted; version increments
-    # are driven by bumping PROJECT_VERSION in CMakeLists.txt.
-    file(WRITE "${OUT_FILE}" "MARKETING_VERSION = ${MAJOR}.${MINOR}\n")
+    file(WRITE "${OUT_FILE}" "MARKETING_VERSION = ${MAJOR}.${MINOR}.${PATCH}\n")
     file(APPEND "${OUT_FILE}" "CURRENT_PROJECT_VERSION = ${MAJOR}.${MINOR}.${PATCH}\n")
 
 else ()

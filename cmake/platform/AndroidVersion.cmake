@@ -11,7 +11,7 @@ function(add_android_version_target target)
             -DMINOR=${PROJECT_VERSION_MINOR}
             -DPATCH=${PROJECT_VERSION_PATCH}
             -DOUT_FILE=${_ver_file}
-            -P ${CMAKE_CURRENT_SOURCE_DIR}/scripts/generate_android_version.cmake
+            -P ${CMAKE_CURRENT_SOURCE_DIR}/cmake/deploy/android/GenerateVersion.cmake
         COMMENT "Generating Android version.properties -> ${_ver_file}"
         VERBATIM
     )

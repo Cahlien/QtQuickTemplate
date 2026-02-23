@@ -49,10 +49,12 @@ Root `CMakeLists.txt` is minimal (14 lines) — it delegates to two entry points
 - **`cmake/ProjectSetup.cmake`** → `configure_project()`: compiler settings, Conan, Qt discovery, AUTOMOC
 - **`cmake/MainApp.cmake`** → `configure_main_app()`: creates the executable, registers QML modules, platform sources, code signing, packaging targets
 
-Packaging modules live in `cmake/packaging/` and define custom build targets that chain together:
+Deploy modules live in `cmake/deploy/` with consistent `{Platform}{Stage}.cmake` naming and define custom build targets that chain together:
 - **iOS**: `IOSArchive → IOSExportIPA → VerifyIOSIPA → IOSUploadASC → ReleaseDistributableIOS`
 - **macOS DMG**: `MacDeployQt → DMG → NotarizeMacOS → VerifyMacOSPackage → ReleaseDistributableMacOS`
 - **macOS App Store**: `MacAppStoreArchive → MacExportPkg → VerifyMacPkg → MacUploadASC → ReleaseDistributableMacOSAppStore`
+
+Build-time `-P` scripts (version generation, notarization, verification, etc.) live alongside their deploy modules in `cmake/deploy/{platform}/` subdirectories; shared scripts live in `cmake/deploy/`.
 
 All CMake modules use `include_guard(GLOBAL)`.
 
@@ -82,7 +84,7 @@ Libraries live in `libs/`. Helper macros in `cmake/libs/LibraryCommon.cmake`:
 
 ### Version Generation
 
-`scripts/generate_version.cmake` computes build number from `git rev-list --count HEAD`:
+`cmake/deploy/GenerateVersion.cmake` computes build number from `git rev-list --count HEAD`:
 - iOS: generates `platforms/ios/version.xcconfig`
 - Android: generates `platforms/android/version.properties`
 - Format: `MARKETING_VERSION = 1.0`, `CURRENT_PROJECT_VERSION = 1.0.0.<commit_count>`

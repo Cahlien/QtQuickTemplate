@@ -5,36 +5,53 @@ include("${CMAKE_CURRENT_LIST_DIR}/platform/PlatformSources.cmake")
 include("${CMAKE_CURRENT_LIST_DIR}/platform/AppleCodeSigning.cmake")
 include("${CMAKE_CURRENT_LIST_DIR}/platform/AndroidVersion.cmake")
 include("${CMAKE_CURRENT_LIST_DIR}/toolchain/CompilerSettings.cmake")
-include("${CMAKE_CURRENT_LIST_DIR}/packaging/AppImage.cmake")
-include("${CMAKE_CURRENT_LIST_DIR}/packaging/AndroidAab.cmake")
-include("${CMAKE_CURRENT_LIST_DIR}/packaging/AndroidApk.cmake")
-include("${CMAKE_CURRENT_LIST_DIR}/packaging/IOSAppStore.cmake")
-include("${CMAKE_CURRENT_LIST_DIR}/packaging/IOSAppStoreConnect.cmake")
-include("${CMAKE_CURRENT_LIST_DIR}/packaging/Install.cmake")
-include("${CMAKE_CURRENT_LIST_DIR}/packaging/MacAppStore.cmake")
-include("${CMAKE_CURRENT_LIST_DIR}/packaging/MacAppStoreConnect.cmake")
-include("${CMAKE_CURRENT_LIST_DIR}/packaging/MacDeployQt.cmake")
-include("${CMAKE_CURRENT_LIST_DIR}/packaging/MacOSDmg.cmake")
-include("${CMAKE_CURRENT_LIST_DIR}/packaging/MacOSNotarization.cmake")
-include("${CMAKE_CURRENT_LIST_DIR}/packaging/MacOSPackageVerification.cmake")
-include("${CMAKE_CURRENT_LIST_DIR}/packaging/ReleaseDistributables.cmake")
 include("${CMAKE_CURRENT_LIST_DIR}/docs/QDoc.cmake")
 
-# Create and fully configure the main application target.
-# Must be called after add_subdirectory(libs).
+include("${CMAKE_CURRENT_LIST_DIR}/deploy/Install.cmake")
+include("${CMAKE_CURRENT_LIST_DIR}/deploy/IOSBuild.cmake")
+include("${CMAKE_CURRENT_LIST_DIR}/deploy/IOSPackage.cmake")
+include("${CMAKE_CURRENT_LIST_DIR}/deploy/IOSVerify.cmake")
+include("${CMAKE_CURRENT_LIST_DIR}/deploy/IOSUpload.cmake")
+include("${CMAKE_CURRENT_LIST_DIR}/deploy/MacOSBuild.cmake")
+include("${CMAKE_CURRENT_LIST_DIR}/deploy/MacOSPackage.cmake")
+include("${CMAKE_CURRENT_LIST_DIR}/deploy/MacOSSign.cmake")
+include("${CMAKE_CURRENT_LIST_DIR}/deploy/MacOSVerify.cmake")
+include("${CMAKE_CURRENT_LIST_DIR}/deploy/MacOSAppStoreBuild.cmake")
+include("${CMAKE_CURRENT_LIST_DIR}/deploy/MacOSAppStorePackage.cmake")
+include("${CMAKE_CURRENT_LIST_DIR}/deploy/MacOSAppStoreVerify.cmake")
+include("${CMAKE_CURRENT_LIST_DIR}/deploy/MacOSAppStoreUpload.cmake")
+include("${CMAKE_CURRENT_LIST_DIR}/deploy/AndroidBuild.cmake")
+include("${CMAKE_CURRENT_LIST_DIR}/deploy/AndroidVerify.cmake")
+include("${CMAKE_CURRENT_LIST_DIR}/deploy/AndroidUpload.cmake")
+include("${CMAKE_CURRENT_LIST_DIR}/deploy/LinuxPackage.cmake")
+include("${CMAKE_CURRENT_LIST_DIR}/deploy/ReleaseDistributables.cmake")
+
 function(configure_main_app)
+    # Compute git-derived build number so the four-part version
+    # (MAJOR.MINOR.PATCH.BUILD) is available at configure time.
+    execute_process(
+        COMMAND git rev-list --count HEAD
+        WORKING_DIRECTORY "${CMAKE_SOURCE_DIR}"
+        OUTPUT_VARIABLE _build_number
+        OUTPUT_STRIP_TRAILING_WHITESPACE
+        ERROR_QUIET
+    )
+    if (NOT _build_number)
+        set(_build_number 1)
+    endif ()
+    set(QTQUICKTEMPLATE_BUILD_NUMBER "${_build_number}" CACHE INTERNAL
+        "Git commit count used as the fourth version component")
+
     qt_add_executable(${PROJECT_NAME}
         src/main/common/main.cpp
     )
 
-    # Link FFmpeg xcframeworks on iOS using Qt's official API (tech preview).
-    # Requires find_package(Qt6 Multimedia) from QtProject.cmake.
     if (IOS AND COMMAND qt_add_ios_ffmpeg_libraries)
         qt_add_ios_ffmpeg_libraries(${PROJECT_NAME})
     endif ()
 
     target_compile_definitions(${PROJECT_NAME} PRIVATE
-        APP_VERSION_STRING="${PROJECT_VERSION}"
+        APP_VERSION_STRING="${PROJECT_VERSION}.${QTQUICKTEMPLATE_BUILD_NUMBER}"
     )
 
     get_property(_helloworld_modules_enabled GLOBAL PROPERTY QTQUICKTEMPLATE_HELLOWORLD_MODULE_ENABLED)
@@ -53,8 +70,8 @@ function(configure_main_app)
     set_target_properties(${PROJECT_NAME} PROPERTIES
         MACOSX_BUNDLE TRUE
         WIN32_EXECUTABLE TRUE
-        MACOSX_BUNDLE_BUNDLE_VERSION ${PROJECT_VERSION}
-        MACOSX_BUNDLE_SHORT_VERSION_STRING ${PROJECT_VERSION_MAJOR}.${PROJECT_VERSION_MINOR}
+        MACOSX_BUNDLE_BUNDLE_VERSION ${PROJECT_VERSION}.${QTQUICKTEMPLATE_BUILD_NUMBER}
+        MACOSX_BUNDLE_SHORT_VERSION_STRING ${PROJECT_VERSION}
         QT_ANDROID_PACKAGE_SOURCE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/platforms/android
     )
 
@@ -65,9 +82,13 @@ function(configure_main_app)
     target_link_libraries(${PROJECT_NAME}
         PRIVATE
         Qt6::Core
+        Qt6::CorePrivate
         Qt6::Quick
+        Qt6::QuickPrivate
         Qt6::QuickControls2
+        Qt6::QuickControls2Private
         Qt6::Qml
+        Qt6::QmlPrivate
         apptheme
         appthemeplugin
         appstyle
@@ -78,8 +99,6 @@ function(configure_main_app)
     qt_import_qml_plugins(${PROJECT_NAME})
 
     if (ANDROID)
-        # Android 15 requires 16 KB page size support for ELF alignment.
-        # See https://developer.android.com/16kb-page-size
         set_target_properties(${PROJECT_NAME} PROPERTIES LINK_FLAGS "-Wl,-z,max-page-size=16384")
     endif ()
 
@@ -91,21 +110,27 @@ function(configure_main_app)
     )
 
     configure_ipo(${PROJECT_NAME})
-
     add_qdoc_target(docs "${CMAKE_CURRENT_SOURCE_DIR}/doc/qtquicktemplate.qdocconf")
 
-    configure_appimage(${PROJECT_NAME})
-    configure_android_release_aab(${PROJECT_NAME})
-    configure_android_release_apk(${PROJECT_NAME})
-    configure_ios_app_store_release(${PROJECT_NAME})
-    configure_ios_upload_asc(${PROJECT_NAME})
     configure_install(${PROJECT_NAME})
-    configure_macos_app_store_release(${PROJECT_NAME})
-    configure_macos_upload_asc(${PROJECT_NAME})
-    configure_macos_deployqt(${PROJECT_NAME})
-    configure_macos_dmg(${PROJECT_NAME})
-    configure_macos_notarization(${PROJECT_NAME})
-    configure_macos_package_verification(${PROJECT_NAME})
+    configure_ios_build(${PROJECT_NAME})
+    configure_ios_package(${PROJECT_NAME})
+    configure_ios_verify(${PROJECT_NAME})
+    configure_ios_upload(${PROJECT_NAME})
+    configure_macos_build(${PROJECT_NAME})
+    configure_macos_package(${PROJECT_NAME})
+    configure_macos_sign(${PROJECT_NAME})
+    configure_macos_verify(${PROJECT_NAME})
+    configure_macos_appstore_build(${PROJECT_NAME})
+    configure_macos_appstore_package(${PROJECT_NAME})
+    configure_macos_appstore_verify(${PROJECT_NAME})
+    configure_macos_appstore_upload(${PROJECT_NAME})
+    configure_android_build_aab(${PROJECT_NAME})
+    configure_android_build_apk(${PROJECT_NAME})
+    configure_android_verify_aab(${PROJECT_NAME})
+    configure_android_verify_apk(${PROJECT_NAME})
+    configure_android_upload_play(${PROJECT_NAME})
+    configure_linux_package(${PROJECT_NAME})
 
     configure_release_distributables(${PROJECT_NAME})
 endfunction()
