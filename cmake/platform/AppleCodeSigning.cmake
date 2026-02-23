@@ -41,8 +41,8 @@ function(configure_apple_release_code_signing target)
             XCODE_ATTRIBUTE_DEVELOPMENT_TEAM ${QTQUICKTEMPLATE_APPLE_DEVELOPMENT_TEAM}
             XCODE_ATTRIBUTE_CODE_SIGNING_ALLOWED YES
             XCODE_ATTRIBUTE_CODE_SIGNING_REQUIRED YES
-            XCODE_ATTRIBUTE_CODE_SIGN_STYLE Manual
-            XCODE_ATTRIBUTE_CODE_SIGN_IDENTITY "Apple Distribution"
+            XCODE_ATTRIBUTE_CODE_SIGN_STYLE "$<IF:$<CONFIG:Release>,Manual,Automatic>"
+            XCODE_ATTRIBUTE_CODE_SIGN_IDENTITY "$<IF:$<CONFIG:Release>,Apple Distribution,Apple Development>"
             XCODE_ATTRIBUTE_TARGETED_DEVICE_FAMILY "1,2"
         )
 
@@ -62,12 +62,12 @@ function(configure_apple_release_code_signing target)
         set_target_properties(${target} PROPERTIES
             XCODE_ATTRIBUTE_CODE_SIGNING_ALLOWED YES
             XCODE_ATTRIBUTE_CODE_SIGNING_REQUIRED YES
-            XCODE_ATTRIBUTE_CODE_SIGN_STYLE Manual
-            XCODE_ATTRIBUTE_CODE_SIGN_IDENTITY "Apple Distribution"
+            XCODE_ATTRIBUTE_CODE_SIGN_STYLE "$<IF:$<CONFIG:Release>,Manual,Automatic>"
+            XCODE_ATTRIBUTE_CODE_SIGN_IDENTITY "$<IF:$<CONFIG:Release>,Apple Distribution,Apple Development>"
         )
         if (EXISTS "${_macos_entitlements}")
             set_target_properties(${target} PROPERTIES
-                XCODE_ATTRIBUTE_CODE_SIGN_ENTITLEMENTS "${_macos_entitlements}"
+                XCODE_ATTRIBUTE_CODE_SIGN_ENTITLEMENTS "$<$<CONFIG:Release>:${_macos_entitlements}>"
             )
         endif ()
         if (QTQUICKTEMPLATE_APPLE_DEVELOPMENT_TEAM)
