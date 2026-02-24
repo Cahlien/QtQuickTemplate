@@ -55,6 +55,41 @@ info "Verifying tools..."
 "$UV" run pytest  --version | head -1
 ok "All tools verified."
 
+# ── Step 5 (Linux): Install linuxdeploy AppImage toolchain ─────────────────
+if [ "$(uname -s)" = "Linux" ]; then
+    case "$(uname -m)" in
+        x86_64)  LD_ARCH=x86_64; LDAI_ARCH=x86_64 ;;
+        i?86)    LD_ARCH=i386;   LDAI_ARCH=i686   ;;
+        aarch64) LD_ARCH=aarch64; LDAI_ARCH=aarch64 ;;
+        armv7l)  LD_ARCH=armhf;  LDAI_ARCH=armhf  ;;
+        *)       LD_ARCH="" ;;
+    esac
+
+    if [ -n "$LD_ARCH" ]; then
+        info "Installing linuxdeploy toolchain for $LD_ARCH..."
+        _ld_files=(
+            "linuxdeploy/continuous/linuxdeploy-${LD_ARCH}.AppImage"
+            "linuxdeploy-plugin-qt/continuous/linuxdeploy-plugin-qt-${LD_ARCH}.AppImage"
+            "linuxdeploy-plugin-appimage/continuous/linuxdeploy-plugin-appimage-${LDAI_ARCH}.AppImage"
+        )
+        for _entry in "${_ld_files[@]}"; do
+            _repo="${_entry%%/*}"
+            _file="${_entry##*/}"
+            _dest="$SCRIPT_DIR/tools/$_file"
+            if [ ! -x "$_dest" ]; then
+                info "Downloading $_file..."
+                curl -Lo "$_dest" "https://github.com/linuxdeploy/${_repo}/releases/download/${_entry#*/}"
+                chmod +x "$_dest"
+                ok "Installed $_file"
+            else
+                ok "$_file already installed"
+            fi
+        done
+    else
+        info "No linuxdeploy builds for $(uname -m) — skipping"
+    fi
+fi
+
 # ── Done ─────────────────────────────────────────────────────────────────────
 printf "\n${BOLD}Bootstrap complete!${RESET}\n"
 printf "Run commands through the venv with ${CYAN}./tools/uv run${RESET}:\n"

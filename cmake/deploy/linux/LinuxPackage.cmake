@@ -11,17 +11,28 @@ function(configure_linux_package target)
         return()
     endif ()
 
+    set(_ld_arch "${CMAKE_SYSTEM_PROCESSOR}")
+    if (_ld_arch MATCHES "^i.86$")
+        set(_ld_arch "i386")
+        set(_ldai_arch "i686")
+    elseif (_ld_arch STREQUAL "armv7l")
+        set(_ld_arch "armhf")
+        set(_ldai_arch "armhf")
+    else ()
+        set(_ldai_arch "${_ld_arch}")
+    endif ()
+
     find_program(LINUXDEPLOY_EXECUTABLE
-        NAMES linuxdeploy linuxdeploy-x86_64.AppImage linuxdeploy-x86_64.appimage
-        HINTS "$ENV{HOME}/applications" "$ENV{HOME}/.local/bin" /usr/local/bin
+        NAMES linuxdeploy "linuxdeploy-${_ld_arch}.AppImage"
+        HINTS "${PROJECT_SOURCE_DIR}/tools" "$ENV{HOME}/applications" "$ENV{HOME}/.local/bin" /usr/local/bin
     )
     find_program(LINUXDEPLOY_PLUGIN_QT_EXECUTABLE
-        NAMES linuxdeploy-plugin-qt linuxdeploy-plugin-qt-x86_64.AppImage linuxdeploy-plugin-qt-x86_64.appimage
-        HINTS "$ENV{HOME}/applications" "$ENV{HOME}/.local/bin" /usr/local/bin
+        NAMES linuxdeploy-plugin-qt "linuxdeploy-plugin-qt-${_ld_arch}.AppImage"
+        HINTS "${PROJECT_SOURCE_DIR}/tools" "$ENV{HOME}/applications" "$ENV{HOME}/.local/bin" /usr/local/bin
     )
     find_program(LINUXDEPLOY_PLUGIN_APPIMAGE_EXECUTABLE
-        NAMES linuxdeploy-plugin-appimage linuxdeploy-plugin-appimage-x86_64.AppImage linuxdeploy-plugin-appimage-x86_64.appimage
-        HINTS "$ENV{HOME}/applications" "$ENV{HOME}/.local/bin" /usr/local/bin
+        NAMES linuxdeploy-plugin-appimage "linuxdeploy-plugin-appimage-${_ldai_arch}.AppImage"
+        HINTS "${PROJECT_SOURCE_DIR}/tools" "$ENV{HOME}/applications" "$ENV{HOME}/.local/bin" /usr/local/bin
     )
 
     foreach (_tool LINUXDEPLOY_EXECUTABLE LINUXDEPLOY_PLUGIN_QT_EXECUTABLE LINUXDEPLOY_PLUGIN_APPIMAGE_EXECUTABLE)
@@ -43,7 +54,7 @@ function(configure_linux_package target)
 
     set(_build_dir "${CMAKE_BINARY_DIR}/AppImageBuild")
     set(_appdir "${_build_dir}/AppDir")
-    set(_appimage_out "${_build_dir}/${PROJECT_NAME}-${PROJECT_VERSION}-x86_64.AppImage")
+    set(_appimage_out "${_build_dir}/${PROJECT_NAME}-${PROJECT_VERSION}-${CMAKE_SYSTEM_PROCESSOR}.AppImage")
     set(_icon_name "dev.crowell.qtquicktemplate")
     set(_icon_staging "${_build_dir}/${_icon_name}.png")
 
@@ -71,9 +82,9 @@ function(configure_linux_package target)
 
         COMMAND ${CMAKE_COMMAND} -E env
             QMAKE=${_qmake_path}
-            QML_SOURCES_PATHS=${CMAKE_CURRENT_SOURCE_DIR}/ui
+            QML_SOURCES_PATHS=${CMAKE_CURRENT_SOURCE_DIR}/qml
             LINUXDEPLOY_PLUGIN_DIR=${_ld_dir}:${_qt_plugin_dir}:${_ai_plugin_dir}
-            ARCH=x86_64 NO_STRIP=1
+            ARCH=${CMAKE_SYSTEM_PROCESSOR} NO_STRIP=1
             ${LINUXDEPLOY_EXECUTABLE}
                 --appdir "${_appdir}"
                 --executable "$<TARGET_FILE:${target}>"
@@ -89,7 +100,7 @@ function(configure_linux_package target)
 
         COMMAND ${CMAKE_COMMAND} -E env
             LINUXDEPLOY_PLUGIN_DIR=${_ld_dir}:${_qt_plugin_dir}:${_ai_plugin_dir}
-            ARCH=x86_64
+            ARCH=${CMAKE_SYSTEM_PROCESSOR}
             OUTPUT=${_appimage_out} SIGN=1 SIGN_KEY=${GPG_KEY_ID}
             LDAI_OUTPUT=${_appimage_out} LDAI_SIGN=1 LDAI_SIGN_KEY=${GPG_KEY_ID}
             NO_STRIP=1
