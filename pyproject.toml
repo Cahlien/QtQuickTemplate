@@ -1,0 +1,37 @@
+[project]
+name = "qtquicktemplate"
+version = "0.2.0"
+requires-python = ">=3.14"
+dependencies = [
+    "cmake>=3.31",
+    "conan>=2.0,<3",
+]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+markers = [
+    "ios: iOS App Store pipeline tests",
+    "macos_dmg: macOS DMG (direct distribution) pipeline tests",
+    "macos_appstore: macOS App Store PKG pipeline tests",
+    "slow: full pipeline builds (10+ min each)",
+    "asc_upload: actually uploads to App Store Connect",
+    "asc_processing: checks ASC processing status",
+    "requires_signing: requires code signing credentials",
+    "requires_notarization: requires notarization credentials",
+    "build_pipeline: tests that invoke cmake --build",
+]
+addopts = "--strict-markers --tb=short"
+
+[dependency-groups]
+test = [
+    "pytest>=8.0",
+    "pytest-timeout>=2.3",
+    "PyJWT>=2.8",
+    "cryptography>=42.0",
+]
+dev = [
+    { include-group = "test" },
+]
+
+[tool.uv]
+default-groups = ["dev"]

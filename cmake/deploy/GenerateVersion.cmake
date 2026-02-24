@@ -1,9 +1,9 @@
-# generate_version.cmake
+# GenerateVersion.cmake
 #
 # Computes a git-derived build number and writes version information in
-# a platform-appropriate format.  iOS and Android use the same four-part
-# version string (MAJOR.MINOR.PATCH.BUILD); macOS uses three parts
-# (MAJOR.MINOR.PATCH), omitting the build number.
+# a platform-appropriate format.  All Apple and Android platforms use the
+# same four-part version string (MAJOR.MINOR.PATCH.BUILD) so that
+# CFBundleVersion / versionCode auto-increments with every commit.
 #
 # Expected arguments (passed via -D):
 #   MAJOR, MINOR, PATCH  – semantic version components

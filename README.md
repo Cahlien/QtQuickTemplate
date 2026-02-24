@@ -69,6 +69,9 @@ Back handling and app minimization are split cleanly:
 
 ```text
 .
+├── .python-version                  # pinned Python interpreter for uv
+├── bootstrap.ps1                    # dev environment setup (Windows)
+├── bootstrap.sh                     # dev environment setup (macOS/Linux)
 ├── CMakeLists.txt
 ├── cmake/
 │   ├── toolchain/
@@ -78,7 +81,9 @@ Back handling and app minimization are split cleanly:
 │   └── libs/
 │       └── LibraryCommon.cmake
 ├── conanfile.py
+├── pyproject.toml                   # Python deps and tool config
 ├── README.md
+├── uv.lock                         # cross-platform dependency lockfile
 ├── doc/
 │   └── qtquicktemplate.qdocconf
 ├── include/
@@ -145,15 +150,43 @@ Back handling and app minimization are split cleanly:
 ## Build prerequisites
 
 - **Qt 6.10+** (Core, Quick, QuickControls2, Qml)
-- **CMake 3.28+**
 - A C++23-capable compiler
 - Optional module path requirements:
   - On supported non-Apple toolchains/generators, `helloworld` exports a C++20 module.
   - On Apple targets (and unsupported generators/toolchains), the app automatically uses the header/library path.
   - If using Clang with modules enabled, `clang-scan-deps` must be available (the project attempts to locate it automatically, including Android NDK hints).
 
-Optional:
-- **Conan 2** (the repo includes a basic `conanfile.py`)
+### Recommended: bootstrap script
+
+The fastest way to get cmake, conan, pytest, and all Python-based tools at the correct versions:
+
+```bash
+./bootstrap.sh       # macOS/Linux
+.\bootstrap.ps1      # Windows
+```
+
+This installs [uv](https://docs.astral.sh/uv/) into a project-local `tools/` directory, downloads the pinned CPython (from `.python-version`), and creates an isolated `.venv/` with all dependencies locked in `uv.lock`. Run tools with `./tools/uv run`:
+
+```bash
+./tools/uv run cmake --preset <preset>
+./tools/uv run pytest
+```
+
+Alternatively, activate the venv to put all tools on your `PATH` directly:
+
+```bash
+source .venv/bin/activate   # macOS/Linux
+.venv\Scripts\Activate.ps1  # Windows
+```
+
+> **IDE users:** Activating the venv only affects your current terminal session. IDEs (Qt Creator, CLion, Xcode, Visual Studio) have their own tool discovery and will not see the activated venv. Point your IDE's CMake executable setting to `.venv/bin/cmake` (macOS/Linux) or `.venv\Scripts\cmake.exe` (Windows) to use the pinned version.
+
+### Manual alternative
+
+If you prefer to manage tools globally:
+- **CMake 3.28+**
+- **Conan 2** (optional; the repo includes a `conanfile.py`)
+- **Python 3.14+** with pytest for running integration tests
 
 ---
 
@@ -162,15 +195,15 @@ Optional:
 ### Build (local desktop binary)
 
 ```bash
-cmake -S . -B build/linux-debug -DCMAKE_BUILD_TYPE=Debug
-cmake --build build/linux-debug -j
+./tools/uv run cmake -S . -B build/linux-debug -DCMAKE_BUILD_TYPE=Debug
+./tools/uv run cmake --build build/linux-debug -j
 ```
 
 For release builds:
 
 ```bash
-cmake -S . -B build/linux-release -DCMAKE_BUILD_TYPE=Release
-cmake --build build/linux-release -j
+./tools/uv run cmake -S . -B build/linux-release -DCMAKE_BUILD_TYPE=Release
+./tools/uv run cmake --build build/linux-release -j
 ```
 
 Run on Linux:
@@ -182,9 +215,9 @@ Run on Linux:
 ### Build with Conan (optional)
 
 ```bash
-conan install . -s build_type=Debug --build=missing -of build/conan
-cmake -S . -B build/linux-debug -DCMAKE_TOOLCHAIN_FILE=build/conan/conan_toolchain.cmake
-cmake --build build/linux-debug -j
+./tools/uv run conan install . -s build_type=Debug --build=missing -of build/conan
+./tools/uv run cmake -S . -B build/linux-debug -DCMAKE_TOOLCHAIN_FILE=build/conan/conan_toolchain.cmake
+./tools/uv run cmake --build build/linux-debug -j
 ```
 
 ### Package (AppImage)
@@ -198,8 +231,8 @@ AppImage packaging is provided by `cmake/AppImage.cmake` and requires:
 If they are installed in `~/applications`, `~/.local/bin`, or `/usr/local/bin`, CMake auto-detects them and enables the `AppImage` target.
 
 ```bash
-cmake -S . -B build/linux-release -DCMAKE_BUILD_TYPE=Release
-cmake --build build/linux-release --target AppImage -j
+./tools/uv run cmake -S . -B build/linux-release -DCMAKE_BUILD_TYPE=Release
+./tools/uv run cmake --build build/linux-release --target AppImage -j
 ```
 
 Output:
@@ -213,10 +246,10 @@ build/linux-release/AppImageBuild/QtQuickTemplate-<version>-x86_64.AppImage
 AppImage signing is integrated into the same `AppImage` target. Provide a key ID at configure time:
 
 ```bash
-cmake -S . -B build/linux-release \
+./tools/uv run cmake -S . -B build/linux-release \
   -DCMAKE_BUILD_TYPE=Release \
   -DGPG_KEY_ID=<YOUR_KEY_ID>
-cmake --build build/linux-release --target AppImage -j
+./tools/uv run cmake --build build/linux-release --target AppImage -j
 ```
 
 If `GPG_KEY_ID` is not set, the AppImage plugin uses your default GPG secret key.
@@ -355,10 +388,10 @@ The `AuthKey_<KEY_ID>.p8` file must be in `~/.appstoreconnect/private_keys/` —
 
 ```bash
 # Configure (once, or after CMake changes)
-cmake --preset ios-release-local
+./tools/uv run cmake --preset ios-release-local
 
 # Build → archive → sign → export IPA → verify → upload to App Store Connect
-cmake --build --preset ios-distributable-local
+./tools/uv run cmake --build --preset ios-distributable-local
 ```
 
 Output IPA: `build/Qt_6_10_2_for_iOS/ios/export/QtQuickTemplate.ipa`
@@ -376,7 +409,7 @@ Output IPA: `build/Qt_6_10_2_for_iOS/ios/export/QtQuickTemplate.ipa`
 To build without uploading:
 
 ```bash
-cmake --build --preset ios-app-local
+./tools/uv run cmake --build --preset ios-app-local
 ```
 
 ### CMake cache variables
@@ -465,10 +498,10 @@ xcrun notarytool store-credentials "my-notary-profile" \
 
 ```bash
 # Configure (once, or after CMake changes)
-cmake --preset macos-release-local
+./tools/uv run cmake --preset macos-release-local
 
 # Build → deploy Qt → sign → DMG → notarize → staple → verify
-cmake --build --preset macos-distributable-local
+./tools/uv run cmake --build --preset macos-distributable-local
 ```
 
 Output DMG: `build/Qt_6_10_2_for_macOS/QtQuickTemplate-<version>-macOS.dmg`
@@ -486,7 +519,7 @@ Output DMG: `build/Qt_6_10_2_for_macOS/QtQuickTemplate-<version>-macOS.dmg`
 To build without packaging:
 
 ```bash
-cmake --build --preset macos-app-local
+./tools/uv run cmake --build --preset macos-app-local
 ```
 
 ### CMake cache variables
@@ -557,10 +590,10 @@ The Mac App Store pipeline uses the Xcode generator (separate build directory fr
 
 ```bash
 # Configure (once, or after CMake changes)
-cmake --preset macos-appstore-local
+./tools/uv run cmake --preset macos-appstore-local
 
 # Build → archive → export PKG → verify → upload to App Store Connect
-cmake --build --preset macos-appstore-distributable-local
+./tools/uv run cmake --build --preset macos-appstore-distributable-local
 ```
 
 The exported `.pkg` lands in `build/Qt_6_10_2_for_macOS_AppStore/macos/export/`.
@@ -578,7 +611,7 @@ The exported `.pkg` lands in `build/Qt_6_10_2_for_macOS_AppStore/macos/export/`.
 To build without packaging:
 
 ```bash
-cmake --build --preset macos-appstore-app-local
+./tools/uv run cmake --build --preset macos-appstore-app-local
 ```
 
 ### CMake cache variables
@@ -615,12 +648,12 @@ If `qdoc` is available in your Qt installation, you'll get build targets:
 
 - Generate app docs:
   ```bash
-  cmake --build build --target docs
+  ./tools/uv run cmake --build build --target docs
   ```
 
 - Generate `helloworld` library docs:
   ```bash
-  cmake --build build --target helloworld_docs
+  ./tools/uv run cmake --build build --target helloworld_docs
   ```
 
 The main QDoc configuration lives in `doc/qtquicktemplate.qdocconf`.

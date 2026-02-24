@@ -1,0 +1,74 @@
+# bootstrap.ps1 — one-command dev environment setup for QtQuickTemplate (Windows)
+# Installs uv into tools\ (if needed), downloads the pinned Python, and syncs
+# all dependencies. Idempotent — safe to re-run at any time.
+
+$ErrorActionPreference = "Stop"
+Set-Location $PSScriptRoot
+
+$UV = Join-Path $PSScriptRoot "tools" "uv.exe"
+
+function Write-Info  { Write-Host "[bootstrap] $args" -ForegroundColor Cyan }
+function Write-Ok    { Write-Host "[bootstrap] $args" -ForegroundColor Green }
+
+# ── Step 1: Ensure uv is installed ───────────────────────────────────────────
+if (-not (Test-Path $UV)) {
+    Write-Info "uv not found in tools\ — installing..."
+    New-Item -ItemType Directory -Path (Join-Path $PSScriptRoot "tools") -Force | Out-Null
+    $env:UV_UNMANAGED_INSTALL = Join-Path $PSScriptRoot "tools"
+    try {
+        irm https://astral.sh/uv/install.ps1 | iex
+    } finally {
+        Remove-Item Env:\UV_UNMANAGED_INSTALL
+    }
+
+    if (-not (Test-Path $UV)) {
+        Write-Error "uv installed but not found at $UV."
+        exit 1
+    }
+    Write-Ok "uv installed: $(& $UV --version)"
+} else {
+    Write-Ok "uv already installed: $(& $UV --version)"
+}
+
+# ── Step 2: Install the pinned Python ────────────────────────────────────────
+$pythonVersion = Get-Content .python-version -Raw
+Write-Info "Ensuring pinned Python is available (.python-version -> $($pythonVersion.Trim()))..."
+& $UV python install
+if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+Write-Ok "Python ready: $(& $UV run python --version)"
+
+# ── Step 3: Sync dependencies (creates/updates .venv/) ──────────────────────
+Write-Info "Syncing dependencies..."
+& $UV sync
+if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+Write-Ok "Virtual environment ready at .venv/"
+
+# ── Step 4: Verify key tools ────────────────────────────────────────────────
+Write-Info "Verifying tools..."
+& $UV run cmake   --version | Select-Object -First 1
+& $UV run conan   --version | Select-Object -First 1
+& $UV run pytest  --version | Select-Object -First 1
+Write-Ok "All tools verified."
+
+# ── Step 5: Install bundletool (Android AAB/APK tooling) ───────────────────
+$BundletoolVersion = "1.18.3"
+$BundletoolJar = Join-Path $PSScriptRoot "tools" "bundletool-all-$BundletoolVersion.jar"
+if (-not (Test-Path $BundletoolJar)) {
+    Write-Info "Downloading bundletool $BundletoolVersion..."
+    Invoke-WebRequest -Uri "https://github.com/google/bundletool/releases/download/$BundletoolVersion/bundletool-all-$BundletoolVersion.jar" -OutFile $BundletoolJar
+    Write-Ok "Installed bundletool $BundletoolVersion"
+} else {
+    Write-Ok "bundletool $BundletoolVersion already installed"
+}
+
+# ── Done ─────────────────────────────────────────────────────────────────────
+Write-Host ""
+Write-Host "Bootstrap complete!" -ForegroundColor White -BackgroundColor DarkGreen
+Write-Host "Run commands through the venv with '.\tools\uv.exe run':"
+Write-Host "  .\tools\uv.exe run cmake --preset <preset>         # configure"
+Write-Host "  .\tools\uv.exe run cmake --build --preset <preset>  # build"
+Write-Host "  .\tools\uv.exe run conan install .                  # install C++ deps"
+Write-Host "  .\tools\uv.exe run pytest                           # run tests"
+Write-Host ""
+Write-Host "Or activate the venv directly:"
+Write-Host "  .venv\Scripts\Activate.ps1"
