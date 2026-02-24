@@ -45,11 +45,6 @@ Item {
             return
 
         const currentItem = stackView.currentItem
-
-        // During StackView transitions, depthChanged can fire before
-        // currentItemChanged.  In that window currentItem still references
-        // the outgoing page.  Skip the stale sync — currentItemChanged
-        // will follow immediately with the correct item.
         if (currentItem.StackView.status === StackView.Deactivating)
             return
 
