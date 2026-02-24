@@ -8,7 +8,7 @@ Cross-platform Qt 6 / Qt Quick (QML) application template. CMake build system ta
 
 ## Developer Environment
 
-Run `./bootstrap.sh` (macOS/Linux) or `.\bootstrap.ps1` (Windows) to create an isolated virtual environment with cmake, conan, pytest, and all Python-based build/test tools at pinned versions. The scripts install [uv](https://docs.astral.sh/uv/) into a project-local `tools/` directory if needed.
+Run `./bootstrap.sh` (macOS/Linux) or `.\bootstrap.ps1` (Windows) to create an isolated virtual environment with cmake, conan, pytest, and all Python-based build/test tools at pinned versions. The scripts install [uv](https://docs.astral.sh/uv/) into a project-local `tools/` directory if needed. On Linux, `bootstrap.sh` also downloads the linuxdeploy AppImage toolchain (core, Qt plugin, AppImage plugin) for the host architecture. Both scripts install Google's bundletool for Android builds.
 
 Key files:
 - **`.python-version`** — pins CPython 3.14t (freethreaded); uv auto-downloads this interpreter
@@ -45,9 +45,17 @@ All Apple presets require a `CMakeUserPresets.json` with signing credentials (gi
 
 ### Linux
 ```bash
-./tools/uv run cmake -S . -B build/linux-release -DCMAKE_BUILD_TYPE=Release
-./tools/uv run cmake --build build/linux-release
-./tools/uv run cmake --build build/linux-release --target AppImage  # Optional AppImage packaging
+./tools/uv run cmake -S . -B build/linux-release -DCMAKE_BUILD_TYPE=Release \
+  -DCMAKE_PREFIX_PATH=/path/to/Qt/6.x.y/gcc        # Configure (point to Qt SDK root)
+./tools/uv run cmake --build build/linux-release     # Build only
+./tools/uv run cmake --build build/linux-release --target AppImage  # Package as AppImage (unsigned)
+```
+
+To GPG-sign the AppImage, pass `-DGPG_KEY_ID=<key>` at configure time:
+```bash
+./tools/uv run cmake -S . -B build/linux-release -DCMAKE_BUILD_TYPE=Release \
+  -DCMAKE_PREFIX_PATH=/path/to/Qt/6.x.y/gcc \
+  -DGPG_KEY_ID=<YOUR_KEY_ID>
 ```
 
 ### Android
@@ -66,6 +74,7 @@ Deploy modules live in `cmake/deploy/` organized by platform subdirectory, with 
 - **iOS**: `IOSArchive → IOSExportIPA → VerifyIOSIPA → IOSUploadASC → ReleaseDistributableIOS`
 - **macOS DMG**: `MacDeployQt → DMG → NotarizeMacOS → VerifyMacOSPackage → ReleaseDistributableMacOS`
 - **macOS App Store**: `MacAppStoreArchive → MacExportPkg → VerifyMacPkg → MacUploadASC → ReleaseDistributableMacOSAppStore`
+- **Linux**: `AppImage → ReleaseDistributableLinux`
 
 Cross-platform modules at `cmake/deploy/` root:
 - **`DeployPipelines.cmake`** — platform-conditional dispatcher; includes only the current platform's modules and provides `configure_deploy_pipelines(target)`
