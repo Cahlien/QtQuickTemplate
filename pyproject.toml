@@ -1,6 +1,11 @@
 [project]
-name = "qtquicktemplate-tests"
-requires-python = ">=3.11"
+name = "qtquicktemplate"
+version = "0.2.0"
+requires-python = ">=3.14"
+dependencies = [
+    "cmake>=3.31",
+    "conan>=2.0,<3",
+]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
@@ -24,3 +29,9 @@ test = [
     "PyJWT>=2.8",
     "cryptography>=42.0",
 ]
+dev = [
+    { include-group = "test" },
+]
+
+[tool.uv]
+default-groups = ["dev"]
