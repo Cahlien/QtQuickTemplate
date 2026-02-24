@@ -8,7 +8,7 @@ set -euo pipefail
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 cd "$SCRIPT_DIR"
 
-# ── Colors (skip if not a terminal) ──────────────────────────────────────────
+# ── Terminal colors ───────────────────────────────────────────────────────────
 if [ -t 1 ]; then
     BOLD='\033[1m'
     GREEN='\033[0;32m'
@@ -26,8 +26,7 @@ if ! command -v uv &>/dev/null; then
     info "uv not found — installing..."
     curl -LsSf https://astral.sh/uv/install.sh | sh
 
-    # The installer adds uv to ~/.local/bin (or ~/.cargo/bin on some systems).
-    # Source the env script if it exists, otherwise add common paths.
+    # uv installs to ~/.local/bin or ~/.cargo/bin; source its env to update PATH
     if [ -f "$HOME/.local/bin/env" ]; then
         # shellcheck disable=SC1091
         . "$HOME/.local/bin/env"
