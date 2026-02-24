@@ -22,12 +22,7 @@ function(configure_android_upload_play target)
         return()
     endif ()
 
-    set(_pkg_dir "${CMAKE_CURRENT_SOURCE_DIR}/platforms/android")
-    set(_gradle "${_pkg_dir}/gradlew")
-    if (NOT EXISTS "${_gradle}")
-        message(WARNING "Android Gradle wrapper not found; UploadAndroidPlay target unavailable.")
-        return()
-    endif ()
+    set(_build_dir "${CMAKE_BINARY_DIR}/android-build")
 
     if (NOT QTQUICKTEMPLATE_ANDROID_PLAY_SERVICE_ACCOUNT_FILE)
         message(WARNING "QTQUICKTEMPLATE_ANDROID_PLAY_SERVICE_ACCOUNT_FILE not set; UploadAndroidPlay target unavailable.")
@@ -39,14 +34,20 @@ function(configure_android_upload_play target)
         return()
     endif ()
 
+    _resolve_android_signing_vars(_ks _ksp _ka _kp)
+
     if (NOT TARGET UploadAndroidPlay)
         add_custom_target(UploadAndroidPlay
             DEPENDS VerifyAndroidAAB
             COMMAND ${CMAKE_COMMAND} -E env
+                QT_ANDROID_KEYSTORE_PATH=${_ks}
+                QT_ANDROID_KEYSTORE_PASSWORD=${_ksp}
+                QT_ANDROID_KEY_ALIAS=${_ka}
+                QT_ANDROID_KEY_PASSWORD=${_kp}
                 QT_ANDROID_PLAY_SERVICE_ACCOUNT_FILE=${QTQUICKTEMPLATE_ANDROID_PLAY_SERVICE_ACCOUNT_FILE}
                 QT_ANDROID_PLAY_TRACK=${QTQUICKTEMPLATE_ANDROID_PLAY_TRACK}
                 QT_ANDROID_PLAY_RELEASE_STATUS=${QTQUICKTEMPLATE_ANDROID_PLAY_RELEASE_STATUS}
-                ${CMAKE_COMMAND} -E chdir "${_pkg_dir}" "${_gradle}" --no-daemon publishReleaseBundle
+                ${CMAKE_COMMAND} -E chdir "${_build_dir}" ./gradlew --no-daemon publishReleaseBundle
             COMMENT "Uploading signed Android AAB to Google Play"
             VERBATIM
         )
