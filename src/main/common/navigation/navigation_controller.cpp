@@ -66,11 +66,7 @@ void NavigationController::pop()
         return;
     }
 
-    const bool hadForward = !m_forward.isEmpty();
     m_forward.push_back({ m_currentUrl, m_currentProps, m_currentShowChrome });
-    if (!hadForward)
-        emit currentChanged();
-
     emit popRequested();
 }
 
@@ -81,7 +77,6 @@ void NavigationController::forward()
 
     const Entry next = m_forward.takeLast();
     emit pushRequested(next.url, next.props, next.showChrome);
-    emit currentChanged();
 }
 
 void NavigationController::replace(const QString     &url,
