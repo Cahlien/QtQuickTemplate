@@ -4,7 +4,7 @@ Instructions for JetBrains Junie when working in this repository.
 
 ## Project Summary
 
-Cross-platform Qt 6 / Qt Quick (QML) application template. CMake build system targeting iOS, macOS, Android, Linux, and Windows. Requires Qt 6.10+, CMake 3.28+, C++23.
+Cross-platform Qt 6 / Qt Quick (QML) application template. CMake build system targeting iOS, macOS, Android, Linux, and Windows. Requires Qt 6.10+, CMake 4.2.1+, C++23.
 
 ## Developer Environment
 
@@ -25,29 +25,29 @@ All Apple presets require a `CMakeUserPresets.json` with signing credentials (gi
 
 ### macOS (Direct Distribution — DMG)
 ```bash
-cmake --preset macos-release-local          # Configure (Ninja)
-cmake --build --preset macos-app-local      # Build only
-cmake --build --preset macos-distributable-local  # Full: build → macdeployqt → DMG → notarize → staple → verify
+./tools/uv run cmake --preset macos-release-local          # Configure (Ninja)
+./tools/uv run cmake --build --preset macos-app-local      # Build only
+./tools/uv run cmake --build --preset macos-distributable-local  # Full: build → macdeployqt → DMG → notarize → staple → verify
 ```
 
 ### macOS (App Store — PKG)
 ```bash
-cmake --preset macos-appstore-local         # Configure (Xcode generator)
-cmake --build --preset macos-appstore-distributable-local  # Full: build → archive → export PKG → verify → upload ASC
+./tools/uv run cmake --preset macos-appstore-local         # Configure (Xcode generator)
+./tools/uv run cmake --build --preset macos-appstore-distributable-local  # Full: build → archive → export PKG → verify → upload ASC
 ```
 
 ### iOS (App Store)
 ```bash
-cmake --preset ios-release-local            # Configure (Xcode generator)
-cmake --build --preset ios-app-local        # Build only
-cmake --build --preset ios-distributable-local  # Full: build → archive → export IPA → verify → upload ASC
+./tools/uv run cmake --preset ios-release-local            # Configure (Xcode generator)
+./tools/uv run cmake --build --preset ios-app-local        # Build only
+./tools/uv run cmake --build --preset ios-distributable-local  # Full: build → archive → export IPA → verify → upload ASC
 ```
 
 ### Linux
 ```bash
-cmake -S . -B build/linux-release -DCMAKE_BUILD_TYPE=Release
-cmake --build build/linux-release
-cmake --build build/linux-release --target AppImage  # Optional AppImage packaging
+./tools/uv run cmake -S . -B build/linux-release -DCMAKE_BUILD_TYPE=Release
+./tools/uv run cmake --build build/linux-release
+./tools/uv run cmake --build build/linux-release --target AppImage  # Optional AppImage packaging
 ```
 
 ### Android
@@ -117,7 +117,6 @@ Libraries live in `libs/`. Helper macros in `cmake/libs/LibraryCommon.cmake`:
 
 ## Known Harmless Warnings
 
-- `qmldir file not found at ".../dev/crowell/QtQuickTemplate"` during configure — qmldir is generated at build time
 - `QT_CREATOR_SKIP_CONAN_SETUP` unused variable — set in user presets for Qt Creator compatibility
 - `app-store` export method deprecated — should be `app-store-connect` in future Xcode versions
 - CPack DragNDrop `install_name_tool` RPATH errors — harmless, macdeployqt already fixed RPATHs
