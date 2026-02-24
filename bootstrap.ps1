@@ -50,6 +50,17 @@ Write-Info "Verifying tools..."
 & $UV run pytest  --version | Select-Object -First 1
 Write-Ok "All tools verified."
 
+# ── Step 5: Install bundletool (Android AAB/APK tooling) ───────────────────
+$BundletoolVersion = "1.18.3"
+$BundletoolJar = Join-Path $PSScriptRoot "tools" "bundletool-all-$BundletoolVersion.jar"
+if (-not (Test-Path $BundletoolJar)) {
+    Write-Info "Downloading bundletool $BundletoolVersion..."
+    Invoke-WebRequest -Uri "https://github.com/google/bundletool/releases/download/$BundletoolVersion/bundletool-all-$BundletoolVersion.jar" -OutFile $BundletoolJar
+    Write-Ok "Installed bundletool $BundletoolVersion"
+} else {
+    Write-Ok "bundletool $BundletoolVersion already installed"
+}
+
 # ── Done ─────────────────────────────────────────────────────────────────────
 Write-Host ""
 Write-Host "Bootstrap complete!" -ForegroundColor White -BackgroundColor DarkGreen

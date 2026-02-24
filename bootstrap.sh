@@ -90,6 +90,18 @@ if [ "$(uname -s)" = "Linux" ]; then
     fi
 fi
 
+# ── Step 6: Install bundletool (Android AAB/APK tooling) ───────────────────
+BUNDLETOOL_VERSION="1.18.3"
+BUNDLETOOL_JAR="$SCRIPT_DIR/tools/bundletool-all-${BUNDLETOOL_VERSION}.jar"
+if [ ! -f "$BUNDLETOOL_JAR" ]; then
+    info "Downloading bundletool ${BUNDLETOOL_VERSION}..."
+    curl -Lo "$BUNDLETOOL_JAR" \
+        "https://github.com/google/bundletool/releases/download/${BUNDLETOOL_VERSION}/bundletool-all-${BUNDLETOOL_VERSION}.jar"
+    ok "Installed bundletool ${BUNDLETOOL_VERSION}"
+else
+    ok "bundletool ${BUNDLETOOL_VERSION} already installed"
+fi
+
 # ── Done ─────────────────────────────────────────────────────────────────────
 printf "\n${BOLD}Bootstrap complete!${RESET}\n"
 printf "Run commands through the venv with ${CYAN}./tools/uv run${RESET}:\n"
