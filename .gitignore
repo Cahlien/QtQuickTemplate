@@ -73,9 +73,10 @@ CMakeLists.txt.user*
 *.Debug
 *.Release
 
-# Python byte code
+# Python
 *.pyc
 __pycache__/
+.venv/
 
 # Binaries
 # --------

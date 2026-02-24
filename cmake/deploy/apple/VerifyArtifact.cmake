@@ -1,4 +1,4 @@
-# VerifyArtifact.cmake  —  -P script
+# VerifyArtifact.cmake — -P script
 # Verifies that at least one artifact matching the glob exists in the export path.
 #
 # Expected env vars:

@@ -5,7 +5,7 @@ include_guard(GLOBAL)
 # create targets that run the UploadAsc.cmake -P script via xcrun altool.
 
 set(QTQUICKTEMPLATE_ASC_API_KEY_ID "" CACHE STRING
-    "App Store Connect API key ID used for upload (e.g. NV3YP3T2C5)"
+    "App Store Connect API key ID used for upload"
 )
 
 set(QTQUICKTEMPLATE_ASC_API_ISSUER_ID "" CACHE STRING
