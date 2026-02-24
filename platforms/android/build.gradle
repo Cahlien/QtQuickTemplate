@@ -141,7 +141,7 @@ android {
 
     buildTypes {
         release {
-	    minifyEnabled true
+	    	minifyEnabled true
             proguardFiles getDefaultProguardFile('proguard-android-optimize.txt')
             if (hasReleaseSigning) {
                 signingConfig signingConfigs.release
