@@ -8,7 +8,7 @@ buildscript {
         //noinspection AndroidGradlePluginVersion
         classpath libs.plugins.android.application.get().toString()
         classpath libs.plugins.kotlin.android.get().toString()
-        classpath 'com.github.triplet.gradle:play-publisher:3.12.1'
+        classpath 'com.github.triplet.gradle:play-publisher:4.0.0'
     }
 }
 
@@ -71,7 +71,7 @@ if (playServiceAccountFile) {
 
 android {
     namespace = androidPackageName
-    compileSdkVersion androidCompileSdkVersion
+    compileSdk androidCompileSdkVersion.toString().replaceAll(/\D/, '').toInteger()
     buildToolsVersion androidBuildToolsVersion
     ndkVersion = androidNdkVersion
 

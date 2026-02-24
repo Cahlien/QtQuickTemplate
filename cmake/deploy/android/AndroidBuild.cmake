@@ -41,30 +41,45 @@ function(_resolve_android_signing_vars out_ks out_ksp out_ka out_kp)
     set(${out_kp} "${_kp}" PARENT_SCOPE)
 endfunction()
 
-# Private helper for AAB/APK Gradle build targets.
-function(_configure_android_gradle_build target_name depends gradle_task comment)
-    set(_pkg_dir "${CMAKE_CURRENT_SOURCE_DIR}/platforms/android")
-    set(_gradle "${_pkg_dir}/gradlew")
-    if (NOT EXISTS "${_gradle}")
-        message(WARNING "Android Gradle wrapper not found; ${target_name} target unavailable.")
+function(_configure_android_gradle_build target_name depends qt_target comment)
+    if (NOT TARGET ${target_name})
+        add_custom_target(${target_name}
+            DEPENDS ${depends}
+            COMMAND ${CMAKE_COMMAND} --build "${CMAKE_BINARY_DIR}" --target ${qt_target}
+            COMMENT "${comment}"
+            VERBATIM
+        )
+        message(STATUS "${target_name} target configured -> cmake --build . --target ${qt_target}")
+    endif ()
+endfunction()
+
+function(_configure_android_sign_aab)
+    if (NOT TARGET AndroidAAB)
         return()
     endif ()
 
     _resolve_android_signing_vars(_ks _ksp _ka _kp)
 
-    if (NOT TARGET ${target_name})
-        add_custom_target(${target_name}
-            DEPENDS ${depends}
+    if (NOT _ks OR NOT _ksp OR NOT _ka OR NOT _kp)
+        message(WARNING "Android signing credentials incomplete; SignAndroidAAB target unavailable.")
+        return()
+    endif ()
+
+    set(_build_dir "${CMAKE_BINARY_DIR}/android-build")
+
+    if (NOT TARGET SignAndroidAAB)
+        add_custom_target(SignAndroidAAB
+            DEPENDS AndroidAAB
             COMMAND ${CMAKE_COMMAND} -E env
                 QT_ANDROID_KEYSTORE_PATH=${_ks}
                 QT_ANDROID_KEYSTORE_PASSWORD=${_ksp}
                 QT_ANDROID_KEY_ALIAS=${_ka}
                 QT_ANDROID_KEY_PASSWORD=${_kp}
-                ${CMAKE_COMMAND} -E chdir "${_pkg_dir}" "${_gradle}" --no-daemon ${gradle_task}
-            COMMENT "${comment}"
+                ${CMAKE_COMMAND} -E chdir "${_build_dir}" ./gradlew --no-daemon bundleRelease
+            COMMENT "Signing Android release AAB via Gradle"
             VERBATIM
         )
-        message(STATUS "${target_name} target configured -> cmake --build . --target ${target_name}")
+        message(STATUS "SignAndroidAAB target configured")
     endif ()
 endfunction()
 
@@ -72,14 +87,15 @@ function(configure_android_build_aab target)
     if (NOT ANDROID)
         return()
     endif ()
-    _configure_android_gradle_build(AndroidAAB ${target} bundleRelease
-        "Building signed Android release AAB")
+    _configure_android_gradle_build(AndroidAAB ${target} aab
+        "Building unsigned Android release AAB")
+    _configure_android_sign_aab()
 endfunction()
 
 function(configure_android_build_apk target)
     if (NOT ANDROID)
         return()
     endif ()
-    _configure_android_gradle_build(AndroidAPK ${target} assembleRelease
-        "Building signed Android release APK")
+    _configure_android_gradle_build(AndroidAPK ${target} apk
+        "Building unsigned Android release APK")
 endfunction()
