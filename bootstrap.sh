@@ -46,6 +46,11 @@ ok "Python ready: $("$UV" run python --version)"
 # ── Step 3: Sync dependencies (creates/updates .venv/) ──────────────────────
 info "Syncing dependencies..."
 "$UV" sync
+
+# The cmake pip package bundles native binaries that may lack the execute bit
+# on some platforms (observed with freethreaded Python 3.14t on Linux).
+chmod +x "$SCRIPT_DIR"/.venv/lib/python*/site-packages/cmake/data/bin/* 2>/dev/null || true
+
 ok "Virtual environment ready at .venv/"
 
 # ── Step 4: Verify key tools ────────────────────────────────────────────────
