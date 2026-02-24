@@ -66,6 +66,20 @@ function(configure_linux_package target)
     set(_stage_script "${CMAKE_CURRENT_SOURCE_DIR}/cmake/deploy/linux/StageWaylandSupport.cmake")
     set(_verify_script "${CMAKE_CURRENT_SOURCE_DIR}/cmake/deploy/linux/VerifyWaylandDeps.cmake")
 
+    set(_appimage_env
+        LINUXDEPLOY_PLUGIN_DIR=${_ld_dir}:${_qt_plugin_dir}:${_ai_plugin_dir}
+        ARCH=${CMAKE_SYSTEM_PROCESSOR}
+        OUTPUT=${_appimage_out}
+        LDAI_OUTPUT=${_appimage_out}
+        NO_STRIP=1
+    )
+    if (GPG_KEY_ID)
+        list(APPEND _appimage_env
+            SIGN=1 SIGN_KEY=${GPG_KEY_ID}
+            LDAI_SIGN=1 LDAI_SIGN_KEY=${GPG_KEY_ID}
+        )
+    endif ()
+
     add_custom_target(AppImage
         DEPENDS ${target}
         COMMAND ${CMAKE_COMMAND} -E rm -rf "${_appdir}"
@@ -74,7 +88,6 @@ function(configure_linux_package target)
         COMMAND ${CMAKE_COMMAND} -E copy
             "${CMAKE_CURRENT_SOURCE_DIR}/platforms/linux/icons/256x256.png"
             "${_icon_staging}"
-        COMMAND ${CMAKE_COMMAND} -E copy /usr/lib/libtiff.so.6 "${_appdir}/usr/lib/libtiff.so.5"
 
         COMMAND ${CMAKE_COMMAND} -E env
             QT_PLUGINS_DIR=${_qt_plugins_dir} QT_LIB_DIR=${_qt_lib_dir} APPDIR=${_appdir}
@@ -98,12 +111,7 @@ function(configure_linux_package target)
         COMMAND ${CMAKE_COMMAND} -E env APPDIR=${_appdir}
             ${CMAKE_COMMAND} -P "${_verify_script}"
 
-        COMMAND ${CMAKE_COMMAND} -E env
-            LINUXDEPLOY_PLUGIN_DIR=${_ld_dir}:${_qt_plugin_dir}:${_ai_plugin_dir}
-            ARCH=${CMAKE_SYSTEM_PROCESSOR}
-            OUTPUT=${_appimage_out} SIGN=1 SIGN_KEY=${GPG_KEY_ID}
-            LDAI_OUTPUT=${_appimage_out} LDAI_SIGN=1 LDAI_SIGN_KEY=${GPG_KEY_ID}
-            NO_STRIP=1
+        COMMAND ${CMAKE_COMMAND} -E env ${_appimage_env}
             ${LINUXDEPLOY_EXECUTABLE}
                 --appdir "${_appdir}"
                 --output appimage
