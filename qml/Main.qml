@@ -92,8 +92,8 @@ ApplicationWindow {
         id: navBarItem
         visible: root._displayedShowChrome
 
-        onReadmeRequested:   NavigationController.push(Qt.resolvedUrl("pages/Readme.qml").toString())
-        onControlsRequested: NavigationController.push(Qt.resolvedUrl("pages/StyleShowcase.qml").toString())
+        onReadmeRequested:   NavigationController.replace(Qt.resolvedUrl("pages/Readme.qml").toString())
+        onControlsRequested: NavigationController.replace(Qt.resolvedUrl("pages/StyleShowcase.qml").toString())
     }
 
     Binding {

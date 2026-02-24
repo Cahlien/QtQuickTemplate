@@ -45,6 +45,10 @@ Item {
             return
 
         const currentItem = stackView.currentItem
+
+        if (currentItem.StackView.status === StackView.Deactivating)
+            return
+
         const currentShowChrome = typeof currentItem.showChrome === "boolean"
                                 ? currentItem.showChrome
                                 : true
