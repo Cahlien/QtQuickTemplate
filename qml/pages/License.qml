@@ -22,15 +22,6 @@ BasePage {
         id: licenseContentComponent
 
         LicenseContent {
-            Component.onCompleted: {
-                console.log('[ ' + Qt.formatDateTime(new Date(), "ddMMMyyyy hh:mm:ss.zzz").toUpperCase() + ' ] License page loaded.')
-
-            }
-
-            Component.onDestruction: {
-                console.log('[ ' + Qt.formatDateTime(new Date(), "ddMMMyyyy hh:mm:ss.zzz").toUpperCase() + ' ] License page destroyed.')
-            }
-
             onCloseRequested: root.closeRequested()
         }
     }

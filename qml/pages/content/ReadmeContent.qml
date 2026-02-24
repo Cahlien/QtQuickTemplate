@@ -44,10 +44,6 @@ Item {
         xhr.send()
     }
 
-    Component.onDestruction: {
-        console.log('[ ' + Qt.formatDateTime(new Date(), "ddMMMyyyy hh:mm:ss.zzz").toUpperCase() + ' ] *** DESTROYED *** ReadmeView')
-    }
-
     Flickable {
         id: flickable
         anchors.fill: parent
