@@ -8,15 +8,16 @@ Cross-platform Qt 6 / Qt Quick (QML) application template. CMake build system ta
 
 ## Developer Environment
 
-Run `./bootstrap.sh` (macOS/Linux) or `.\bootstrap.ps1` (Windows) to create an isolated virtual environment with cmake, conan, pytest, and all Python-based build/test tools at pinned versions. The scripts auto-install [uv](https://docs.astral.sh/uv/) if needed.
+Run `./bootstrap.sh` (macOS/Linux) or `.\bootstrap.ps1` (Windows) to create an isolated virtual environment with cmake, conan, pytest, and all Python-based build/test tools at pinned versions. The scripts install [uv](https://docs.astral.sh/uv/) into a project-local `tools/` directory if needed.
 
 Key files:
 - **`.python-version`** — pins CPython 3.14t (freethreaded); uv auto-downloads this interpreter
 - **`pyproject.toml`** — project metadata and Python dependency declarations (cmake, conan, pytest, etc.)
-- **`uv.lock`** — cross-platform lockfile; regenerate with `uv lock` after changing `pyproject.toml`
+- **`uv.lock`** — cross-platform lockfile; regenerate with `./tools/uv lock` after changing `pyproject.toml`
 - **`bootstrap.sh`** / **`bootstrap.ps1`** — idempotent bootstrap scripts
+- **`tools/uv`** — project-local uv binary (gitignored, installed by bootstrap)
 
-After bootstrapping, prefix build/test commands with `uv run` (e.g. `uv run cmake --preset <name>`) or activate the venv directly (`source .venv/bin/activate`).
+After bootstrapping, prefix build/test commands with `./tools/uv run` (e.g. `./tools/uv run cmake --preset <name>`) or activate the venv directly (`source .venv/bin/activate`).
 
 ## Build Commands
 

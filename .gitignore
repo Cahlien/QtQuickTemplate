@@ -78,6 +78,9 @@ CMakeLists.txt.user*
 __pycache__/
 .venv/
 
+# Project-local tools (uv binary, platform-specific)
+tools/
+
 # Binaries
 # --------
 *.dll

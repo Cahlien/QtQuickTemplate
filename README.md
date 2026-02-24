@@ -165,11 +165,11 @@ The fastest way to get cmake, conan, pytest, and all Python-based tools at the c
 .\bootstrap.ps1      # Windows
 ```
 
-This auto-installs [uv](https://docs.astral.sh/uv/), downloads the pinned CPython (from `.python-version`), and creates an isolated `.venv/` with all dependencies locked in `uv.lock`. Run tools with `uv run`:
+This installs [uv](https://docs.astral.sh/uv/) into a project-local `tools/` directory, downloads the pinned CPython (from `.python-version`), and creates an isolated `.venv/` with all dependencies locked in `uv.lock`. Run tools with `./tools/uv run`:
 
 ```bash
-uv run cmake --preset <preset>
-uv run pytest
+./tools/uv run cmake --preset <preset>
+./tools/uv run pytest
 ```
 
 Or activate the venv directly: `source .venv/bin/activate` (macOS/Linux) / `.venv\Scripts\Activate.ps1` (Windows).
