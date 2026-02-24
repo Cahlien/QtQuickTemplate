@@ -6,6 +6,18 @@ Instructions for Gemini CLI and Gemini Code Assist when working in this reposito
 
 Cross-platform Qt 6 / Qt Quick (QML) application template. CMake build system targeting iOS, macOS, Android, Linux, and Windows. Requires Qt 6.10+, CMake 3.28+, C++23.
 
+## Developer Environment
+
+Run `./bootstrap.sh` (macOS/Linux) or `.\bootstrap.ps1` (Windows) to create an isolated virtual environment with cmake, conan, pytest, and all Python-based build/test tools at pinned versions. The scripts auto-install [uv](https://docs.astral.sh/uv/) if needed.
+
+Key files:
+- **`.python-version`** — pins CPython 3.14t (freethreaded); uv auto-downloads this interpreter
+- **`pyproject.toml`** — project metadata and Python dependency declarations (cmake, conan, pytest, etc.)
+- **`uv.lock`** — cross-platform lockfile; regenerate with `uv lock` after changing `pyproject.toml`
+- **`bootstrap.sh`** / **`bootstrap.ps1`** — idempotent bootstrap scripts
+
+After bootstrapping, prefix build/test commands with `uv run` (e.g. `uv run cmake --preset <name>`) or activate the venv directly (`source .venv/bin/activate`).
+
 ## Build Commands
 
 All Apple presets require a `CMakeUserPresets.json` with signing credentials (gitignored). Presets ending in `-local` are user-defined overrides inheriting from the base presets in `CMakePresets.json`.

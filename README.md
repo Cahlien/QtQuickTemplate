@@ -69,6 +69,9 @@ Back handling and app minimization are split cleanly:
 
 ```text
 .
+├── .python-version                  # pinned Python interpreter for uv
+├── bootstrap.ps1                    # dev environment setup (Windows)
+├── bootstrap.sh                     # dev environment setup (macOS/Linux)
 ├── CMakeLists.txt
 ├── cmake/
 │   ├── toolchain/
@@ -78,7 +81,9 @@ Back handling and app minimization are split cleanly:
 │   └── libs/
 │       └── LibraryCommon.cmake
 ├── conanfile.py
+├── pyproject.toml                   # Python deps and tool config
 ├── README.md
+├── uv.lock                         # cross-platform dependency lockfile
 ├── doc/
 │   └── qtquicktemplate.qdocconf
 ├── include/
@@ -145,15 +150,36 @@ Back handling and app minimization are split cleanly:
 ## Build prerequisites
 
 - **Qt 6.10+** (Core, Quick, QuickControls2, Qml)
-- **CMake 3.28+**
 - A C++23-capable compiler
 - Optional module path requirements:
   - On supported non-Apple toolchains/generators, `helloworld` exports a C++20 module.
   - On Apple targets (and unsupported generators/toolchains), the app automatically uses the header/library path.
   - If using Clang with modules enabled, `clang-scan-deps` must be available (the project attempts to locate it automatically, including Android NDK hints).
 
-Optional:
-- **Conan 2** (the repo includes a basic `conanfile.py`)
+### Recommended: bootstrap script
+
+The fastest way to get cmake, conan, pytest, and all Python-based tools at the correct versions:
+
+```bash
+./bootstrap.sh       # macOS/Linux
+.\bootstrap.ps1      # Windows
+```
+
+This auto-installs [uv](https://docs.astral.sh/uv/), downloads the pinned CPython (from `.python-version`), and creates an isolated `.venv/` with all dependencies locked in `uv.lock`. Run tools with `uv run`:
+
+```bash
+uv run cmake --preset <preset>
+uv run pytest
+```
+
+Or activate the venv directly: `source .venv/bin/activate` (macOS/Linux) / `.venv\Scripts\Activate.ps1` (Windows).
+
+### Manual alternative
+
+If you prefer to manage tools globally:
+- **CMake 3.28+**
+- **Conan 2** (optional; the repo includes a `conanfile.py`)
+- **Python 3.14+** with pytest for running integration tests
 
 ---
 
