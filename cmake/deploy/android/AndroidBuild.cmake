@@ -1,5 +1,8 @@
 include_guard(GLOBAL)
 
+# AndroidBuild.cmake — Configures AndroidAAB and AndroidAPK targets that invoke
+# Gradle to produce signed release bundles and APKs for Android distribution.
+
 set(QTQUICKTEMPLATE_ANDROID_KEYSTORE_PATH "" CACHE FILEPATH
     "Path to Android keystore used for release signing"
 )

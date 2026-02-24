@@ -1,7 +1,11 @@
 include_guard(GLOBAL)
 
-include("${CMAKE_CURRENT_LIST_DIR}/../qt/FindMacDeployQt.cmake")
-include("${CMAKE_CURRENT_LIST_DIR}/VersionTarget.cmake")
+# MacOSAppStoreBuild.cmake — Configures the MacAppStoreArchive target that builds,
+# archives, patches ApplicationProperties, and runs macdeployqt -appstore-compliant
+# for macOS App Store distribution.
+
+include("${CMAKE_CURRENT_LIST_DIR}/../apple/FindMacDeployQt.cmake")
+include("${CMAKE_CURRENT_LIST_DIR}/../VersionTarget.cmake")
 
 set(QTQUICKTEMPLATE_MACOS_APP_STORE_ARCHIVE_CONFIGURATION "Release" CACHE STRING
     "Build configuration used for macOS App Store archive/export"

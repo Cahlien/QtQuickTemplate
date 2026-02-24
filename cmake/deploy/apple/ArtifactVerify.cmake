@@ -1,8 +1,12 @@
 include_guard(GLOBAL)
 
+# ArtifactVerify.cmake — Unified artifact verification for Apple pipelines.
+# Provides configure_ios_verify() and configure_macos_appstore_verify() which
+# create targets that run the VerifyArtifact.cmake -P script.
+
 # Private helper shared by iOS and macOS App Store verify targets.
 function(_configure_artifact_verify target_name depends_target export_path artifact_glob comment)
-    set(_verify_script "${CMAKE_CURRENT_SOURCE_DIR}/cmake/deploy/VerifyArtifact.cmake")
+    set(_verify_script "${CMAKE_CURRENT_SOURCE_DIR}/cmake/deploy/apple/VerifyArtifact.cmake")
 
     if (NOT TARGET ${target_name})
         add_custom_target(${target_name}

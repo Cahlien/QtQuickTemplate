@@ -1,5 +1,8 @@
 include_guard(GLOBAL)
 
+# Install.cmake — Configures CMake install rules for the app target across
+# all platforms (bundle, library, runtime, desktop entries, icons).
+
 function(configure_install target)
     include(GNUInstallDirs)
 

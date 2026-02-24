@@ -49,21 +49,28 @@ Root `CMakeLists.txt` is minimal (14 lines) — it delegates to two entry points
 - **`cmake/ProjectSetup.cmake`** → `configure_project()`: compiler settings, Conan, Qt discovery, AUTOMOC
 - **`cmake/MainApp.cmake`** → `configure_main_app()`: creates the executable, registers QML modules, platform sources, code signing, packaging targets
 
-Deploy modules live in `cmake/deploy/` and define custom build targets that chain together:
+Deploy modules live in `cmake/deploy/` organized by platform subdirectory, with custom build targets that chain together:
 - **iOS**: `IOSArchive → IOSExportIPA → VerifyIOSIPA → IOSUploadASC → ReleaseDistributableIOS`
 - **macOS DMG**: `MacDeployQt → DMG → NotarizeMacOS → VerifyMacOSPackage → ReleaseDistributableMacOS`
 - **macOS App Store**: `MacAppStoreArchive → MacExportPkg → VerifyMacPkg → MacUploadASC → ReleaseDistributableMacOSAppStore`
 
-Shared deploy helpers eliminate cross-platform duplication:
-- **`DeployPipelines.cmake`** — single entry point; includes all deploy modules and provides `configure_deploy_pipelines(target)`
-- **`AscUpload.cmake`** — unified App Store Connect upload for iOS IPA and macOS PKG
+Cross-platform modules at `cmake/deploy/` root:
+- **`DeployPipelines.cmake`** — platform-conditional dispatcher; includes only the current platform's modules and provides `configure_deploy_pipelines(target)`
+- **`VersionTarget.cmake`** — shared `add_version_target()` used by iOS and macOS builds
+- **`ReleaseDistributables.cmake`** — meta-targets aggregating platform pipelines
+
+Shared Apple helpers in `cmake/deploy/apple/`:
 - **`XcodeExport.cmake`** — unified `xcodebuild -exportArchive` for iOS and macOS App Store
 - **`ArtifactVerify.cmake`** / **`VerifyArtifact.cmake`** — unified artifact verification
-- **`VersionTarget.cmake`** — shared `add_version_target()` used by iOS and macOS builds
-- **`cmake/qt/FindMacDeployQt.cmake`** — shared `find_macdeployqt()` used by macOS DMG and App Store builds
-- **`cmake/platform/IOSResources.cmake`** — iOS asset catalog and launch screen setup
+- **`AscUpload.cmake`** / **`UploadAsc.cmake`** — unified App Store Connect upload
+- **`AppleCodeSigning.cmake`** — release code signing configuration
+- **`FindMacDeployQt.cmake`** — shared `find_macdeployqt()` used by macOS DMG and App Store builds
 
-Build-time `-P` scripts (version generation, notarization, verification, etc.) live in `cmake/deploy/{platform}/` subdirectories; shared scripts live in `cmake/deploy/`.
+Platform-specific modules in `cmake/deploy/{ios,macos,android,linux}/`:
+- **`ios/`**: `IOSBuild.cmake`, `IOSResources.cmake` (asset catalog + launch screen), `GenerateLaunchScreen.cmake`
+- **`macos/`**: `MacOSBuild.cmake`, `MacOSPackage.cmake`, `MacOSSign.cmake`, `MacOSVerify.cmake`, `MacOSAppStoreBuild.cmake`, plus `-P` scripts
+- **`android/`**: `AndroidBuild.cmake`, `AndroidVerify.cmake`, `AndroidUpload.cmake`, `AndroidVersion.cmake`, plus `-P` scripts
+- **`linux/`**: `LinuxPackage.cmake`, plus `-P` scripts
 
 All CMake modules use `include_guard(GLOBAL)`.
 

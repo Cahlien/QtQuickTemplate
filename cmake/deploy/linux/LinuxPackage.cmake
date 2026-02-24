@@ -1,5 +1,8 @@
 include_guard(GLOBAL)
 
+# LinuxPackage.cmake — Configures the AppImage target that packages the app
+# using linuxdeploy with Qt and AppImage plugins, including Wayland support.
+
 option(ENABLE_WAYLAND "Bundle Qt Wayland platform plugin into AppImage" ON)
 set(GPG_KEY_ID "" CACHE STRING "GPG Key ID for AppImage signing")
 

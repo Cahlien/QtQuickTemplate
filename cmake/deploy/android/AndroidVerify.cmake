@@ -1,5 +1,8 @@
 include_guard(GLOBAL)
 
+# AndroidVerify.cmake — Configures VerifyAndroidAAB and VerifyAndroidAPK targets
+# that verify release artifact signatures via jarsigner and apksigner.
+
 function(configure_android_verify_aab target)
     if (NOT ANDROID)
         return()

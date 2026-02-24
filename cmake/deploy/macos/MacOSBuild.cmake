@@ -1,6 +1,9 @@
 include_guard(GLOBAL)
 
-include("${CMAKE_CURRENT_LIST_DIR}/../qt/FindMacDeployQt.cmake")
+# MacOSBuild.cmake — Configures the MacDeployQt target that deploys Qt
+# frameworks into the macOS app bundle for direct (DMG) distribution.
+
+include("${CMAKE_CURRENT_LIST_DIR}/../apple/FindMacDeployQt.cmake")
 
 option(QTQUICKTEMPLATE_MACOS_USE_MACDEPLOYQT "Use macdeployqt for macOS app deployment" ON)
 

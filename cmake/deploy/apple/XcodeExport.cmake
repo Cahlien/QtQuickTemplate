@@ -1,5 +1,9 @@
 include_guard(GLOBAL)
 
+# XcodeExport.cmake — Unified xcodebuild -exportArchive for Apple pipelines.
+# Provides configure_ios_package() and configure_macos_appstore_package() which
+# create targets to export signed IPA or PKG from an xcarchive.
+
 # Private helper shared by iOS and macOS App Store export targets.
 function(_configure_xcode_export target_name depends_target archive_path export_path export_options comment)
     find_program(XCODEBUILD_EXECUTABLE xcodebuild)

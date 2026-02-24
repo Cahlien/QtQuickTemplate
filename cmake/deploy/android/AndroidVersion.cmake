@@ -1,5 +1,8 @@
 include_guard(GLOBAL)
 
+# AndroidVersion.cmake — Creates the GenerateAndroidVersion target that writes
+# platforms/android/version.properties from the project version.
+
 # Add a custom target that generates platforms/android/version.properties
 # from the project version, and make the given target depend on it.
 function(add_android_version_target target)

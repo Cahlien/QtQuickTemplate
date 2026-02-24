@@ -1,5 +1,8 @@
 include_guard(GLOBAL)
 
+# VersionTarget.cmake — Shared helper that creates a custom target to generate
+# platform-specific version files (xcconfig or properties) via GenerateVersion.cmake.
+
 # Creates a custom target that generates a version file via GenerateVersion.cmake.
 #   target_name  — name of the custom target (e.g. GenerateIOSVersion)
 #   platform     — "ios", "macos", or "android"

@@ -1,6 +1,9 @@
 include_guard(GLOBAL)
 
-include("${CMAKE_CURRENT_LIST_DIR}/IOSResources.cmake")
+# PlatformSources.cmake — Adds platform-specific source files, resources,
+# Info.plists, icons, and desktop entries to the main app target.
+
+include("${CMAKE_CURRENT_LIST_DIR}/../deploy/ios/IOSResources.cmake")
 
 # Add platform-specific sources, resources, and configuration to the given target.
 function(add_platform_sources target)

@@ -1,5 +1,8 @@
 include_guard(GLOBAL)
 
+# FindMacDeployQt.cmake — Locates the macdeployqt tool from the Qt installation.
+# Used by both the macOS DMG and App Store pipelines.
+
 # Locates macdeployqt via the Qt6::qmake target's bin directory.
 # Sets ${out_var} in the caller's scope.
 function(find_macdeployqt out_var)

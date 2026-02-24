@@ -1,9 +1,12 @@
 include_guard(GLOBAL)
 
+# MainApp.cmake — Creates the main executable target, registers QML modules,
+# adds platform sources, configures code signing, and wires up deploy pipelines.
+
 include("${CMAKE_CURRENT_LIST_DIR}/qt/QmlModule.cmake")
 include("${CMAKE_CURRENT_LIST_DIR}/platform/PlatformSources.cmake")
-include("${CMAKE_CURRENT_LIST_DIR}/platform/AppleCodeSigning.cmake")
-include("${CMAKE_CURRENT_LIST_DIR}/platform/AndroidVersion.cmake")
+include("${CMAKE_CURRENT_LIST_DIR}/deploy/apple/AppleCodeSigning.cmake")
+include("${CMAKE_CURRENT_LIST_DIR}/deploy/android/AndroidVersion.cmake")
 include("${CMAKE_CURRENT_LIST_DIR}/toolchain/CompilerSettings.cmake")
 include("${CMAKE_CURRENT_LIST_DIR}/docs/QDoc.cmake")
 

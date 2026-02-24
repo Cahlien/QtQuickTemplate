@@ -1,5 +1,8 @@
 include_guard(GLOBAL)
 
+# AppleCodeSigning.cmake — Configures Xcode code signing attributes for iOS
+# and macOS App Store targets (team ID, provisioning profiles, entitlements).
+
 set(QTQUICKTEMPLATE_APPLE_DEVELOPMENT_TEAM "" CACHE STRING
     "Apple Developer Team ID used for automatic release code signing"
 )

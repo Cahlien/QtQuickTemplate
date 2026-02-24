@@ -1,5 +1,9 @@
 include_guard(GLOBAL)
 
+# ReleaseDistributables.cmake — Defines per-platform ReleaseDistributable* meta-targets
+# that depend on the deepest available pipeline target, plus an umbrella
+# ReleaseDistributable target aggregating all platforms.
+
 # Adds a guarded release meta-target. Iterates ARGN to find the deepest
 # existing pipeline target. Falls back to fallback_target if no candidate
 # exists. If both are empty, the meta-target is not created.

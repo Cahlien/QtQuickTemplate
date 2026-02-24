@@ -1,5 +1,8 @@
 include_guard(GLOBAL)
 
+# MacOSPackage.cmake — Configures the DMG target that packages the macOS app
+# bundle into a signed DMG using CPack DragNDrop generator.
+
 set(QTQUICKTEMPLATE_MACOS_DMG_SIGN_IDENTITY "" CACHE STRING
     "Optional macOS signing identity for signing the generated DMG"
 )

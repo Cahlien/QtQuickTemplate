@@ -1,5 +1,9 @@
 include_guard(GLOBAL)
 
+# AscUpload.cmake — Unified App Store Connect upload for Apple pipelines.
+# Provides configure_ios_upload() and configure_macos_appstore_upload() which
+# create targets that run the UploadAsc.cmake -P script via xcrun altool.
+
 set(QTQUICKTEMPLATE_ASC_API_KEY_ID "" CACHE STRING
     "App Store Connect API key ID used for upload (e.g. NV3YP3T2C5)"
 )
@@ -21,7 +25,7 @@ function(_configure_asc_upload target_name depends_target export_path artifact_g
         return()
     endif ()
 
-    set(_upload_script "${CMAKE_CURRENT_SOURCE_DIR}/cmake/deploy/UploadAsc.cmake")
+    set(_upload_script "${CMAKE_CURRENT_SOURCE_DIR}/cmake/deploy/apple/UploadAsc.cmake")
 
     if (NOT TARGET ${target_name})
         add_custom_target(${target_name}

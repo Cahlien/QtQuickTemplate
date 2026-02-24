@@ -1,3 +1,13 @@
+# UploadAsc.cmake — -P script that uploads an artifact to App Store Connect
+# via xcrun altool. Used by both iOS IPA and macOS PKG upload targets.
+#
+# Expected env vars:
+#   XCRUN_EXECUTABLE  — path to xcrun
+#   EXPORT_PATH       — directory containing the exported artifact
+#   ARTIFACT_GLOB     — glob pattern (e.g. *.ipa, *.pkg)
+#   ASC_API_KEY_ID    — App Store Connect API key ID
+#   ASC_API_ISSUER_ID — App Store Connect API issuer ID
+
 foreach (_req IN ITEMS XCRUN_EXECUTABLE EXPORT_PATH ARTIFACT_GLOB ASC_API_KEY_ID ASC_API_ISSUER_ID)
     if (NOT DEFINED ENV{${_req}} OR "$ENV{${_req}}" STREQUAL "")
         message(FATAL_ERROR "${_req} env var is required")

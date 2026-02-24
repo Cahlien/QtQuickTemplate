@@ -1,5 +1,8 @@
 include_guard(GLOBAL)
 
+# MacOSSign.cmake — Configures the NotarizeMacOS target that submits the DMG
+# to Apple's notary service and staples the ticket to both DMG and app bundle.
+
 set(QTQUICKTEMPLATE_MACOS_NOTARY_KEYCHAIN_PROFILE "" CACHE STRING
     "Keychain profile name used by notarytool for macOS notarization"
 )

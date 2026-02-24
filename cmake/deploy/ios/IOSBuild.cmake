@@ -1,6 +1,9 @@
 include_guard(GLOBAL)
 
-include("${CMAKE_CURRENT_LIST_DIR}/VersionTarget.cmake")
+# IOSBuild.cmake — Configures the IOSArchive target that builds and archives
+# the iOS app via xcodebuild for App Store distribution.
+
+include("${CMAKE_CURRENT_LIST_DIR}/../VersionTarget.cmake")
 
 set(QTQUICKTEMPLATE_IOS_ARCHIVE_CONFIGURATION "Release" CACHE STRING
     "Build configuration used for iOS archive/export"

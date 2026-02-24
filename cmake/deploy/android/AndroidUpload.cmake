@@ -1,5 +1,8 @@
 include_guard(GLOBAL)
 
+# AndroidUpload.cmake — Configures the UploadAndroidPlay target that publishes
+# a signed AAB to Google Play via Gradle's publishReleaseBundle task.
+
 set(QTQUICKTEMPLATE_ANDROID_PLAY_SERVICE_ACCOUNT_FILE "" CACHE FILEPATH
     "Path to Google Play service-account JSON used for publishing"
 )

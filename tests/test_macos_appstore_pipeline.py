@@ -38,10 +38,12 @@ class TestMacOSAppStoreVersionGeneration:
     """Verify ``GenerateMacOSVersion`` target output."""
 
     def test_xcconfig_exists(self, macos_appstore_build_dir: Path) -> None:
+        """version.xcconfig must exist after GenerateMacOSVersion."""
         path = macos_appstore_version_xcconfig(macos_appstore_build_dir)
         assert path.is_file(), f"version.xcconfig not found at {path}"
 
     def test_marketing_version_format(self, macos_appstore_build_dir: Path) -> None:
+        """MARKETING_VERSION must have at least major.minor components."""
         cfg = parse_version_xcconfig(
             macos_appstore_version_xcconfig(macos_appstore_build_dir)
         )
@@ -69,14 +71,17 @@ class TestMacOSAppStoreArchive:
     """Verify ``MacAppStoreArchive`` target output."""
 
     def test_xcarchive_exists(self, macos_appstore_build_dir: Path) -> None:
+        """xcarchive directory must exist after MacAppStoreArchive."""
         archive = macos_appstore_archive_path(macos_appstore_build_dir)
         assert archive.is_dir(), f"xcarchive not found at {archive}"
 
     def test_info_plist_exists(self, macos_appstore_build_dir: Path) -> None:
+        """xcarchive must contain an Info.plist."""
         plist = macos_appstore_archive_path(macos_appstore_build_dir) / "Info.plist"
         assert plist.is_file(), "xcarchive Info.plist missing"
 
     def test_app_bundle_exists(self, macos_appstore_build_dir: Path) -> None:
+        """App bundle must exist inside the xcarchive."""
         app = macos_appstore_archive_app_path(macos_appstore_build_dir)
         assert app.is_dir(), f"App bundle not found inside archive at {app}"
 
@@ -112,6 +117,7 @@ class TestMacOSAppStoreArchive:
         macos_appstore_build_dir: Path,
         bundle_id: str,
     ) -> None:
+        """Archived app must use the expected bundle identifier."""
         app = macos_appstore_archive_app_path(macos_appstore_build_dir)
         info_plist = app / "Contents" / "Info.plist"
         with open(info_plist, "rb") as f:
@@ -130,6 +136,7 @@ class TestMacOSAppStoreArchive:
         self,
         macos_appstore_build_dir: Path,
     ) -> None:
+        """Archived app must be signed with an Apple Distribution identity."""
         app = macos_appstore_archive_app_path(macos_appstore_build_dir)
         ok, output = codesign_display(app)
         assert ok, f"codesign display failed:\n{output}"
@@ -143,6 +150,7 @@ class TestMacOSAppStoreArchive:
         macos_appstore_build_dir: Path,
         apple_team_id: str,
     ) -> None:
+        """Archived app must be signed with the expected team identifier."""
         app = macos_appstore_archive_app_path(macos_appstore_build_dir)
         ok, output = codesign_display(app)
         assert ok
@@ -158,13 +166,16 @@ class TestMacOSExportPkg:
     """Verify ``MacExportPkg`` target output."""
 
     def test_export_dir_exists(self, macos_appstore_build_dir: Path) -> None:
+        """macOS export directory must exist after MacExportPkg."""
         assert macos_appstore_export_dir(macos_appstore_build_dir).is_dir()
 
     def test_pkg_exists(self, macos_appstore_build_dir: Path) -> None:
+        """At least one .pkg must exist in the export directory."""
         pkg = macos_pkg_path(macos_appstore_build_dir)
         assert pkg is not None, "No .pkg found in export directory"
 
     def test_pkg_size(self, macos_appstore_build_dir: Path) -> None:
+        """Exported PKG must be larger than 1 MB."""
         pkg = macos_pkg_path(macos_appstore_build_dir)
         assert pkg is not None
         size_mb = pkg.stat().st_size / (1024 * 1024)
@@ -189,6 +200,7 @@ class TestMacOSExportPkg:
         )
 
     def test_distribution_summary_exists(self, macos_appstore_build_dir: Path) -> None:
+        """Export directory must contain a DistributionSummary file."""
         export_dir = macos_appstore_export_dir(macos_appstore_build_dir)
         summaries = list(export_dir.glob("DistributionSummary*"))
         assert summaries, "DistributionSummary not found in export directory"
@@ -211,6 +223,7 @@ class TestMacOSAppStoreUpload:
         asc_api_issuer_id: str,
         require_asc: None,
     ) -> None:
+        """PKG must upload to App Store Connect without errors."""
         pkg = macos_pkg_path(macos_appstore_build_dir)
         assert pkg is not None, "No .pkg found — cannot upload"
         ok, output = altool_upload(pkg, asc_api_key_id, asc_api_issuer_id)
@@ -235,6 +248,7 @@ class TestMacOSAppStoreAscProcessing:
         asc_api_key_path: Path,
         require_asc: None,
     ) -> None:
+        """Uploaded macOS build must reach VALID processing state in ASC."""
         from tests.helpers.asc_api import (
             find_latest_build,
             generate_asc_jwt,
