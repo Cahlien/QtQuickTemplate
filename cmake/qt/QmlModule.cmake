@@ -1,12 +1,12 @@
 include_guard(GLOBAL)
 
-# Keep QML resource aliases relative to the ui/ source root.
+# Keep QML resource aliases relative to the qml/ source root.
 # This yields stable paths such as pages/Readme.qml and
 # pages/content/ReadmeContent.qml under the module resource root.
 function(set_qml_resource_aliases file_list)
     foreach (_file ${${file_list}})
-        if (_file MATCHES "^ui/")
-            string(REGEX REPLACE "^ui/" "" _alias "${_file}")
+        if (_file MATCHES "^qml/")
+            string(REGEX REPLACE "^qml/" "" _alias "${_file}")
         else ()
             get_filename_component(_alias "${_file}" NAME)
         endif ()
@@ -22,21 +22,21 @@ function(setup_app_qml_module target)
     set_source_files_properties(${_app_icon_resource} PROPERTIES QT_RESOURCE_ALIAS "app_icon.png")
 
     set(_qml_all_files
-        ui/Main.qml
-        ui/organisms/Header.qml
-        ui/organisms/Footer.qml
-        ui/organisms/NavBar.qml
-        ui/organisms/NavigationStack.qml
-        ui/templates/AdaptiveLayout.qml
-        ui/templates/MainPortraitLayout.qml
-        ui/templates/MainLandscapeLayout.qml
-        ui/pages/BasePage.qml
-        ui/pages/Readme.qml
-        ui/pages/License.qml
-        ui/pages/StyleShowcase.qml
-        ui/pages/content/ReadmeContent.qml
-        ui/pages/content/LicenseContent.qml
-        ui/pages/content/StyleShowcaseContent.qml
+        qml/Main.qml
+        qml/organisms/Header.qml
+        qml/organisms/Footer.qml
+        qml/organisms/NavBar.qml
+        qml/organisms/NavigationStack.qml
+        qml/templates/AdaptiveLayout.qml
+        qml/templates/MainPortraitLayout.qml
+        qml/templates/MainLandscapeLayout.qml
+        qml/pages/BasePage.qml
+        qml/pages/Readme.qml
+        qml/pages/License.qml
+        qml/pages/StyleShowcase.qml
+        qml/pages/content/ReadmeContent.qml
+        qml/pages/content/LicenseContent.qml
+        qml/pages/content/StyleShowcaseContent.qml
     )
     set_qml_resource_aliases(_qml_all_files)
 

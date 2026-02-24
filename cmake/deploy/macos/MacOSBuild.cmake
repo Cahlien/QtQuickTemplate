@@ -29,7 +29,7 @@ function(configure_macos_build target)
         COMMAND ${CMAKE_COMMAND} -E env
             MACDEPLOYQT_EXECUTABLE=${MACDEPLOYQT_EXECUTABLE}
             APP_BUNDLE_PATH=$<TARGET_BUNDLE_DIR:${target}>
-            QML_DIR=${CMAKE_CURRENT_SOURCE_DIR}/ui
+            QML_DIR=${CMAKE_CURRENT_SOURCE_DIR}/qml
             MACOS_APP_SIGN_IDENTITY=${QTQUICKTEMPLATE_MACOS_APP_SIGN_IDENTITY}
             ${CMAKE_COMMAND} -P "${_deploy_script}"
         COMMENT "Deploying macOS app bundle with macdeployqt"

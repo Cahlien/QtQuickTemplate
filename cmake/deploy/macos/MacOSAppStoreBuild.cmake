@@ -81,7 +81,7 @@ function(configure_macos_appstore_build target)
             COMMAND ${CMAKE_COMMAND} -E env
                 MACDEPLOYQT_EXECUTABLE=${MACDEPLOYQT_EXECUTABLE}
                 APP_BUNDLE_PATH=${_archive_path}/Products/Applications/${PROJECT_NAME}.app
-                QML_DIR=${CMAKE_CURRENT_SOURCE_DIR}/ui
+                QML_DIR=${CMAKE_CURRENT_SOURCE_DIR}/qml
                 APPSTORE_COMPLIANT=1
                 ${CMAKE_COMMAND} -P "${_deployqt_script}"
             COMMENT "Archiving macOS app for App Store distribution"

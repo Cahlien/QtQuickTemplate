@@ -75,22 +75,22 @@ All CMake modules use `include_guard(GLOBAL)`.
 
 - **Entry point**: `src/main/common/main.cpp` — creates QGuiApplication, sets AppStyle, loads `Main.qml`
 - **Navigation**: C++ `NavigationController` singleton (`include/main/common/navigation/`) manages a back-stack of `(url, props, showChrome)` entries. QML drives a `Loader` from `currentUrl`/`currentProps`.
-- **QML root**: `ui/Main.qml` — `ApplicationWindow` with adaptive portrait/landscape layouts
-- **Organisms**: `ui/organisms/` — reusable composite components (Header, Footer, NavBar, NavigationStack)
-- **Pages**: `ui/pages/` (Readme, StyleShowcase, License) with content components in `ui/pages/content/`
-- **Layouts**: `ui/templates/` (AdaptiveLayout, MainPortraitLayout, MainLandscapeLayout)
+- **QML root**: `qml/Main.qml` — `ApplicationWindow` with adaptive portrait/landscape layouts
+- **Organisms**: `qml/organisms/` — reusable composite components (Header, Footer, NavBar, NavigationStack)
+- **Pages**: `qml/pages/` (Readme, StyleShowcase, License) with content components in `qml/pages/content/`
+- **Layouts**: `qml/templates/` (AdaptiveLayout, MainPortraitLayout, MainLandscapeLayout)
 - **Android back**: JNI glue in `src/main/android/` queues `NavigationController::pop()` onto the Qt thread
 
 ### QML Modules
 
 Three QML modules, each a separate CMake target:
-- **`dev.crowell.QtQuickTemplate`** — main app QML (files in `ui/`)
+- **`dev.crowell.QtQuickTemplate`** — main app QML (files in `qml/`)
 - **`dev.crowell.AppTheme`** — `Theme.qml` singleton with design tokens (colors, spacing, radii, typography)
 - **`dev.crowell.AppStyle`** — custom Qt Quick Controls 2 style overriding Button, TextField, etc.
 
 AppTheme and AppStyle link against Qt Private modules (`Qt6::QmlPrivate`, `Qt6::QuickPrivate`, `Qt6::QuickTemplates2Private`) for deep style customization. Both have the Qt type compiler enabled.
 
-QML files use `QT_RESOURCE_ALIAS` for flattened resource paths (e.g., `ui/pages/Readme.qml` → `pages/Readme.qml`).
+QML files use `QT_RESOURCE_ALIAS` for flattened resource paths (e.g., `qml/pages/Readme.qml` → `pages/Readme.qml`).
 
 ### Libraries
 
@@ -113,7 +113,7 @@ Libraries live in `libs/`. Helper macros in `cmake/libs/LibraryCommon.cmake`:
 - **Qt minimum**: 6.10 — the FFmpeg static-linking workaround in `cmake/qt/QtProject.cmake` is specific to this version
 - **Cache variable prefix**: all project-specific CMake cache variables use the `QTQUICKTEMPLATE_` prefix
 - **Platform resources**: `platforms/{ios,macos,android,linux,windows}/` — Info.plists, entitlements, icons, manifests
-- **QML directory is `ui/`**, not `qml/` — this matters for macdeployqt's `-qmldir` flag
+- **QML directory is `qml/`** — used by macdeployqt's `-qmldir` flag; organized by atomic design level (atoms, molecules, organisms, templates, pages)
 
 ## Known Harmless Warnings
 

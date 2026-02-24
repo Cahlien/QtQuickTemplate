@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.28)
+cmake_minimum_required(VERSION 4.2.1)
 
 include(cmake/toolchain/ClangScanDeps.cmake)
 bootstrap_clang_scan_deps()
