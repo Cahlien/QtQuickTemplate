@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.20)
+cmake_minimum_required(VERSION 4.2.1)
 
 foreach (_req IN ITEMS ARCHIVE_PATH APP_NAME DEVELOPMENT_TEAM)
     if (NOT DEFINED ENV{${_req}} OR "$ENV{${_req}}" STREQUAL "")
