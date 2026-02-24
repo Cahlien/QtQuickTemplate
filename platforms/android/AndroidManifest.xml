@@ -16,7 +16,7 @@
                  android:enableOnBackInvokedCallback="true">
         <activity android:name="dev.crowell.qtquicktemplate.activities.MainActivity"
                   android:configChanges="orientation|uiMode|screenLayout|screenSize|smallestScreenSize|layoutDirection|locale|fontScale|keyboard|keyboardHidden|navigation|mcc|mnc|density"
-                  android:exported="true" android:launchMode="singleTop" android:screenOrientation="portrait">
+                  android:exported="true" android:launchMode="singleTop">
             <meta-data android:name="android.app.lib_name" android:value="-- %%INSERT_APP_LIB_NAME%% --"/>
             <meta-data android:name="android.app.load_local_libs" android:value="-- %%INSERT_APP_LIB_NAME%% --"/>
             <intent-filter>
