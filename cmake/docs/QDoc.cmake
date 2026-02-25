@@ -18,5 +18,12 @@ function(add_qdoc_target name qdocconf_path)
             WORKING_DIRECTORY ${_qdocconf_dir}
             COMMENT "Generating documentation with QDoc"
         )
+
+        register_help_target(
+            NAME ${name}
+            GROUP "Utilities"
+            DESCRIPTION "Generate project documentation with QDoc"
+            COMMAND "cmake --build <dir> --target ${name}"
+        )
     endif ()
 endfunction()

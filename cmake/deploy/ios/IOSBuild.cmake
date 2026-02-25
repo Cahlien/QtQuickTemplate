@@ -72,6 +72,14 @@ function(configure_ios_build target)
             COMMENT "Archiving iOS app for App Store distribution"
             VERBATIM
         )
+        register_help_target(
+            NAME IOSArchive
+            GROUP "iOS"
+            DESCRIPTION "Archive iOS app for App Store distribution via xcodebuild"
+            COMMAND "cmake --build <dir> --target IOSArchive"
+            VARIABLES "QTQUICKTEMPLATE_APPLE_DEVELOPMENT_TEAM -- Apple development team ID"
+        )
+
         message(STATUS "IOSArchive target configured -> cmake --build . --target IOSArchive")
     endif ()
 

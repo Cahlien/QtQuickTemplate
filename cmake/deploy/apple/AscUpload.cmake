@@ -54,6 +54,17 @@ function(configure_ios_upload target)
     _configure_asc_upload(IOSUploadASC VerifyIOSIPA
         "${CMAKE_BINARY_DIR}/ios/export" "*.ipa"
         "Uploading signed iOS IPA to App Store Connect")
+
+    if (TARGET IOSUploadASC)
+        register_help_target(
+            NAME IOSUploadASC
+            GROUP "iOS"
+            DESCRIPTION "Upload signed iOS IPA to App Store Connect"
+            COMMAND "cmake --build <dir> --target IOSUploadASC"
+            VARIABLES "QTQUICKTEMPLATE_ASC_API_KEY_ID -- App Store Connect API key ID"
+                      "QTQUICKTEMPLATE_ASC_API_ISSUER_ID -- App Store Connect API issuer ID"
+        )
+    endif ()
 endfunction()
 
 function(configure_macos_appstore_upload target)
@@ -66,4 +77,15 @@ function(configure_macos_appstore_upload target)
     _configure_asc_upload(MacUploadASC VerifyMacPkg
         "${CMAKE_BINARY_DIR}/macos/export" "*.pkg"
         "Uploading signed macOS PKG to App Store Connect")
+
+    if (TARGET MacUploadASC)
+        register_help_target(
+            NAME MacUploadASC
+            GROUP "macOS (App Store)"
+            DESCRIPTION "Upload signed macOS PKG to App Store Connect"
+            COMMAND "cmake --build <dir> --target MacUploadASC"
+            VARIABLES "QTQUICKTEMPLATE_ASC_API_KEY_ID -- App Store Connect API key ID"
+                      "QTQUICKTEMPLATE_ASC_API_ISSUER_ID -- App Store Connect API issuer ID"
+        )
+    endif ()
 endfunction()

@@ -40,6 +40,15 @@ function(configure_ios_package target)
         "${CMAKE_BINARY_DIR}/ios/export"
         "${CMAKE_CURRENT_BINARY_DIR}/${target}_ExportOptions.plist"
         "Exporting signed iOS IPA for App Store submission")
+
+    if (TARGET IOSExportIPA)
+        register_help_target(
+            NAME IOSExportIPA
+            GROUP "iOS"
+            DESCRIPTION "Export signed iOS IPA from xcarchive for App Store submission"
+            COMMAND "cmake --build <dir> --target IOSExportIPA"
+        )
+    endif ()
 endfunction()
 
 function(configure_macos_appstore_package target)
@@ -54,4 +63,13 @@ function(configure_macos_appstore_package target)
         "${CMAKE_BINARY_DIR}/macos/export"
         "${CMAKE_CURRENT_BINARY_DIR}/${target}_MacAppStoreExportOptions.plist"
         "Exporting signed macOS PKG for App Store submission")
+
+    if (TARGET MacExportPkg)
+        register_help_target(
+            NAME MacExportPkg
+            GROUP "macOS (App Store)"
+            DESCRIPTION "Export signed macOS PKG from xcarchive for App Store submission"
+            COMMAND "cmake --build <dir> --target MacExportPkg"
+        )
+    endif ()
 endfunction()

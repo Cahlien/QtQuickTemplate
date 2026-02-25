@@ -51,6 +51,7 @@ function(configure_android_upload_play target)
             COMMENT "Uploading signed Android AAB to Google Play"
             VERBATIM
         )
+
         message(STATUS "UploadAndroidPlay target configured -> cmake --build . --target UploadAndroidPlay")
     endif ()
 endfunction()

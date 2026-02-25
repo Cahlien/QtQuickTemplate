@@ -90,6 +90,7 @@ function(configure_android_build_aab target)
     _configure_android_gradle_build(AndroidAAB ${target} aab
         "Building unsigned Android release AAB")
     _configure_android_sign_aab()
+
 endfunction()
 
 function(configure_android_build_apk target)

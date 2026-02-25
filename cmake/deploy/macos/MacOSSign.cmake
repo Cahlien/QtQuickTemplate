@@ -42,5 +42,13 @@ function(configure_macos_sign target)
         VERBATIM
     )
 
+    register_help_target(
+        NAME NotarizeMacOS
+        GROUP "macOS (DMG)"
+        DESCRIPTION "Submit DMG to Apple notary service and staple the ticket"
+        COMMAND "cmake --build <dir> --target NotarizeMacOS"
+        VARIABLES "QTQUICKTEMPLATE_MACOS_NOTARY_KEYCHAIN_PROFILE -- Keychain profile for notarytool"
+    )
+
     message(STATUS "NotarizeMacOS target configured -> cmake --build . --target NotarizeMacOS")
 endfunction()

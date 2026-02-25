@@ -36,6 +36,13 @@ function(configure_macos_verify target)
             COMMENT "Verifying final macOS package integrity and notarization"
             VERBATIM
         )
+        register_help_target(
+            NAME VerifyMacOSPackage
+            GROUP "macOS (DMG)"
+            DESCRIPTION "Verify codesign, spctl, and notarization of the DMG and app bundle"
+            COMMAND "cmake --build <dir> --target VerifyMacOSPackage"
+        )
+
         message(STATUS "VerifyMacOSPackage target configured -> cmake --build . --target VerifyMacOSPackage")
     endif ()
 endfunction()
