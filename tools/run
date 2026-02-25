@@ -21,7 +21,7 @@ else
     # Warn when running cmake without .env.local (likely missing SDK paths)
     for arg in "$@"; do
         if [ "$arg" = "cmake" ]; then
-            printf '\033[0;33m[run] .env.local not found — run ./tools/configure-env.sh to set SDK paths\033[0m\n' >&2
+            printf '\033[0;33m[run] .env.local not found — run ./tools/configure_env.sh to set SDK paths\033[0m\n' >&2
             break
         fi
     done

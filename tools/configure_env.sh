@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# tools/configure-env.sh — interactive wizard that writes .env.local
+# tools/configure_env.sh — interactive wizard that writes .env.local
 # with developer-specific SDK paths and signing credentials.
 
 set -euo pipefail
@@ -26,9 +26,9 @@ else
     BOLD='' GREEN='' CYAN='' YELLOW='' RESET=''
 fi
 
-info()  { printf "${CYAN}[configure-env]${RESET} %s\n" "$*"; }
-ok()    { printf "${GREEN}[configure-env]${RESET} %s\n" "$*"; }
-warn()  { printf "${YELLOW}[configure-env]${RESET} %s\n" "$*"; }
+info()  { printf "${CYAN}[configure_env]${RESET} %s\n" "$*"; }
+ok()    { printf "${GREEN}[configure_env]${RESET} %s\n" "$*"; }
+warn()  { printf "${YELLOW}[configure_env]${RESET} %s\n" "$*"; }
 header(){ printf "\n${BOLD}── %s ──${RESET}\n" "$*"; }
 
 # ── Load existing .env.local as defaults ─────────────────────────────────────
@@ -74,12 +74,84 @@ prompt() {
     fi
 }
 
-# ── Derive Qt6_DIR from a platform root ──────────────────────────────────────
-derive_qt6_dir() {
+# ── Derive Qt6_DIR and CMAKE_PREFIX_PATH from a platform root ────────────────
+derive_qt_paths() {
     local root="$1"
     if [ -n "$root" ]; then
         RESULT["Qt6_DIR"]="${root}/lib/cmake/Qt6"
+        RESULT["CMAKE_PREFIX_PATH"]="$root"
     fi
+}
+
+# ── Auto-detect Android SDK/NDK from common locations ────────────────────────
+detect_android_sdk() {
+    local candidates=()
+    case "$PLATFORM" in
+        Darwin)
+            candidates=(
+                "$HOME/Library/Android/sdk"
+                "$HOME/Android/Sdk"
+            )
+            ;;
+        Linux)
+            candidates=(
+                "$HOME/Android/Sdk"
+                "/opt/android-sdk"
+                "$HOME/android-sdk"
+            )
+            ;;
+    esac
+    for dir in "${candidates[@]}"; do
+        if [ -d "$dir" ]; then
+            echo "$dir"
+            return
+        fi
+    done
+}
+
+detect_android_ndk() {
+    local sdk_root="${1:-}"
+    if [ -n "$sdk_root" ] && [ -d "$sdk_root/ndk" ]; then
+        # Pick the highest-versioned NDK directory
+        local latest
+        latest=$(ls -1d "$sdk_root/ndk"/*/ 2>/dev/null | sort -V | tail -1)
+        if [ -n "$latest" ]; then
+            echo "${latest%/}"
+            return
+        fi
+    fi
+}
+
+detect_java_home() {
+    case "$PLATFORM" in
+        Darwin)
+            if /usr/libexec/java_home &>/dev/null; then
+                /usr/libexec/java_home 2>/dev/null
+                return
+            fi
+            ;;
+        Linux)
+            local candidates=(
+                "/usr/lib/jvm/java-17-openjdk"
+                "/usr/lib/jvm/java-17-openjdk-amd64"
+                "/usr/lib/jvm/java-21-openjdk"
+                "/usr/lib/jvm/java-21-openjdk-amd64"
+            )
+            for dir in "${candidates[@]}"; do
+                if [ -d "$dir" ]; then
+                    echo "$dir"
+                    return
+                fi
+            done
+            # Fallback: follow the java binary
+            if command -v java &>/dev/null; then
+                local java_bin
+                java_bin="$(readlink -f "$(command -v java)")"
+                echo "${java_bin%/bin/java}"
+                return
+            fi
+            ;;
+    esac
 }
 
 # ── Start ────────────────────────────────────────────────────────────────────
@@ -97,26 +169,29 @@ case "$PLATFORM" in
         prompt QT_IOS_ROOT    "iOS Qt SDK root (e.g. ~/Qt/6.10.2/ios)"
         prompt QT_ANDROID_ROOT "Android Qt SDK root (e.g. ~/Qt/6.10.2/android_arm64_v8a)"
         prompt QT_HOST_ROOT    "Host Qt root for cross-compilation (e.g. ~/Qt/6.10.2/macos)"
-        # Derive Qt6_DIR from macOS root
-        derive_qt6_dir "${RESULT[QT_MACOS_ROOT]:-${DEFAULTS[QT_MACOS_ROOT]:-}}"
+        # Derive Qt6_DIR and CMAKE_PREFIX_PATH from macOS root
+        derive_qt_paths "${RESULT[QT_MACOS_ROOT]:-${DEFAULTS[QT_MACOS_ROOT]:-}}"
         ;;
     Linux)
         prompt QT_LINUX_ROOT  "Linux Qt SDK root (e.g. ~/Qt/6.10.2/gcc_64)"
         prompt QT_ANDROID_ROOT "Android Qt SDK root (leave empty to skip)"
         prompt QT_HOST_ROOT    "Host Qt root for cross-compilation (leave empty to skip)"
-        # Derive Qt6_DIR from Linux root
-        derive_qt6_dir "${RESULT[QT_LINUX_ROOT]:-${DEFAULTS[QT_LINUX_ROOT]:-}}"
+        # Derive Qt6_DIR and CMAKE_PREFIX_PATH from Linux root
+        derive_qt_paths "${RESULT[QT_LINUX_ROOT]:-${DEFAULTS[QT_LINUX_ROOT]:-}}"
         ;;
     *)
         # Generic fallback
         prompt QT_ROOT "Qt SDK root"
-        derive_qt6_dir "${RESULT[QT_ROOT]:-${DEFAULTS[QT_ROOT]:-}}"
+        derive_qt_paths "${RESULT[QT_ROOT]:-${DEFAULTS[QT_ROOT]:-}}"
         ;;
 esac
 
-# Show derived Qt6_DIR
+# Show derived paths
 if [ -n "${RESULT[Qt6_DIR]:-}" ]; then
     info "Derived Qt6_DIR=${RESULT[Qt6_DIR]}"
+fi
+if [ -n "${RESULT[CMAKE_PREFIX_PATH]:-}" ]; then
+    info "Derived CMAKE_PREFIX_PATH=${RESULT[CMAKE_PREFIX_PATH]}"
 fi
 
 # ── Apple Code Signing (macOS only) ──────────────────────────────────────────
@@ -136,8 +211,20 @@ if [ "$PLATFORM" = "Darwin" ]; then
     prompt IOS_PROVISIONING_PROFILE "iOS provisioning profile name (leave empty to skip)"
 fi
 
-# ── Android Signing ──────────────────────────────────────────────────────────
+# ── Android SDK & Signing ───────────────────────────────────────────────────
 if [ -n "${RESULT[QT_ANDROID_ROOT]:-${DEFAULTS[QT_ANDROID_ROOT]:-}}" ]; then
+    header "Android SDK"
+
+    # Auto-detect defaults for Android toolchain paths
+    detected_sdk="$(detect_android_sdk || true)"
+    prompt ANDROID_SDK_ROOT "Android SDK root" "${DEFAULTS[ANDROID_SDK_ROOT]:-$detected_sdk}"
+
+    detected_ndk="$(detect_android_ndk "${RESULT[ANDROID_SDK_ROOT]:-${DEFAULTS[ANDROID_SDK_ROOT]:-}}" || true)"
+    prompt ANDROID_NDK_ROOT "Android NDK root" "${DEFAULTS[ANDROID_NDK_ROOT]:-$detected_ndk}"
+
+    detected_java="$(detect_java_home || true)"
+    prompt JAVA_HOME "Java JDK home (JDK 17+ recommended)" "${DEFAULTS[JAVA_HOME]:-$detected_java}"
+
     header "Android Signing"
     prompt ANDROID_KEYSTORE_PATH     "Keystore file path"
     prompt ANDROID_KEYSTORE_PASSWORD "Keystore password"
@@ -146,6 +233,8 @@ if [ -n "${RESULT[QT_ANDROID_ROOT]:-${DEFAULTS[QT_ANDROID_ROOT]:-}}" ]; then
 
     header "Google Play Upload"
     prompt ANDROID_PLAY_SERVICE_ACCOUNT_FILE "Play Console service account JSON path (leave empty to skip)"
+    prompt ANDROID_PLAY_TRACK                "Play Console release track" "${DEFAULTS[ANDROID_PLAY_TRACK]:-internal}"
+    prompt ANDROID_PLAY_RELEASE_STATUS       "Play Console release status" "${DEFAULTS[ANDROID_PLAY_RELEASE_STATUS]:-completed}"
 fi
 
 # ── Linux Signing ────────────────────────────────────────────────────────────
@@ -158,48 +247,74 @@ fi
 header "Writing .env.local"
 
 {
-    echo "# Generated by tools/configure-env.sh on $(date -u +%Y-%m-%dT%H:%M:%SZ)"
+    echo "# Generated by tools/configure_env.sh on $(date -u +%Y-%m-%dT%H:%M:%SZ)"
     echo "# Re-run the script to update. Manual edits are preserved as defaults."
     echo ""
 
     # Qt SDK Paths
-    local_has_qt=false
-    for var in QT_MACOS_ROOT QT_IOS_ROOT QT_LINUX_ROOT QT_ANDROID_ROOT QT_HOST_ROOT QT_ROOT Qt6_DIR; do
+    has_qt=false
+    for var in QT_MACOS_ROOT QT_IOS_ROOT QT_LINUX_ROOT QT_ANDROID_ROOT QT_HOST_ROOT QT_ROOT Qt6_DIR CMAKE_PREFIX_PATH; do
         if [ -n "${RESULT[$var]:-}" ]; then
-            if [ "$local_has_qt" = false ]; then
+            if [ "$has_qt" = false ]; then
                 echo "# Qt SDK Paths"
-                local_has_qt=true
+                has_qt=true
             fi
             echo "${var}=${RESULT[$var]}"
         fi
     done
-    [ "$local_has_qt" = true ] && echo ""
+    [ "$has_qt" = true ] && echo ""
 
     # Apple Signing
-    local_has_apple=false
+    has_apple=false
     for var in APPLE_DEVELOPMENT_TEAM MACOS_APP_SIGN_IDENTITY MACOS_DMG_SIGN_IDENTITY MACOS_NOTARY_KEYCHAIN_PROFILE MACOS_APP_STORE_PROVISIONING_PROFILE ASC_API_KEY_ID ASC_API_ISSUER_ID IOS_PROVISIONING_PROFILE; do
         if [ -n "${RESULT[$var]:-}" ]; then
-            if [ "$local_has_apple" = false ]; then
+            if [ "$has_apple" = false ]; then
                 echo "# Apple Signing"
-                local_has_apple=true
+                has_apple=true
             fi
             echo "${var}=${RESULT[$var]}"
         fi
     done
-    [ "$local_has_apple" = true ] && echo ""
+    [ "$has_apple" = true ] && echo ""
+
+    # Android SDK
+    has_android_sdk=false
+    for var in ANDROID_SDK_ROOT ANDROID_NDK_ROOT JAVA_HOME; do
+        if [ -n "${RESULT[$var]:-}" ]; then
+            if [ "$has_android_sdk" = false ]; then
+                echo "# Android SDK"
+                has_android_sdk=true
+            fi
+            echo "${var}=${RESULT[$var]}"
+        fi
+    done
+    [ "$has_android_sdk" = true ] && echo ""
 
     # Android Signing
-    local_has_android=false
-    for var in ANDROID_KEYSTORE_PATH ANDROID_KEYSTORE_PASSWORD ANDROID_KEY_ALIAS ANDROID_KEY_PASSWORD ANDROID_PLAY_SERVICE_ACCOUNT_FILE; do
+    has_android_signing=false
+    for var in ANDROID_KEYSTORE_PATH ANDROID_KEYSTORE_PASSWORD ANDROID_KEY_ALIAS ANDROID_KEY_PASSWORD; do
         if [ -n "${RESULT[$var]:-}" ]; then
-            if [ "$local_has_android" = false ]; then
+            if [ "$has_android_signing" = false ]; then
                 echo "# Android Signing"
-                local_has_android=true
+                has_android_signing=true
             fi
             echo "${var}=${RESULT[$var]}"
         fi
     done
-    [ "$local_has_android" = true ] && echo ""
+    [ "$has_android_signing" = true ] && echo ""
+
+    # Android Play Upload
+    has_play=false
+    for var in ANDROID_PLAY_SERVICE_ACCOUNT_FILE ANDROID_PLAY_TRACK ANDROID_PLAY_RELEASE_STATUS; do
+        if [ -n "${RESULT[$var]:-}" ]; then
+            if [ "$has_play" = false ]; then
+                echo "# Google Play Upload"
+                has_play=true
+            fi
+            echo "${var}=${RESULT[$var]}"
+        fi
+    done
+    [ "$has_play" = true ] && echo ""
 
     # Linux Signing
     if [ -n "${RESULT[GPG_KEY_ID]:-}" ]; then
