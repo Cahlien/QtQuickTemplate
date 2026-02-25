@@ -85,8 +85,8 @@ tools/*
 !tools/configure_package.py
 !tools/run
 !tools/run.ps1
-!tools/configure-env.sh
-!tools/configure-env.ps1
+!tools/configure_env.sh
+!tools/configure_env.ps1
 
 # Binaries
 # --------

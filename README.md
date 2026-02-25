@@ -69,6 +69,8 @@ Back handling and app minimization are split cleanly:
 
 ```text
 .
+├── .env                                  # tracked defaults (ANDROID_PLAY_TRACK, ANDROID_PLAY_RELEASE_STATUS)
+├── .env.local                            # gitignored developer overrides (Qt paths, signing credentials)
 ├── .python-version                     # pinned CPython 3.14t (freethreaded) for uv
 ├── CMakeLists.txt                      # minimal root; delegates to cmake/ modules
 ├── CMakePresets.json                   # platform build presets (iOS, macOS, etc.)
@@ -247,6 +249,10 @@ Back handling and app minimization are split cleanly:
 └── tools/                              # developer tooling
     ├── bootstrap.sh                    # dev environment setup (macOS/Linux)
     ├── bootstrap.ps1                   # dev environment setup (Windows)
+    ├── configure_env.sh                # interactive Qt SDK + signing config wizard (macOS/Linux)
+    ├── configure_env.ps1               # interactive Qt SDK + signing config wizard (Windows)
+    ├── run                             # env-aware wrapper: loads .env/.env.local before running tools
+    ├── run.ps1                         # env-aware wrapper for Windows
     └── configure_package.py            # project renaming/repackaging script
 ```
 
@@ -270,12 +276,18 @@ The fastest way to get cmake, conan, pytest, and all Python-based tools at the c
 .\tools\bootstrap.ps1      # Windows
 ```
 
-This installs [uv](https://docs.astral.sh/uv/) into a project-local `tools/` directory, downloads the pinned CPython (from `.python-version`), and creates an isolated `.venv/` with all dependencies locked in `uv.lock`. Run tools with `./tools/uv run`:
+This installs [uv](https://docs.astral.sh/uv/) into a project-local `tools/` directory, downloads the pinned CPython (from `.python-version`), and creates an isolated `.venv/` with all dependencies locked in `uv.lock`. Run tools with `./tools/run`:
 
 ```bash
-./tools/uv run cmake --preset <preset>
-./tools/uv run pytest
+./tools/run cmake --preset <preset>
+./tools/run pytest
 ```
+
+`./tools/run` is a thin wrapper around `uv run` that automatically loads environment variables from:
+1. `.env` — tracked defaults (e.g., Android Play defaults)
+2. `.env.local` — developer-specific overrides (gitignored)
+
+If `.env.local` is missing and you run `cmake`, the wrapper prints a warning reminding you to run `configure_env.sh`.
 
 Alternatively, activate the venv to put all tools on your `PATH` directly:
 
@@ -286,6 +298,29 @@ source .venv/bin/activate   # macOS/Linux
 
 > **IDE users:** Activating the venv only affects your current terminal session. IDEs (Qt Creator, CLion, Xcode, Visual Studio) have their own tool discovery and will not see the activated venv. Point your IDE's CMake executable setting to `.venv/bin/cmake` (macOS/Linux) or `.venv\Scripts\cmake.exe` (Windows) to use the pinned version.
 
+### Configure environment
+
+After bootstrapping, set up your Qt SDK paths and platform signing credentials. You have two options:
+
+#### Option 1: Interactive wizard (recommended)
+
+Run the configure script to interactively prompt for your SDK paths and credentials:
+
+```bash
+./tools/configure_env.sh       # macOS/Linux
+.\tools\configure_env.ps1      # Windows
+```
+
+This creates `.env.local` with your settings. The wizard:
+- Detects your platform and prompts for relevant fields
+- Loads existing `.env.local` values as defaults (safe to re-run)
+- Validates paths exist (with a warning if missing)
+- Writes organized, commented output
+
+#### Option 2: Manual .env.local
+
+Create `.env.local` manually with your values. See the [Environment Variables](#environment-variables) section for the full list.
+
 ### Manual alternative
 
 If you prefer to manage tools globally:
@@ -295,20 +330,73 @@ If you prefer to manage tools globally:
 
 ---
 
+## Environment Variables
+
+This project uses environment variables for Qt SDK paths and platform signing credentials. Variables can be set in two ways:
+
+1. **`.env.local`** (recommended, gitignored) — per-developer overrides
+2. **`CMakeUserPresets.json`** — per-preset environment (Apple platforms)
+
+Both are gitignored. The `./tools/run` wrapper loads `.env` and `.env.local` automatically.
+
+### Qt SDK Paths
+
+| Variable | Platform | Example |
+|----------|----------|---------|
+| `QT_MACOS_ROOT` | macOS | `~/Qt/6.10.2/macos` |
+| `QT_IOS_ROOT` | iOS | `~/Qt/6.10.2/ios` |
+| `QT_LINUX_ROOT` | Linux | `~/Qt/6.10.2/gcc_64` |
+| `QT_ANDROID_ROOT` | Android | `~/Qt/6.10.2/android_arm64_v8a` |
+| `QT_HOST_ROOT` | Cross-compile | `~/Qt/6.10.2/macos` |
+| `Qt6_DIR` | Derived | `${QT_MACOS_ROOT}/lib/cmake/Qt6` |
+
+### Apple Code Signing
+
+| Variable | Used By | Description |
+|----------|---------|-------------|
+| `APPLE_DEVELOPMENT_TEAM` | iOS, macOS | 10-character Team ID |
+| `MACOS_APP_SIGN_IDENTITY` | macOS DMG | Signing identity for app bundle (e.g., `Developer ID Application: Your Name (TEAMID)`) |
+| `MACOS_DMG_SIGN_IDENTITY` | macOS DMG | Signing identity for DMG |
+| `MACOS_NOTARY_KEYCHAIN_PROFILE` | macOS DMG | Keychain profile for `notarytool` |
+| `MACOS_APP_STORE_PROVISIONING_PROFILE` | macOS App Store | Provisioning profile name |
+| `IOS_PROVISIONING_PROFILE` | iOS | Provisioning profile name |
+| `ASC_API_KEY_ID` | iOS, macOS | App Store Connect API key ID |
+| `ASC_API_ISSUER_ID` | iOS, macOS | App Store Connect API issuer UUID |
+
+### Android Signing & Upload
+
+| Variable | Used By | Description |
+|----------|---------|-------------|
+| `ANDROID_KEYSTORE_PATH` | Android signing | Path to keystore file |
+| `ANDROID_KEYSTORE_PASSWORD` | Android signing | Keystore password |
+| `ANDROID_KEY_ALIAS` | Android signing | Key alias within keystore |
+| `ANDROID_KEY_PASSWORD` | Android signing | Key password |
+| `ANDROID_PLAY_SERVICE_ACCOUNT_FILE` | Play upload | Path to service account JSON |
+| `ANDROID_PLAY_TRACK` | Play upload | Track name (default: `internal`) |
+| `ANDROID_PLAY_RELEASE_STATUS` | Play upload | Release status (default: `completed`) |
+
+### Linux Signing
+
+| Variable | Used By | Description |
+|----------|---------|-------------|
+| `GPG_KEY_ID` | AppImage | GPG key ID for signing |
+
+---
+
 ## Linux: build, package, sign
 
 ### Build (local desktop binary)
 
 ```bash
-./tools/uv run cmake -S . -B build/linux-debug -DCMAKE_BUILD_TYPE=Debug
-./tools/uv run cmake --build build/linux-debug -j
+./tools/run cmake -S . -B build/linux-debug -DCMAKE_BUILD_TYPE=Debug
+./tools/run cmake --build build/linux-debug -j
 ```
 
 For release builds:
 
 ```bash
-./tools/uv run cmake -S . -B build/linux-release -DCMAKE_BUILD_TYPE=Release
-./tools/uv run cmake --build build/linux-release -j
+./tools/run cmake -S . -B build/linux-release -DCMAKE_BUILD_TYPE=Release
+./tools/run cmake --build build/linux-release -j
 ```
 
 Run on Linux:
@@ -320,9 +408,9 @@ Run on Linux:
 ### Build with Conan (optional)
 
 ```bash
-./tools/uv run conan install . -s build_type=Debug --build=missing -of build/conan
-./tools/uv run cmake -S . -B build/linux-debug -DCMAKE_TOOLCHAIN_FILE=build/conan/conan_toolchain.cmake
-./tools/uv run cmake --build build/linux-debug -j
+./tools/run conan install . -s build_type=Debug --build=missing -of build/conan
+./tools/run cmake -S . -B build/linux-debug -DCMAKE_TOOLCHAIN_FILE=build/conan/conan_toolchain.cmake
+./tools/run cmake --build build/linux-debug -j
 ```
 
 ### Package (AppImage)
@@ -336,8 +424,8 @@ AppImage packaging is provided by `cmake/AppImage.cmake` and requires:
 If they are installed in `~/applications`, `~/.local/bin`, or `/usr/local/bin`, CMake auto-detects them and enables the `AppImage` target.
 
 ```bash
-./tools/uv run cmake -S . -B build/linux-release -DCMAKE_BUILD_TYPE=Release
-./tools/uv run cmake --build build/linux-release --target AppImage -j
+./tools/run cmake -S . -B build/linux-release -DCMAKE_BUILD_TYPE=Release
+./tools/run cmake --build build/linux-release --target AppImage -j
 ```
 
 Output:
@@ -351,10 +439,10 @@ build/linux-release/AppImageBuild/QtQuickTemplate-<version>-x86_64.AppImage
 AppImage signing is integrated into the same `AppImage` target. Provide a key ID at configure time:
 
 ```bash
-./tools/uv run cmake -S . -B build/linux-release \
+./tools/run cmake -S . -B build/linux-release \
   -DCMAKE_BUILD_TYPE=Release \
   -DGPG_KEY_ID=<YOUR_KEY_ID>
-./tools/uv run cmake --build build/linux-release --target AppImage -j
+./tools/run cmake --build build/linux-release --target AppImage -j
 ```
 
 If `GPG_KEY_ID` is not set, the AppImage plugin uses your default GPG secret key.
@@ -487,16 +575,21 @@ The full pipeline — build → archive → sign → export IPA → verify → u
 }
 ```
 
-The `AuthKey_<KEY_ID>.p8` file must be in `~/.appstoreconnect/private_keys/` — the standard path that `altool` searches automatically.
+**Two ways to set environment variables:**
+
+1. **`.env.local`** (recommended) — set `QT_MACOS_ROOT`, `APPLE_DEVELOPMENT_TEAM`, `ASC_API_KEY_ID`, `ASC_API_ISSUER_ID` in `.env.local`. Run `./tools/configure_env.sh` to interactively configure.
+2. **`CMakeUserPresets.json`** — set these values in the preset's `environment` block as shown above.
+
+Both approaches work; `.env.local` is simpler for single-machine setups, while `CMakeUserPresets.json` enables per-preset configurations.
 
 ### Full pipeline (one command after first configure)
 
 ```bash
 # Configure (once, or after CMake changes)
-./tools/uv run cmake --preset ios-release-local
+./tools/run cmake --preset ios-release-local
 
 # Build → archive → sign → export IPA → verify → upload to App Store Connect
-./tools/uv run cmake --build --preset ios-distributable-local
+./tools/run cmake --build --preset ios-distributable-local
 ```
 
 Output IPA: `build/Qt_6_10_2_for_iOS/ios/export/QtQuickTemplate.ipa`
@@ -514,7 +607,7 @@ Output IPA: `build/Qt_6_10_2_for_iOS/ios/export/QtQuickTemplate.ipa`
 To build without uploading:
 
 ```bash
-./tools/uv run cmake --build --preset ios-app-local
+./tools/run cmake --build --preset ios-app-local
 ```
 
 ### CMake cache variables
@@ -599,14 +692,21 @@ xcrun notarytool store-credentials "my-notary-profile" \
 }
 ```
 
+**Two ways to set environment variables:**
+
+1. **`.env.local`** (recommended) — set `QT_MACOS_ROOT`, `MACOS_NOTARY_KEYCHAIN_PROFILE`, `MACOS_APP_SIGN_IDENTITY`, `MACOS_DMG_SIGN_IDENTITY` in `.env.local`. Run `./tools/configure_env.sh` to interactively configure.
+2. **`CMakeUserPresets.json`** — set these values in the preset's `environment` block as shown above.
+
+Both approaches work; `.env.local` is simpler for single-machine setups, while `CMakeUserPresets.json` enables per-preset configurations.
+
 ### Full pipeline (one command after first configure)
 
 ```bash
 # Configure (once, or after CMake changes)
-./tools/uv run cmake --preset macos-release-local
+./tools/run cmake --preset macos-release-local
 
 # Build → deploy Qt → sign → DMG → notarize → staple → verify
-./tools/uv run cmake --build --preset macos-distributable-local
+./tools/run cmake --build --preset macos-distributable-local
 ```
 
 Output DMG: `build/Qt_6_10_2_for_macOS/QtQuickTemplate-<version>-macOS.dmg`
@@ -624,7 +724,7 @@ Output DMG: `build/Qt_6_10_2_for_macOS/QtQuickTemplate-<version>-macOS.dmg`
 To build without packaging:
 
 ```bash
-./tools/uv run cmake --build --preset macos-app-local
+./tools/run cmake --build --preset macos-app-local
 ```
 
 ### CMake cache variables
@@ -691,14 +791,21 @@ The Mac App Store pipeline uses the Xcode generator (separate build directory fr
 }
 ```
 
+**Two ways to set environment variables:**
+
+1. **`.env.local`** (recommended) — set `QT_MACOS_ROOT`, `APPLE_DEVELOPMENT_TEAM`, `ASC_API_KEY_ID`, `ASC_API_ISSUER_ID` in `.env.local`. Run `./tools/configure_env.sh` to interactively configure.
+2. **`CMakeUserPresets.json`** — set these values in the preset's `environment` block as shown above.
+
+Both approaches work; `.env.local` is simpler for single-machine setups, while `CMakeUserPresets.json` enables per-preset configurations.
+
 ### Full pipeline (one command after first configure)
 
 ```bash
 # Configure (once, or after CMake changes)
-./tools/uv run cmake --preset macos-appstore-local
+./tools/run cmake --preset macos-appstore-local
 
 # Build → archive → export PKG → verify → upload to App Store Connect
-./tools/uv run cmake --build --preset macos-appstore-distributable-local
+./tools/run cmake --build --preset macos-appstore-distributable-local
 ```
 
 The exported `.pkg` lands in `build/Qt_6_10_2_for_macOS_AppStore/macos/export/`.
@@ -716,7 +823,7 @@ The exported `.pkg` lands in `build/Qt_6_10_2_for_macOS_AppStore/macos/export/`.
 To build without packaging:
 
 ```bash
-./tools/uv run cmake --build --preset macos-appstore-app-local
+./tools/run cmake --build --preset macos-appstore-app-local
 ```
 
 ### CMake cache variables
@@ -753,12 +860,12 @@ If `qdoc` is available in your Qt installation, you'll get build targets:
 
 - Generate app docs:
   ```bash
-  ./tools/uv run cmake --build build --target docs
+  ./tools/run cmake --build build --target docs
   ```
 
 - Generate `helloworld` library docs:
   ```bash
-  ./tools/uv run cmake --build build --target helloworld_docs
+  ./tools/run cmake --build build --target helloworld_docs
   ```
 
 The main QDoc configuration lives in `doc/qtquicktemplate.qdocconf`.
