@@ -28,8 +28,8 @@ OLD_PACKAGE_UNDERSCORE = "dev_crowell_qtquicktemplate"
 # ---------------------------------------------------------------------------
 # Skip rules
 # ---------------------------------------------------------------------------
-SKIP_DIRS = {".git", "build", ".venv", "tools", "node_modules", "__pycache__"}
-SKIP_DIR_PREFIXES = ("cmake-build-",)
+SKIP_DIRS = {".git", ".venv", "tools", "node_modules", "__pycache__"}
+SKIP_DIR_PREFIXES = ("build", "cmake-build-")
 
 BINARY_EXTENSIONS = {
     ".png", ".svg", ".ico", ".icns", ".jpg", ".jpeg", ".gif", ".webp",
