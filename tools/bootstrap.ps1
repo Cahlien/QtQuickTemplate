@@ -3,18 +3,18 @@
 # all dependencies. Idempotent — safe to re-run at any time.
 
 $ErrorActionPreference = "Stop"
-Set-Location $PSScriptRoot
+$ProjectRoot = Split-Path $PSScriptRoot -Parent
+Set-Location $ProjectRoot
 
-$UV = Join-Path $PSScriptRoot "tools" "uv.exe"
+$UV = Join-Path $PSScriptRoot "uv.exe"
 
 function Write-Info  { Write-Host "[bootstrap] $args" -ForegroundColor Cyan }
 function Write-Ok    { Write-Host "[bootstrap] $args" -ForegroundColor Green }
 
 # ── Step 1: Ensure uv is installed ───────────────────────────────────────────
 if (-not (Test-Path $UV)) {
-    Write-Info "uv not found in tools\ — installing..."
-    New-Item -ItemType Directory -Path (Join-Path $PSScriptRoot "tools") -Force | Out-Null
-    $env:UV_UNMANAGED_INSTALL = Join-Path $PSScriptRoot "tools"
+    Write-Info "uv not found — installing..."
+    $env:UV_UNMANAGED_INSTALL = $PSScriptRoot
     try {
         irm https://astral.sh/uv/install.ps1 | iex
     } finally {
@@ -52,7 +52,7 @@ Write-Ok "All tools verified."
 
 # ── Step 5: Install bundletool (Android AAB/APK tooling) ───────────────────
 $BundletoolVersion = "1.18.3"
-$BundletoolJar = Join-Path $PSScriptRoot "tools" "bundletool-all-$BundletoolVersion.jar"
+$BundletoolJar = Join-Path $PSScriptRoot "bundletool-all-$BundletoolVersion.jar"
 if (-not (Test-Path $BundletoolJar)) {
     Write-Info "Downloading bundletool $BundletoolVersion..."
     Invoke-WebRequest -Uri "https://github.com/google/bundletool/releases/download/$BundletoolVersion/bundletool-all-$BundletoolVersion.jar" -OutFile $BundletoolJar

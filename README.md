@@ -161,8 +161,8 @@ Back handling and app minimization are split cleanly:
 The fastest way to get cmake, conan, pytest, and all Python-based tools at the correct versions:
 
 ```bash
-./bootstrap.sh       # macOS/Linux
-.\bootstrap.ps1      # Windows
+./tools/bootstrap.sh       # macOS/Linux
+.\tools\bootstrap.ps1      # Windows
 ```
 
 This installs [uv](https://docs.astral.sh/uv/) into a project-local `tools/` directory, downloads the pinned CPython (from `.python-version`), and creates an isolated `.venv/` with all dependencies locked in `uv.lock`. Run tools with `./tools/uv run`:
