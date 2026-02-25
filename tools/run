@@ -1,0 +1,30 @@
+#!/usr/bin/env bash
+# tools/run — wrapper around `uv run` that loads .env and .env.local
+# Usage: ./tools/run cmake --preset <name>
+#        ./tools/run pytest
+
+set -euo pipefail
+
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+PROJECT_ROOT="$(cd "$SCRIPT_DIR/.." && pwd)"
+UV="$SCRIPT_DIR/uv"
+
+env_flags=()
+
+if [ -f "$PROJECT_ROOT/.env" ]; then
+    env_flags+=(--env-file "$PROJECT_ROOT/.env")
+fi
+
+if [ -f "$PROJECT_ROOT/.env.local" ]; then
+    env_flags+=(--env-file "$PROJECT_ROOT/.env.local")
+else
+    # Warn when running cmake without .env.local (likely missing SDK paths)
+    for arg in "$@"; do
+        if [ "$arg" = "cmake" ]; then
+            printf '\033[0;33m[run] .env.local not found — run ./tools/configure-env.sh to set SDK paths\033[0m\n' >&2
+            break
+        fi
+    done
+fi
+
+exec "$UV" run "${env_flags[@]}" "$@"

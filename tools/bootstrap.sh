@@ -109,10 +109,15 @@ fi
 
 # ── Done ─────────────────────────────────────────────────────────────────────
 printf "\n${BOLD}Bootstrap complete!${RESET}\n"
-printf "Run commands through the venv with ${CYAN}./tools/uv run${RESET}:\n"
-printf "  ./tools/uv run cmake --preset <preset>        # configure\n"
-printf "  ./tools/uv run cmake --build --preset <preset> # build\n"
-printf "  ./tools/uv run conan install .                 # install C++ deps\n"
-printf "  ./tools/uv run pytest                          # run tests\n"
+
+if [ ! -f "$PROJECT_ROOT/.env.local" ]; then
+    printf "${YELLOW}Next step:${RESET} Run ${CYAN}./tools/configure-env.sh${RESET} to set Qt SDK paths and signing credentials.\n\n"
+fi
+
+printf "Run commands through the env-aware wrapper with ${CYAN}./tools/run${RESET}:\n"
+printf "  ./tools/run cmake --preset <preset>        # configure\n"
+printf "  ./tools/run cmake --build --preset <preset> # build\n"
+printf "  ./tools/run conan install .                 # install C++ deps\n"
+printf "  ./tools/run pytest                          # run tests\n"
 printf "\nOr activate the venv directly:\n"
 printf "  source .venv/bin/activate\n"
