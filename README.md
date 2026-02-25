@@ -660,6 +660,123 @@ The main QDoc configuration lives in `doc/qtquicktemplate.qdocconf`.
 
 ---
 
+## Discovering build targets (`help-targets`)
+
+After configuring, run the built-in help target to see every custom target available for the current platform (plus Android, which always appears):
+
+```bash
+cmake --build <dir> --target help-targets
+```
+
+This prints a grouped, formatted summary of each target with its description, invocation command, and any required or optional CMake variables.
+
+### All custom targets
+
+The table below documents every custom target across all platforms. Only targets for the current platform (and Android) are actually created during configuration; the rest are silently skipped.
+
+#### Linux
+
+| Target | Description | Command |
+|--------|-------------|---------|
+| `AppImage` | Package the app as an AppImage using linuxdeploy | `cmake --build <dir> --target AppImage` |
+| `ReleaseDistributableLinux` | Full Linux release pipeline (depends on AppImage) | `cmake --build <dir> --target ReleaseDistributableLinux` |
+
+**Variables for `AppImage`:**
+
+| Variable | Required | Default | Description |
+|----------|----------|---------|-------------|
+| `GPG_KEY_ID` | No | _(empty)_ | GPG key ID for AppImage signing. If unset, no signing is performed. |
+| `ENABLE_WAYLAND` | No | `ON` | Bundle the Qt Wayland platform plugin into the AppImage. |
+
+#### macOS -- Direct Distribution (DMG)
+
+| Target | Description | Command |
+|--------|-------------|---------|
+| `MacDeployQt` | Deploy Qt frameworks into the macOS app bundle | `cmake --build <dir> --target MacDeployQt` |
+| `DMG` | Package the macOS app bundle into a signed DMG | `cmake --build <dir> --target DMG` |
+| `NotarizeMacOS` | Submit DMG to Apple notary service and staple the ticket | `cmake --build <dir> --target NotarizeMacOS` |
+| `VerifyMacOSPackage` | Verify codesign, spctl, and notarization of the DMG and app bundle | `cmake --build <dir> --target VerifyMacOSPackage` |
+| `ReleaseDistributableMacOS` | Full macOS DMG pipeline (build -> deploy -> DMG -> notarize -> verify) | `cmake --build <dir> --target ReleaseDistributableMacOS` |
+
+**Variables for DMG pipeline:**
+
+| Variable | Required | Default | Description |
+|----------|----------|---------|-------------|
+| `QTQUICKTEMPLATE_MACOS_DMG_SIGN_IDENTITY` | No | _(empty)_ | Signing identity for the DMG. |
+| `QTQUICKTEMPLATE_MACOS_NOTARY_KEYCHAIN_PROFILE` | Yes (for notarization) | _(empty)_ | Keychain profile name for `xcrun notarytool`. |
+
+#### macOS -- App Store (PKG)
+
+| Target | Description | Command |
+|--------|-------------|---------|
+| `MacAppStoreArchive` | Archive macOS app for App Store distribution via xcodebuild | `cmake --build <dir> --target MacAppStoreArchive` |
+| `MacExportPkg` | Export signed macOS PKG from xcarchive for App Store submission | `cmake --build <dir> --target MacExportPkg` |
+| `VerifyMacPkg` | Verify exported macOS PKG output | `cmake --build <dir> --target VerifyMacPkg` |
+| `MacUploadASC` | Upload signed macOS PKG to App Store Connect | `cmake --build <dir> --target MacUploadASC` |
+| `ReleaseDistributableMacOSAppStore` | Full macOS App Store pipeline (archive -> export -> verify -> upload) | `cmake --build <dir> --target ReleaseDistributableMacOSAppStore` |
+
+**Variables for App Store pipeline:**
+
+| Variable | Required | Default | Description |
+|----------|----------|---------|-------------|
+| `QTQUICKTEMPLATE_APPLE_DEVELOPMENT_TEAM` | Yes | _(empty)_ | Apple development team ID (10-char). |
+| `QTQUICKTEMPLATE_ASC_API_KEY_ID` | Yes (for upload) | _(empty)_ | App Store Connect API key ID. |
+| `QTQUICKTEMPLATE_ASC_API_ISSUER_ID` | Yes (for upload) | _(empty)_ | App Store Connect API issuer UUID. |
+
+#### iOS
+
+| Target | Description | Command |
+|--------|-------------|---------|
+| `IOSArchive` | Archive iOS app for App Store distribution via xcodebuild | `cmake --build <dir> --target IOSArchive` |
+| `IOSExportIPA` | Export signed iOS IPA from xcarchive for App Store submission | `cmake --build <dir> --target IOSExportIPA` |
+| `VerifyIOSIPA` | Verify exported iOS IPA output | `cmake --build <dir> --target VerifyIOSIPA` |
+| `IOSUploadASC` | Upload signed iOS IPA to App Store Connect | `cmake --build <dir> --target IOSUploadASC` |
+| `ReleaseDistributableIOS` | Full iOS pipeline (archive -> export -> verify -> upload) | `cmake --build <dir> --target ReleaseDistributableIOS` |
+
+**Variables for iOS pipeline:**
+
+| Variable | Required | Default | Description |
+|----------|----------|---------|-------------|
+| `QTQUICKTEMPLATE_APPLE_DEVELOPMENT_TEAM` | Yes | _(empty)_ | Apple development team ID (10-char). |
+| `QTQUICKTEMPLATE_ASC_API_KEY_ID` | Yes (for upload) | _(empty)_ | App Store Connect API key ID. |
+| `QTQUICKTEMPLATE_ASC_API_ISSUER_ID` | Yes (for upload) | _(empty)_ | App Store Connect API issuer UUID. |
+
+#### Android
+
+Android targets always appear in `help-targets` output regardless of the current build platform.
+
+| Target | Description | Command |
+|--------|-------------|---------|
+| `AndroidAAB` | Build unsigned Android release AAB via Gradle | `cmake --build <dir> --target AndroidAAB` |
+| `SignAndroidAAB` | Sign Android release AAB via Gradle | `cmake --build <dir> --target SignAndroidAAB` |
+| `AndroidAPK` | Build unsigned Android release APK via Gradle | `cmake --build <dir> --target AndroidAPK` |
+| `VerifyAndroidAAB` | Verify Android release AAB signature via jarsigner | `cmake --build <dir> --target VerifyAndroidAAB` |
+| `VerifyAndroidAPK` | Verify Android release APK signature via apksigner | `cmake --build <dir> --target VerifyAndroidAPK` |
+| `UploadAndroidPlay` | Upload signed Android AAB to Google Play via Gradle | `cmake --build <dir> --target UploadAndroidPlay` |
+| `ReleaseDistributableAndroid` | Full Android release pipeline (AAB + APK) | `cmake --build <dir> --target ReleaseDistributableAndroid` |
+
+**Variables for Android pipeline:**
+
+| Variable | Required | Default | Description |
+|----------|----------|---------|-------------|
+| `QTQUICKTEMPLATE_ANDROID_KEYSTORE_PATH` | Yes (for signing) | _(empty)_ | Path to Android keystore file. |
+| `QTQUICKTEMPLATE_ANDROID_KEYSTORE_PASSWORD` | Yes (for signing) | _(empty)_ | Keystore password. |
+| `QTQUICKTEMPLATE_ANDROID_KEY_ALIAS` | Yes (for signing) | _(empty)_ | Key alias within the keystore. |
+| `QTQUICKTEMPLATE_ANDROID_KEY_PASSWORD` | Yes (for signing) | _(empty)_ | Key password. |
+| `QTQUICKTEMPLATE_ANDROID_PLAY_SERVICE_ACCOUNT_FILE` | Yes (for upload) | _(empty)_ | Path to Google Play service-account JSON. |
+| `QTQUICKTEMPLATE_ANDROID_PLAY_TRACK` | No | `internal` | Google Play track (internal, alpha, beta, production). |
+| `QTQUICKTEMPLATE_ANDROID_PLAY_RELEASE_STATUS` | No | `completed` | Release status (completed, draft, inProgress, halted). |
+
+#### Utilities
+
+| Target | Description | Command |
+|--------|-------------|---------|
+| `docs` | Generate project documentation with QDoc | `cmake --build <dir> --target docs` |
+| `ReleaseDistributable` | Build all release distributables for the current platform | `cmake --build <dir> --target ReleaseDistributable` |
+| `help-targets` | Print this help summary | `cmake --build <dir> --target help-targets` |
+
+---
+
 ## Customizing this template
 
 A quick checklist you'll almost certainly want to do:
