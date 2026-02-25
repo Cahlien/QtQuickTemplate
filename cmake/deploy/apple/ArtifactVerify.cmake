@@ -32,6 +32,15 @@ function(configure_ios_verify target)
     _configure_artifact_verify(VerifyIOSIPA IOSExportIPA
         "${CMAKE_BINARY_DIR}/ios/export" "*.ipa"
         "Verifying exported iOS IPA output")
+
+    if (TARGET VerifyIOSIPA)
+        register_help_target(
+            NAME VerifyIOSIPA
+            GROUP "iOS"
+            DESCRIPTION "Verify exported iOS IPA output"
+            COMMAND "cmake --build <dir> --target VerifyIOSIPA"
+        )
+    endif ()
 endfunction()
 
 function(configure_macos_appstore_verify target)
@@ -44,4 +53,13 @@ function(configure_macos_appstore_verify target)
     _configure_artifact_verify(VerifyMacPkg MacExportPkg
         "${CMAKE_BINARY_DIR}/macos/export" "*.pkg"
         "Verifying exported macOS PKG output")
+
+    if (TARGET VerifyMacPkg)
+        register_help_target(
+            NAME VerifyMacPkg
+            GROUP "macOS (App Store)"
+            DESCRIPTION "Verify exported macOS PKG output"
+            COMMAND "cmake --build <dir> --target VerifyMacPkg"
+        )
+    endif ()
 endfunction()

@@ -35,9 +35,27 @@ function(configure_release_distributables target)
             "Full macOS DMG release pipeline"
             VerifyMacOSPackage NotarizeMacOS)
 
+        if (TARGET ReleaseDistributableMacOS)
+            register_help_target(
+                NAME ReleaseDistributableMacOS
+                GROUP "macOS (DMG)"
+                DESCRIPTION "Full macOS DMG release pipeline (build -> deploy -> DMG -> notarize -> verify)"
+                COMMAND "cmake --build <dir> --target ReleaseDistributableMacOS"
+            )
+        endif ()
+
         _add_release_meta(ReleaseDistributableMacOSAppStore ""
             "Full macOS App Store release pipeline"
             MacUploadASC VerifyMacPkg MacExportPkg MacAppStoreArchive)
+
+        if (TARGET ReleaseDistributableMacOSAppStore)
+            register_help_target(
+                NAME ReleaseDistributableMacOSAppStore
+                GROUP "macOS (App Store)"
+                DESCRIPTION "Full macOS App Store release pipeline (archive -> export -> verify -> upload)"
+                COMMAND "cmake --build <dir> --target ReleaseDistributableMacOSAppStore"
+            )
+        endif ()
     endif ()
 
     # iOS pipeline
@@ -45,6 +63,15 @@ function(configure_release_distributables target)
         _add_release_meta(ReleaseDistributableIOS "${target}"
             "Full iOS release pipeline"
             IOSUploadASC VerifyIOSIPA IOSExportIPA IOSArchive)
+
+        if (TARGET ReleaseDistributableIOS)
+            register_help_target(
+                NAME ReleaseDistributableIOS
+                GROUP "iOS"
+                DESCRIPTION "Full iOS release pipeline (archive -> export -> verify -> upload)"
+                COMMAND "cmake --build <dir> --target ReleaseDistributableIOS"
+            )
+        endif ()
     endif ()
 
     # Android pipeline
@@ -66,6 +93,7 @@ function(configure_release_distributables target)
             endforeach ()
             message(STATUS "ReleaseDistributableAndroid target configured")
         endif ()
+
     endif ()
 
     # Linux pipeline
@@ -73,12 +101,30 @@ function(configure_release_distributables target)
         _add_release_meta(ReleaseDistributableLinux "${target}"
             "Full Linux release pipeline"
             AppImage)
+
+        if (TARGET ReleaseDistributableLinux)
+            register_help_target(
+                NAME ReleaseDistributableLinux
+                GROUP "Linux"
+                DESCRIPTION "Full Linux release pipeline (depends on AppImage)"
+                COMMAND "cmake --build <dir> --target ReleaseDistributableLinux"
+            )
+        endif ()
     endif ()
 
     # Windows pipeline
     if (WIN32)
         _add_release_meta(ReleaseDistributableWindows "${target}"
             "Building Windows release artifacts")
+
+        if (TARGET ReleaseDistributableWindows)
+            register_help_target(
+                NAME ReleaseDistributableWindows
+                GROUP "Windows"
+                DESCRIPTION "Full Windows release pipeline"
+                COMMAND "cmake --build <dir> --target ReleaseDistributableWindows"
+            )
+        endif ()
     endif ()
 
     # Umbrella target
@@ -93,4 +139,11 @@ function(configure_release_distributables target)
             add_dependencies(ReleaseDistributable ${_t})
         endif ()
     endforeach ()
+
+    register_help_target(
+        NAME ReleaseDistributable
+        GROUP "Utilities"
+        DESCRIPTION "Build all release distributables for the current platform"
+        COMMAND "cmake --build <dir> --target ReleaseDistributable"
+    )
 endfunction()

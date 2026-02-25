@@ -83,6 +83,10 @@ tools/*
 !tools/bootstrap.sh
 !tools/bootstrap.ps1
 !tools/configure_package.py
+!tools/run
+!tools/run.ps1
+!tools/configure-env.sh
+!tools/configure-env.ps1
 
 # Binaries
 # --------
@@ -96,6 +100,9 @@ tools/*
 .rcc/
 .uic/
 /build*/
+
+# Developer-local environment overrides (secrets, machine-specific paths)
+.env.local
 
 # Conan
 CMakeUserPresets.json

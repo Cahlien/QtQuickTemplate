@@ -69,80 +69,185 @@ Back handling and app minimization are split cleanly:
 
 ```text
 .
-├── .python-version                  # pinned Python interpreter for uv
-├── bootstrap.ps1                    # dev environment setup (Windows)
-├── bootstrap.sh                     # dev environment setup (macOS/Linux)
-├── CMakeLists.txt
-├── cmake/
-│   ├── toolchain/
-│   │   ├── CompilerSettings.cmake
-│   │   ├── CxxModules.cmake
-│   │   └── ClangScanDeps.cmake
-│   └── libs/
-│       └── LibraryCommon.cmake
+├── .python-version                     # pinned CPython 3.14t (freethreaded) for uv
+├── CMakeLists.txt                      # minimal root; delegates to cmake/ modules
+├── CMakePresets.json                   # platform build presets (iOS, macOS, etc.)
+├── LICENSE
 ├── conanfile.py
-├── pyproject.toml                   # Python deps and tool config
-├── README.md
-├── uv.lock                         # cross-platform dependency lockfile
+├── pyproject.toml                      # Python deps and tool config
+├── uv.lock                            # cross-platform dependency lockfile
+│
+├── cmake/
+│   ├── MainApp.cmake                   # executable, QML modules, deploy wiring
+│   ├── ProjectSetup.cmake              # compiler settings, Conan, Qt discovery
+│   │
+│   ├── deploy/                         # platform packaging pipelines
+│   │   ├── DeployPipelines.cmake       # platform-conditional dispatcher
+│   │   ├── ReleaseDistributables.cmake # meta-targets aggregating pipelines
+│   │   ├── Install.cmake               # cross-platform install rules
+│   │   ├── GenerateVersion.cmake       # git-derived build numbers
+│   │   ├── VersionTarget.cmake         # shared version target helper
+│   │   │
+│   │   ├── android/
+│   │   │   ├── AndroidBuild.cmake      # AndroidAAB / AndroidAPK / SignAndroidAAB
+│   │   │   ├── AndroidVerify.cmake     # VerifyAndroidAAB / VerifyAndroidAPK
+│   │   │   ├── AndroidUpload.cmake     # UploadAndroidPlay (Google Play)
+│   │   │   ├── AndroidVersion.cmake    # GenerateAndroidVersion target
+│   │   │   ├── AndroidHelpTargets.cmake # unconditional Android help registration
+│   │   │   ├── GenerateVersion.cmake   # -P script for version.properties
+│   │   │   ├── VerifyAab.cmake         # -P script for AAB verification
+│   │   │   └── VerifyApk.cmake         # -P script for APK verification
+│   │   │
+│   │   ├── apple/                      # shared iOS + macOS helpers
+│   │   │   ├── AppleCodeSigning.cmake  # release code signing config
+│   │   │   ├── ArtifactVerify.cmake    # unified artifact verification
+│   │   │   ├── AscUpload.cmake         # unified App Store Connect upload
+│   │   │   ├── FindMacDeployQt.cmake   # macdeployqt discovery
+│   │   │   ├── XcodeExport.cmake       # unified xcodebuild -exportArchive
+│   │   │   ├── UploadAsc.cmake         # -P script for ASC upload
+│   │   │   └── VerifyArtifact.cmake    # -P script for artifact verification
+│   │   │
+│   │   ├── ios/
+│   │   │   ├── IOSBuild.cmake          # IOSArchive target
+│   │   │   ├── IOSResources.cmake      # asset catalog + launch screen
+│   │   │   └── GenerateLaunchScreen.cmake
+│   │   │
+│   │   ├── linux/
+│   │   │   ├── LinuxPackage.cmake      # AppImage target
+│   │   │   ├── StageWaylandSupport.cmake
+│   │   │   └── VerifyWaylandDeps.cmake
+│   │   │
+│   │   └── macos/
+│   │       ├── MacOSBuild.cmake        # MacDeployQt target
+│   │       ├── MacOSPackage.cmake      # DMG target
+│   │       ├── MacOSSign.cmake         # NotarizeMacOS target
+│   │       ├── MacOSVerify.cmake       # VerifyMacOSPackage target
+│   │       ├── MacOSAppStoreBuild.cmake # MacAppStoreArchive target
+│   │       ├── Notarize.cmake          # -P script for notarization
+│   │       ├── PatchArchiveInfo.cmake  # -P script for archive patching
+│   │       ├── RunMacDeployQt.cmake    # -P script for macdeployqt
+│   │       ├── SignDmg.cmake           # -P script for DMG signing
+│   │       └── VerifyPackage.cmake     # -P script for package verification
+│   │
+│   ├── docs/
+│   │   └── QDoc.cmake                  # docs target (QDoc documentation)
+│   │
+│   ├── help/
+│   │   ├── HelpTargets.cmake           # register_help_target() + finalize
+│   │   └── PrintHelp.cmake             # -P script for formatted help output
+│   │
+│   ├── integration/
+│   │   └── Conan.cmake                 # Conan package manager integration
+│   │
+│   ├── libs/
+│   │   └── LibraryCommon.cmake         # add_portable_cpp_library() helpers
+│   │
+│   ├── platform/
+│   │   └── PlatformSources.cmake       # platform-specific source selection
+│   │
+│   ├── qt/
+│   │   ├── QmlModule.cmake             # QML module registration
+│   │   └── QtProject.cmake             # Qt discovery + FFmpeg workaround
+│   │
+│   └── toolchain/
+│       ├── CompilerSettings.cmake      # C++23, warnings, IPO
+│       ├── CxxModules.cmake            # C++20 module support detection
+│       └── ClangScanDeps.cmake         # clang-scan-deps configuration
+│
 ├── doc/
-│   └── qtquicktemplate.qdocconf
+│   ├── qtquicktemplate.qdocconf
+│   └── modules.qdoc
+│
 ├── include/
-│   └── main/
-│       └── common/
-│           ├── app_info.h
-│           ├── navigation/
-│           │   └── navigation_controller.h
-│           └── platform_init.h
+│   └── main/common/
+│       ├── app_info.h
+│       ├── platform_init.h
+│       └── navigation/
+│           └── navigation_controller.h
+│
 ├── libs/
-│   ├── CMakeLists.txt                 # auto-adds child lib dirs
-│   ├── appstyle/                      # custom Qt Quick Controls 2 style
+│   ├── CMakeLists.txt                  # auto-adds child lib dirs
+│   ├── appstyle/                       # custom Qt Quick Controls 2 style
 │   │   ├── CMakeLists.txt
 │   │   ├── README.md
-│   │   └── qml/
-│   │       ├── Button.qml
-│   │       ├── CheckBox.qml
-│   │       ├── ...
-│   │       └── ToolTip.qml
-│   ├── apptheme/                      # AppTheme singleton (design tokens)
+│   │   └── qml/                        # Button, CheckBox, ComboBox, ...
+│   ├── apptheme/                       # AppTheme singleton (design tokens)
 │   │   ├── CMakeLists.txt
-│   │   └── qml/
-│   │       └── Theme.qml
-│   └── helloworld/                    # sample C++20 module library
+│   │   └── qml/Theme.qml
+│   └── helloworld/                     # sample C++20 module library
 │       ├── CMakeLists.txt
 │       ├── helloworld.cppm
 │       ├── include/helloworld.h
 │       ├── src/helloworld.cpp
 │       └── doc/helloworld.qdocconf
+│
 ├── platforms/
-│   ├── android/                       # Qt Android package source (Gradle project + resources)
-│   ├── ios/                           # Qt iOS platform-specific files
-│   ├── linux/                         # .desktop + appstream metainfo templates
-│   ├── macos/                         # Info.plist (bundle metadata)
-│   └── windows/                       # .rc + manifest
+│   ├── android/                        # Gradle project, resources, Kotlin sources
+│   │   ├── AndroidManifest.xml
+│   │   ├── build.gradle
+│   │   ├── gradle.properties
+│   │   ├── settings.gradle
+│   │   ├── proguard-rules.pro
+│   │   ├── gradlew / gradlew.bat
+│   │   ├── gradle/                     # wrapper + version catalog
+│   │   ├── res/                        # icons, splash, layouts, values
+│   │   └── src/main/kotlin/            # MainActivity + extensions
+│   ├── ios/                            # Info.plist, Assets.xcassets, LaunchScreen
+│   ├── linux/                          # .desktop template, metainfo, icons
+│   ├── macos/                          # Info.plist, entitlements, app.icns
+│   └── windows/                        # app.ico, app.manifest, app.rc.in
+│
 ├── qml/
-│   ├── Main.qml
-│   ├── organisms/
+│   ├── Main.qml                        # ApplicationWindow entry point
+│   ├── atoms/                          # atomic design: smallest components
+│   ├── molecules/                      # atomic design: composed atoms
+│   ├── organisms/                      # composite components
 │   │   ├── Header.qml
 │   │   ├── Footer.qml
-│   │   └── NavBar.qml
-│   ├── pages/
+│   │   ├── NavBar.qml
+│   │   └── NavigationStack.qml
+│   ├── pages/                          # full-page views
+│   │   ├── BasePage.qml
 │   │   ├── License.qml
 │   │   ├── Readme.qml
-│   │   └── StyleShowcase.qml
-│   └── templates/
+│   │   ├── StyleShowcase.qml
+│   │   └── content/                    # page content components
+│   │       ├── LicenseContent.qml
+│   │       ├── ReadmeContent.qml
+│   │       └── StyleShowcaseContent.qml
+│   ├── scripts/                        # QML JavaScript modules
+│   └── templates/                      # layout templates
+│       ├── AdaptiveLayout.qml
 │       ├── MainPortraitLayout.qml
 │       └── MainLandscapeLayout.qml
-└── src/
-    └── main/
-        ├── common/
-        │   ├── main.cpp
-        │   ├── app_info.cpp
-        │   ├── navigation/
-        │   │   └── navigation_controller.cpp
-        │   └── platform_init_default.cpp
-        └── android/
-            ├── android_back_handler.cpp
-            └── platform_init_android.cpp
+│
+├── src/
+│   └── main/
+│       ├── common/
+│       │   ├── main.cpp                # application entry point
+│       │   ├── app_info.cpp
+│       │   ├── platform_init_default.cpp
+│       │   └── navigation/
+│       │       └── navigation_controller.cpp
+│       └── android/
+│           ├── android_back_handler.cpp
+│           └── platform_init_android.cpp
+│
+├── tests/                              # pytest integration tests
+│   ├── conftest.py
+│   ├── test_ios_pipeline.py
+│   ├── test_macos_appstore_pipeline.py
+│   ├── test_macos_dmg_pipeline.py
+│   └── helpers/                        # shared test utilities
+│       ├── artifacts.py
+│       ├── asc_api.py
+│       ├── cmake.py
+│       └── codesign.py
+│
+└── tools/                              # developer tooling
+    ├── bootstrap.sh                    # dev environment setup (macOS/Linux)
+    ├── bootstrap.ps1                   # dev environment setup (Windows)
+    └── configure_package.py            # project renaming/repackaging script
 ```
 
 ---
@@ -657,6 +762,123 @@ If `qdoc` is available in your Qt installation, you'll get build targets:
   ```
 
 The main QDoc configuration lives in `doc/qtquicktemplate.qdocconf`.
+
+---
+
+## Discovering build targets (`help-targets`)
+
+After configuring, run the built-in help target to see every custom target available for the current platform (plus Android, which always appears):
+
+```bash
+cmake --build <dir> --target help-targets
+```
+
+This prints a grouped, formatted summary of each target with its description, invocation command, and any required or optional CMake variables.
+
+### All custom targets
+
+The table below documents every custom target across all platforms. Only targets for the current platform (and Android) are actually created during configuration; the rest are silently skipped.
+
+#### Linux
+
+| Target | Description | Command |
+|--------|-------------|---------|
+| `AppImage` | Package the app as an AppImage using linuxdeploy | `cmake --build <dir> --target AppImage` |
+| `ReleaseDistributableLinux` | Full Linux release pipeline (depends on AppImage) | `cmake --build <dir> --target ReleaseDistributableLinux` |
+
+**Variables for `AppImage`:**
+
+| Variable | Required | Default | Description |
+|----------|----------|---------|-------------|
+| `GPG_KEY_ID` | No | _(empty)_ | GPG key ID for AppImage signing. If unset, no signing is performed. |
+| `ENABLE_WAYLAND` | No | `ON` | Bundle the Qt Wayland platform plugin into the AppImage. |
+
+#### macOS -- Direct Distribution (DMG)
+
+| Target | Description | Command |
+|--------|-------------|---------|
+| `MacDeployQt` | Deploy Qt frameworks into the macOS app bundle | `cmake --build <dir> --target MacDeployQt` |
+| `DMG` | Package the macOS app bundle into a signed DMG | `cmake --build <dir> --target DMG` |
+| `NotarizeMacOS` | Submit DMG to Apple notary service and staple the ticket | `cmake --build <dir> --target NotarizeMacOS` |
+| `VerifyMacOSPackage` | Verify codesign, spctl, and notarization of the DMG and app bundle | `cmake --build <dir> --target VerifyMacOSPackage` |
+| `ReleaseDistributableMacOS` | Full macOS DMG pipeline (build -> deploy -> DMG -> notarize -> verify) | `cmake --build <dir> --target ReleaseDistributableMacOS` |
+
+**Variables for DMG pipeline:**
+
+| Variable | Required | Default | Description |
+|----------|----------|---------|-------------|
+| `QTQUICKTEMPLATE_MACOS_DMG_SIGN_IDENTITY` | No | _(empty)_ | Signing identity for the DMG. |
+| `QTQUICKTEMPLATE_MACOS_NOTARY_KEYCHAIN_PROFILE` | Yes (for notarization) | _(empty)_ | Keychain profile name for `xcrun notarytool`. |
+
+#### macOS -- App Store (PKG)
+
+| Target | Description | Command |
+|--------|-------------|---------|
+| `MacAppStoreArchive` | Archive macOS app for App Store distribution via xcodebuild | `cmake --build <dir> --target MacAppStoreArchive` |
+| `MacExportPkg` | Export signed macOS PKG from xcarchive for App Store submission | `cmake --build <dir> --target MacExportPkg` |
+| `VerifyMacPkg` | Verify exported macOS PKG output | `cmake --build <dir> --target VerifyMacPkg` |
+| `MacUploadASC` | Upload signed macOS PKG to App Store Connect | `cmake --build <dir> --target MacUploadASC` |
+| `ReleaseDistributableMacOSAppStore` | Full macOS App Store pipeline (archive -> export -> verify -> upload) | `cmake --build <dir> --target ReleaseDistributableMacOSAppStore` |
+
+**Variables for App Store pipeline:**
+
+| Variable | Required | Default | Description |
+|----------|----------|---------|-------------|
+| `QTQUICKTEMPLATE_APPLE_DEVELOPMENT_TEAM` | Yes | _(empty)_ | Apple development team ID (10-char). |
+| `QTQUICKTEMPLATE_ASC_API_KEY_ID` | Yes (for upload) | _(empty)_ | App Store Connect API key ID. |
+| `QTQUICKTEMPLATE_ASC_API_ISSUER_ID` | Yes (for upload) | _(empty)_ | App Store Connect API issuer UUID. |
+
+#### iOS
+
+| Target | Description | Command |
+|--------|-------------|---------|
+| `IOSArchive` | Archive iOS app for App Store distribution via xcodebuild | `cmake --build <dir> --target IOSArchive` |
+| `IOSExportIPA` | Export signed iOS IPA from xcarchive for App Store submission | `cmake --build <dir> --target IOSExportIPA` |
+| `VerifyIOSIPA` | Verify exported iOS IPA output | `cmake --build <dir> --target VerifyIOSIPA` |
+| `IOSUploadASC` | Upload signed iOS IPA to App Store Connect | `cmake --build <dir> --target IOSUploadASC` |
+| `ReleaseDistributableIOS` | Full iOS pipeline (archive -> export -> verify -> upload) | `cmake --build <dir> --target ReleaseDistributableIOS` |
+
+**Variables for iOS pipeline:**
+
+| Variable | Required | Default | Description |
+|----------|----------|---------|-------------|
+| `QTQUICKTEMPLATE_APPLE_DEVELOPMENT_TEAM` | Yes | _(empty)_ | Apple development team ID (10-char). |
+| `QTQUICKTEMPLATE_ASC_API_KEY_ID` | Yes (for upload) | _(empty)_ | App Store Connect API key ID. |
+| `QTQUICKTEMPLATE_ASC_API_ISSUER_ID` | Yes (for upload) | _(empty)_ | App Store Connect API issuer UUID. |
+
+#### Android
+
+Android targets always appear in `help-targets` output regardless of the current build platform.
+
+| Target | Description | Command |
+|--------|-------------|---------|
+| `AndroidAAB` | Build unsigned Android release AAB via Gradle | `cmake --build <dir> --target AndroidAAB` |
+| `SignAndroidAAB` | Sign Android release AAB via Gradle | `cmake --build <dir> --target SignAndroidAAB` |
+| `AndroidAPK` | Build unsigned Android release APK via Gradle | `cmake --build <dir> --target AndroidAPK` |
+| `VerifyAndroidAAB` | Verify Android release AAB signature via jarsigner | `cmake --build <dir> --target VerifyAndroidAAB` |
+| `VerifyAndroidAPK` | Verify Android release APK signature via apksigner | `cmake --build <dir> --target VerifyAndroidAPK` |
+| `UploadAndroidPlay` | Upload signed Android AAB to Google Play via Gradle | `cmake --build <dir> --target UploadAndroidPlay` |
+| `ReleaseDistributableAndroid` | Full Android release pipeline (AAB + APK) | `cmake --build <dir> --target ReleaseDistributableAndroid` |
+
+**Variables for Android pipeline:**
+
+| Variable | Required | Default | Description |
+|----------|----------|---------|-------------|
+| `QTQUICKTEMPLATE_ANDROID_KEYSTORE_PATH` | Yes (for signing) | _(empty)_ | Path to Android keystore file. |
+| `QTQUICKTEMPLATE_ANDROID_KEYSTORE_PASSWORD` | Yes (for signing) | _(empty)_ | Keystore password. |
+| `QTQUICKTEMPLATE_ANDROID_KEY_ALIAS` | Yes (for signing) | _(empty)_ | Key alias within the keystore. |
+| `QTQUICKTEMPLATE_ANDROID_KEY_PASSWORD` | Yes (for signing) | _(empty)_ | Key password. |
+| `QTQUICKTEMPLATE_ANDROID_PLAY_SERVICE_ACCOUNT_FILE` | Yes (for upload) | _(empty)_ | Path to Google Play service-account JSON. |
+| `QTQUICKTEMPLATE_ANDROID_PLAY_TRACK` | No | `internal` | Google Play track (internal, alpha, beta, production). |
+| `QTQUICKTEMPLATE_ANDROID_PLAY_RELEASE_STATUS` | No | `completed` | Release status (completed, draft, inProgress, halted). |
+
+#### Utilities
+
+| Target | Description | Command |
+|--------|-------------|---------|
+| `docs` | Generate project documentation with QDoc | `cmake --build <dir> --target docs` |
+| `ReleaseDistributable` | Build all release distributables for the current platform | `cmake --build <dir> --target ReleaseDistributable` |
+| `help-targets` | Print this help summary | `cmake --build <dir> --target help-targets` |
 
 ---
 

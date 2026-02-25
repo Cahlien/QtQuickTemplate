@@ -37,6 +37,7 @@ function(configure_android_verify_aab target)
             COMMENT "Verifying Android release AAB signature"
             VERBATIM
         )
+
         message(STATUS "VerifyAndroidAAB target configured -> cmake --build . --target VerifyAndroidAAB")
     endif ()
 endfunction()
@@ -69,6 +70,7 @@ function(configure_android_verify_apk target)
             COMMENT "Verifying Android release APK signature"
             VERBATIM
         )
+
         message(STATUS "VerifyAndroidAPK target configured -> cmake --build . --target VerifyAndroidAPK")
     endif ()
 endfunction()

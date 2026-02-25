@@ -120,5 +120,14 @@ function(configure_linux_package target)
         VERBATIM
     )
 
+    register_help_target(
+        NAME AppImage
+        GROUP "Linux"
+        DESCRIPTION "Package the app as an AppImage using linuxdeploy"
+        COMMAND "cmake --build <dir> --target AppImage"
+        VARIABLES "GPG_KEY_ID (optional) -- GPG key for AppImage signing"
+                  "ENABLE_WAYLAND (default: ON) -- Bundle Qt Wayland plugin"
+    )
+
     message(STATUS "AppImage target configured -> cmake --build . --target AppImage")
 endfunction()

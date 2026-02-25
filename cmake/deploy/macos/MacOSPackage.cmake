@@ -49,5 +49,13 @@ function(configure_macos_package target)
         VERBATIM
     )
 
+    register_help_target(
+        NAME DMG
+        GROUP "macOS (DMG)"
+        DESCRIPTION "Package the macOS app bundle into a signed DMG"
+        COMMAND "cmake --build <dir> --target DMG"
+        VARIABLES "QTQUICKTEMPLATE_MACOS_DMG_SIGN_IDENTITY (optional) -- Signing identity for the DMG"
+    )
+
     message(STATUS "DMG target configured -> cmake --build . --target DMG")
 endfunction()

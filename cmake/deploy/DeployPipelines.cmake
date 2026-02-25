@@ -6,6 +6,7 @@ include_guard(GLOBAL)
 
 include("${CMAKE_CURRENT_LIST_DIR}/Install.cmake")
 include("${CMAKE_CURRENT_LIST_DIR}/ReleaseDistributables.cmake")
+include("${CMAKE_CURRENT_LIST_DIR}/android/AndroidHelpTargets.cmake")
 
 # Apple shared helpers (iOS and macOS)
 if (APPLE)
@@ -60,4 +61,7 @@ function(configure_deploy_pipelines target)
     endif ()
 
     configure_release_distributables(${target})
+
+    register_android_help_targets()
+    finalize_help_targets()
 endfunction()

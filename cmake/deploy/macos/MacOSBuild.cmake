@@ -36,5 +36,12 @@ function(configure_macos_build target)
         VERBATIM
     )
 
+    register_help_target(
+        NAME MacDeployQt
+        GROUP "macOS (DMG)"
+        DESCRIPTION "Deploy Qt frameworks into the macOS app bundle"
+        COMMAND "cmake --build <dir> --target MacDeployQt"
+    )
+
     message(STATUS "MacDeployQt target configured -> cmake --build . --target MacDeployQt")
 endfunction()

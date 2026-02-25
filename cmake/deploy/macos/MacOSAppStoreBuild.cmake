@@ -87,6 +87,14 @@ function(configure_macos_appstore_build target)
             COMMENT "Archiving macOS app for App Store distribution"
             VERBATIM
         )
+        register_help_target(
+            NAME MacAppStoreArchive
+            GROUP "macOS (App Store)"
+            DESCRIPTION "Archive macOS app for App Store distribution via xcodebuild"
+            COMMAND "cmake --build <dir> --target MacAppStoreArchive"
+            VARIABLES "QTQUICKTEMPLATE_APPLE_DEVELOPMENT_TEAM -- Apple development team ID"
+        )
+
         message(STATUS "MacAppStoreArchive target configured -> cmake --build . --target MacAppStoreArchive")
     endif ()
 endfunction()

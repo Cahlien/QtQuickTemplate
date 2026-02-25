@@ -64,11 +64,19 @@ if (-not (Test-Path $BundletoolJar)) {
 # ── Done ─────────────────────────────────────────────────────────────────────
 Write-Host ""
 Write-Host "Bootstrap complete!" -ForegroundColor White -BackgroundColor DarkGreen
-Write-Host "Run commands through the venv with '.\tools\uv.exe run':"
-Write-Host "  .\tools\uv.exe run cmake --preset <preset>         # configure"
-Write-Host "  .\tools\uv.exe run cmake --build --preset <preset>  # build"
-Write-Host "  .\tools\uv.exe run conan install .                  # install C++ deps"
-Write-Host "  .\tools\uv.exe run pytest                           # run tests"
+
+if (-not (Test-Path (Join-Path $ProjectRoot ".env.local"))) {
+    Write-Host ""
+    Write-Host "Next step: " -ForegroundColor Yellow -NoNewline
+    Write-Host "Run .\tools\configure-env.ps1 to set Qt SDK paths and signing credentials."
+}
+
+Write-Host ""
+Write-Host "Run commands through the env-aware wrapper with '.\tools\run.ps1':"
+Write-Host "  .\tools\run.ps1 cmake --preset <preset>         # configure"
+Write-Host "  .\tools\run.ps1 cmake --build --preset <preset>  # build"
+Write-Host "  .\tools\run.ps1 conan install .                  # install C++ deps"
+Write-Host "  .\tools\run.ps1 pytest                           # run tests"
 Write-Host ""
 Write-Host "Or activate the venv directly:"
 Write-Host "  .venv\Scripts\Activate.ps1"
