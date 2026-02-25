@@ -78,8 +78,11 @@ CMakeLists.txt.user*
 __pycache__/
 .venv/
 
-# Project-local tools (uv binary, platform-specific)
-tools/
+# Project-local tools (downloaded binaries are ignored; tracked scripts are not)
+tools/*
+!tools/bootstrap.sh
+!tools/bootstrap.ps1
+!tools/configure_package.py
 
 # Binaries
 # --------

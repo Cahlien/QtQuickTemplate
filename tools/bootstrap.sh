@@ -6,9 +6,10 @@
 set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-cd "$SCRIPT_DIR"
+PROJECT_ROOT="$(cd "$SCRIPT_DIR/.." && pwd)"
+cd "$PROJECT_ROOT"
 
-UV="$SCRIPT_DIR/tools/uv"
+UV="$SCRIPT_DIR/uv"
 
 # ── Terminal colors ───────────────────────────────────────────────────────────
 if [ -t 1 ]; then
@@ -26,8 +27,7 @@ ok()    { printf "${GREEN}[bootstrap]${RESET} %s\n" "$*"; }
 # ── Step 1: Ensure uv is installed ───────────────────────────────────────────
 if [ ! -x "$UV" ]; then
     info "uv not found in tools/ — installing..."
-    mkdir -p "$SCRIPT_DIR/tools"
-    curl -LsSf https://astral.sh/uv/install.sh | UV_UNMANAGED_INSTALL="$SCRIPT_DIR/tools" sh
+    curl -LsSf https://astral.sh/uv/install.sh | UV_UNMANAGED_INSTALL="$SCRIPT_DIR" sh
 
     if [ ! -x "$UV" ]; then
         echo "ERROR: uv installed but not found at $UV." >&2
@@ -49,7 +49,7 @@ info "Syncing dependencies..."
 
 # The cmake pip package bundles native binaries that may lack the execute bit
 # on some platforms (observed with freethreaded Python 3.14t on Linux).
-chmod +x "$SCRIPT_DIR"/.venv/lib/python*/site-packages/cmake/data/bin/* 2>/dev/null || true
+chmod +x "$PROJECT_ROOT"/.venv/lib/python*/site-packages/cmake/data/bin/* 2>/dev/null || true
 
 ok "Virtual environment ready at .venv/"
 
@@ -80,7 +80,7 @@ if [ "$(uname -s)" = "Linux" ]; then
         for _entry in "${_ld_files[@]}"; do
             _repo="${_entry%%/*}"
             _file="${_entry##*/}"
-            _dest="$SCRIPT_DIR/tools/$_file"
+            _dest="$SCRIPT_DIR/$_file"
             if [ ! -x "$_dest" ]; then
                 info "Downloading $_file..."
                 curl -Lo "$_dest" "https://github.com/linuxdeploy/${_repo}/releases/download/${_entry#*/}"
@@ -97,7 +97,7 @@ fi
 
 # ── Step 6: Install bundletool (Android AAB/APK tooling) ───────────────────
 BUNDLETOOL_VERSION="1.18.3"
-BUNDLETOOL_JAR="$SCRIPT_DIR/tools/bundletool-all-${BUNDLETOOL_VERSION}.jar"
+BUNDLETOOL_JAR="$SCRIPT_DIR/bundletool-all-${BUNDLETOOL_VERSION}.jar"
 if [ ! -f "$BUNDLETOOL_JAR" ]; then
     info "Downloading bundletool ${BUNDLETOOL_VERSION}..."
     curl -Lo "$BUNDLETOOL_JAR" \
