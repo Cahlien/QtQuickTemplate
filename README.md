@@ -69,80 +69,185 @@ Back handling and app minimization are split cleanly:
 
 ```text
 .
-├── .python-version                  # pinned Python interpreter for uv
-├── bootstrap.ps1                    # dev environment setup (Windows)
-├── bootstrap.sh                     # dev environment setup (macOS/Linux)
-├── CMakeLists.txt
-├── cmake/
-│   ├── toolchain/
-│   │   ├── CompilerSettings.cmake
-│   │   ├── CxxModules.cmake
-│   │   └── ClangScanDeps.cmake
-│   └── libs/
-│       └── LibraryCommon.cmake
+├── .python-version                     # pinned CPython 3.14t (freethreaded) for uv
+├── CMakeLists.txt                      # minimal root; delegates to cmake/ modules
+├── CMakePresets.json                   # platform build presets (iOS, macOS, etc.)
+├── LICENSE
 ├── conanfile.py
-├── pyproject.toml                   # Python deps and tool config
-├── README.md
-├── uv.lock                         # cross-platform dependency lockfile
+├── pyproject.toml                      # Python deps and tool config
+├── uv.lock                            # cross-platform dependency lockfile
+│
+├── cmake/
+│   ├── MainApp.cmake                   # executable, QML modules, deploy wiring
+│   ├── ProjectSetup.cmake              # compiler settings, Conan, Qt discovery
+│   │
+│   ├── deploy/                         # platform packaging pipelines
+│   │   ├── DeployPipelines.cmake       # platform-conditional dispatcher
+│   │   ├── ReleaseDistributables.cmake # meta-targets aggregating pipelines
+│   │   ├── Install.cmake               # cross-platform install rules
+│   │   ├── GenerateVersion.cmake       # git-derived build numbers
+│   │   ├── VersionTarget.cmake         # shared version target helper
+│   │   │
+│   │   ├── android/
+│   │   │   ├── AndroidBuild.cmake      # AndroidAAB / AndroidAPK / SignAndroidAAB
+│   │   │   ├── AndroidVerify.cmake     # VerifyAndroidAAB / VerifyAndroidAPK
+│   │   │   ├── AndroidUpload.cmake     # UploadAndroidPlay (Google Play)
+│   │   │   ├── AndroidVersion.cmake    # GenerateAndroidVersion target
+│   │   │   ├── AndroidHelpTargets.cmake # unconditional Android help registration
+│   │   │   ├── GenerateVersion.cmake   # -P script for version.properties
+│   │   │   ├── VerifyAab.cmake         # -P script for AAB verification
+│   │   │   └── VerifyApk.cmake         # -P script for APK verification
+│   │   │
+│   │   ├── apple/                      # shared iOS + macOS helpers
+│   │   │   ├── AppleCodeSigning.cmake  # release code signing config
+│   │   │   ├── ArtifactVerify.cmake    # unified artifact verification
+│   │   │   ├── AscUpload.cmake         # unified App Store Connect upload
+│   │   │   ├── FindMacDeployQt.cmake   # macdeployqt discovery
+│   │   │   ├── XcodeExport.cmake       # unified xcodebuild -exportArchive
+│   │   │   ├── UploadAsc.cmake         # -P script for ASC upload
+│   │   │   └── VerifyArtifact.cmake    # -P script for artifact verification
+│   │   │
+│   │   ├── ios/
+│   │   │   ├── IOSBuild.cmake          # IOSArchive target
+│   │   │   ├── IOSResources.cmake      # asset catalog + launch screen
+│   │   │   └── GenerateLaunchScreen.cmake
+│   │   │
+│   │   ├── linux/
+│   │   │   ├── LinuxPackage.cmake      # AppImage target
+│   │   │   ├── StageWaylandSupport.cmake
+│   │   │   └── VerifyWaylandDeps.cmake
+│   │   │
+│   │   └── macos/
+│   │       ├── MacOSBuild.cmake        # MacDeployQt target
+│   │       ├── MacOSPackage.cmake      # DMG target
+│   │       ├── MacOSSign.cmake         # NotarizeMacOS target
+│   │       ├── MacOSVerify.cmake       # VerifyMacOSPackage target
+│   │       ├── MacOSAppStoreBuild.cmake # MacAppStoreArchive target
+│   │       ├── Notarize.cmake          # -P script for notarization
+│   │       ├── PatchArchiveInfo.cmake  # -P script for archive patching
+│   │       ├── RunMacDeployQt.cmake    # -P script for macdeployqt
+│   │       ├── SignDmg.cmake           # -P script for DMG signing
+│   │       └── VerifyPackage.cmake     # -P script for package verification
+│   │
+│   ├── docs/
+│   │   └── QDoc.cmake                  # docs target (QDoc documentation)
+│   │
+│   ├── help/
+│   │   ├── HelpTargets.cmake           # register_help_target() + finalize
+│   │   └── PrintHelp.cmake             # -P script for formatted help output
+│   │
+│   ├── integration/
+│   │   └── Conan.cmake                 # Conan package manager integration
+│   │
+│   ├── libs/
+│   │   └── LibraryCommon.cmake         # add_portable_cpp_library() helpers
+│   │
+│   ├── platform/
+│   │   └── PlatformSources.cmake       # platform-specific source selection
+│   │
+│   ├── qt/
+│   │   ├── QmlModule.cmake             # QML module registration
+│   │   └── QtProject.cmake             # Qt discovery + FFmpeg workaround
+│   │
+│   └── toolchain/
+│       ├── CompilerSettings.cmake      # C++23, warnings, IPO
+│       ├── CxxModules.cmake            # C++20 module support detection
+│       └── ClangScanDeps.cmake         # clang-scan-deps configuration
+│
 ├── doc/
-│   └── qtquicktemplate.qdocconf
+│   ├── qtquicktemplate.qdocconf
+│   └── modules.qdoc
+│
 ├── include/
-│   └── main/
-│       └── common/
-│           ├── app_info.h
-│           ├── navigation/
-│           │   └── navigation_controller.h
-│           └── platform_init.h
+│   └── main/common/
+│       ├── app_info.h
+│       ├── platform_init.h
+│       └── navigation/
+│           └── navigation_controller.h
+│
 ├── libs/
-│   ├── CMakeLists.txt                 # auto-adds child lib dirs
-│   ├── appstyle/                      # custom Qt Quick Controls 2 style
+│   ├── CMakeLists.txt                  # auto-adds child lib dirs
+│   ├── appstyle/                       # custom Qt Quick Controls 2 style
 │   │   ├── CMakeLists.txt
 │   │   ├── README.md
-│   │   └── qml/
-│   │       ├── Button.qml
-│   │       ├── CheckBox.qml
-│   │       ├── ...
-│   │       └── ToolTip.qml
-│   ├── apptheme/                      # AppTheme singleton (design tokens)
+│   │   └── qml/                        # Button, CheckBox, ComboBox, ...
+│   ├── apptheme/                       # AppTheme singleton (design tokens)
 │   │   ├── CMakeLists.txt
-│   │   └── qml/
-│   │       └── Theme.qml
-│   └── helloworld/                    # sample C++20 module library
+│   │   └── qml/Theme.qml
+│   └── helloworld/                     # sample C++20 module library
 │       ├── CMakeLists.txt
 │       ├── helloworld.cppm
 │       ├── include/helloworld.h
 │       ├── src/helloworld.cpp
 │       └── doc/helloworld.qdocconf
+│
 ├── platforms/
-│   ├── android/                       # Qt Android package source (Gradle project + resources)
-│   ├── ios/                           # Qt iOS platform-specific files
-│   ├── linux/                         # .desktop + appstream metainfo templates
-│   ├── macos/                         # Info.plist (bundle metadata)
-│   └── windows/                       # .rc + manifest
+│   ├── android/                        # Gradle project, resources, Kotlin sources
+│   │   ├── AndroidManifest.xml
+│   │   ├── build.gradle
+│   │   ├── gradle.properties
+│   │   ├── settings.gradle
+│   │   ├── proguard-rules.pro
+│   │   ├── gradlew / gradlew.bat
+│   │   ├── gradle/                     # wrapper + version catalog
+│   │   ├── res/                        # icons, splash, layouts, values
+│   │   └── src/main/kotlin/            # MainActivity + extensions
+│   ├── ios/                            # Info.plist, Assets.xcassets, LaunchScreen
+│   ├── linux/                          # .desktop template, metainfo, icons
+│   ├── macos/                          # Info.plist, entitlements, app.icns
+│   └── windows/                        # app.ico, app.manifest, app.rc.in
+│
 ├── qml/
-│   ├── Main.qml
-│   ├── organisms/
+│   ├── Main.qml                        # ApplicationWindow entry point
+│   ├── atoms/                          # atomic design: smallest components
+│   ├── molecules/                      # atomic design: composed atoms
+│   ├── organisms/                      # composite components
 │   │   ├── Header.qml
 │   │   ├── Footer.qml
-│   │   └── NavBar.qml
-│   ├── pages/
+│   │   ├── NavBar.qml
+│   │   └── NavigationStack.qml
+│   ├── pages/                          # full-page views
+│   │   ├── BasePage.qml
 │   │   ├── License.qml
 │   │   ├── Readme.qml
-│   │   └── StyleShowcase.qml
-│   └── templates/
+│   │   ├── StyleShowcase.qml
+│   │   └── content/                    # page content components
+│   │       ├── LicenseContent.qml
+│   │       ├── ReadmeContent.qml
+│   │       └── StyleShowcaseContent.qml
+│   ├── scripts/                        # QML JavaScript modules
+│   └── templates/                      # layout templates
+│       ├── AdaptiveLayout.qml
 │       ├── MainPortraitLayout.qml
 │       └── MainLandscapeLayout.qml
-└── src/
-    └── main/
-        ├── common/
-        │   ├── main.cpp
-        │   ├── app_info.cpp
-        │   ├── navigation/
-        │   │   └── navigation_controller.cpp
-        │   └── platform_init_default.cpp
-        └── android/
-            ├── android_back_handler.cpp
-            └── platform_init_android.cpp
+│
+├── src/
+│   └── main/
+│       ├── common/
+│       │   ├── main.cpp                # application entry point
+│       │   ├── app_info.cpp
+│       │   ├── platform_init_default.cpp
+│       │   └── navigation/
+│       │       └── navigation_controller.cpp
+│       └── android/
+│           ├── android_back_handler.cpp
+│           └── platform_init_android.cpp
+│
+├── tests/                              # pytest integration tests
+│   ├── conftest.py
+│   ├── test_ios_pipeline.py
+│   ├── test_macos_appstore_pipeline.py
+│   ├── test_macos_dmg_pipeline.py
+│   └── helpers/                        # shared test utilities
+│       ├── artifacts.py
+│       ├── asc_api.py
+│       ├── cmake.py
+│       └── codesign.py
+│
+└── tools/                              # developer tooling
+    ├── bootstrap.sh                    # dev environment setup (macOS/Linux)
+    ├── bootstrap.ps1                   # dev environment setup (Windows)
+    └── configure_package.py            # project renaming/repackaging script
 ```
 
 ---
