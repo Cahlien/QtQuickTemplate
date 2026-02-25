@@ -9,6 +9,7 @@ include("${CMAKE_CURRENT_LIST_DIR}/deploy/apple/AppleCodeSigning.cmake")
 include("${CMAKE_CURRENT_LIST_DIR}/deploy/android/AndroidVersion.cmake")
 include("${CMAKE_CURRENT_LIST_DIR}/toolchain/CompilerSettings.cmake")
 include("${CMAKE_CURRENT_LIST_DIR}/docs/QDoc.cmake")
+include("${CMAKE_CURRENT_LIST_DIR}/help/HelpTargets.cmake")
 
 include("${CMAKE_CURRENT_LIST_DIR}/deploy/DeployPipelines.cmake")
 
