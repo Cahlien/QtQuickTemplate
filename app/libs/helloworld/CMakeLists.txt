@@ -1,6 +1,6 @@
 set(TARGET helloworld)
 
-include("${CMAKE_CURRENT_LIST_DIR}/../../cmake/libs/LibraryCommon.cmake")
+include("${CMAKE_SOURCE_DIR}/cmake/libs/LibraryCommon.cmake")
 
 add_portable_cpp_library(${TARGET} HELLOWORLD HELLOWORLD_EXPORT_HEADER)
 

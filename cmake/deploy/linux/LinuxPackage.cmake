@@ -26,15 +26,15 @@ function(configure_linux_package target)
 
     find_program(LINUXDEPLOY_EXECUTABLE
         NAMES linuxdeploy "linuxdeploy-${_ld_arch}.AppImage"
-        HINTS "${PROJECT_SOURCE_DIR}/tools" "$ENV{HOME}/applications" "$ENV{HOME}/.local/bin" /usr/local/bin
+        HINTS "${CMAKE_SOURCE_DIR}/tools" "$ENV{HOME}/applications" "$ENV{HOME}/.local/bin" /usr/local/bin
     )
     find_program(LINUXDEPLOY_PLUGIN_QT_EXECUTABLE
         NAMES linuxdeploy-plugin-qt "linuxdeploy-plugin-qt-${_ld_arch}.AppImage"
-        HINTS "${PROJECT_SOURCE_DIR}/tools" "$ENV{HOME}/applications" "$ENV{HOME}/.local/bin" /usr/local/bin
+        HINTS "${CMAKE_SOURCE_DIR}/tools" "$ENV{HOME}/applications" "$ENV{HOME}/.local/bin" /usr/local/bin
     )
     find_program(LINUXDEPLOY_PLUGIN_APPIMAGE_EXECUTABLE
         NAMES linuxdeploy-plugin-appimage "linuxdeploy-plugin-appimage-${_ldai_arch}.AppImage"
-        HINTS "${PROJECT_SOURCE_DIR}/tools" "$ENV{HOME}/applications" "$ENV{HOME}/.local/bin" /usr/local/bin
+        HINTS "${CMAKE_SOURCE_DIR}/tools" "$ENV{HOME}/applications" "$ENV{HOME}/.local/bin" /usr/local/bin
     )
 
     foreach (_tool LINUXDEPLOY_EXECUTABLE LINUXDEPLOY_PLUGIN_QT_EXECUTABLE LINUXDEPLOY_PLUGIN_APPIMAGE_EXECUTABLE)

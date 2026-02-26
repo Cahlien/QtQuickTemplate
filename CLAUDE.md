@@ -65,10 +65,10 @@ Build via Qt Creator (recommended) or the generated Gradle project in `<build-di
 
 ### CMake Module Organization
 
-Root `CMakeLists.txt` is a workspace coordinator — it calls `configure_project()` then adds `libs/` and `app/` as subdirectories:
+Root `CMakeLists.txt` is a workspace coordinator — it calls `configure_project()` then adds `app/` as the sole subdirectory. It declares `project(QtQuickTemplate)` without a `VERSION` (the version-bearing `project()` lives in `app/CMakeLists.txt`):
 
 - **`cmake/ProjectSetup.cmake`** → `configure_project()`: compiler settings, Conan, Qt discovery, AUTOMOC
-- **`app/CMakeLists.txt`** → includes `cmake/MainApp.cmake` and calls `configure_main_app()`: creates the executable, registers QML modules, platform sources, code signing, packaging targets
+- **`app/CMakeLists.txt`** → declares `project(QtQuickTemplate VERSION 0.2.0)`, adds `app/libs/` subdirectory, includes `cmake/MainApp.cmake` and calls `configure_main_app()`: creates the executable, registers QML modules, platform sources, code signing, packaging targets
 
 Deploy modules live in `cmake/deploy/` organized by platform subdirectory, with custom build targets that chain together:
 - **iOS**: `IOSArchive → IOSExportIPA → VerifyIOSIPA → IOSUploadASC → ReleaseDistributableIOS`
@@ -98,7 +98,7 @@ All CMake modules use `include_guard(GLOBAL)`.
 
 ### Application Structure
 
-The main application lives in `app/`, which is a peer of `libs/` under the workspace root.
+The main application lives in `app/`, which contains its own `libs/` subdirectory for project-internal libraries.
 
 - **Entry point**: `app/src/main/common/main.cpp` — creates QGuiApplication, sets AppStyle, loads `Main.qml`
 - **Navigation**: C++ `NavigationController` singleton (`app/include/main/common/navigation/`) manages a back-stack of `(url, props, showChrome)` entries. QML drives a `Loader` from `currentUrl`/`currentProps`.
@@ -121,11 +121,11 @@ QML files use `QT_RESOURCE_ALIAS` for flattened resource paths (e.g., `app/qml/p
 
 ### Libraries
 
-Libraries live in `libs/`. Helper macros in `cmake/libs/LibraryCommon.cmake`:
+Libraries live in `app/libs/` — project-internal libraries are an architectural decision of `app/`, not the workspace. Helper macros in `cmake/libs/LibraryCommon.cmake`:
 - `add_portable_cpp_library()` / `add_portable_qt_library()` — static on iOS, shared elsewhere
 - `apply_android_max_page_size()` — 16KB page alignment for Android
 
-`libs/appstyle/tools/` contains Node.js developer utilities for palette extraction (`extract-crowell-palette.js`) and WCAG contrast validation (`validate-contrast.js`).
+`app/libs/appstyle/tools/` contains Node.js developer utilities for palette extraction (`extract-crowell-palette.js`) and WCAG contrast validation (`validate-contrast.js`).
 
 ### Version Generation
 

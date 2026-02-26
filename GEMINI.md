@@ -65,10 +65,10 @@ Build via Qt Creator (recommended) or the generated Gradle project in `<build-di
 
 ### CMake Module Organization
 
-Root `CMakeLists.txt` is minimal (14 lines) — it delegates to two entry points:
+Root `CMakeLists.txt` is a workspace coordinator — it declares `project(QtQuickTemplate)` without a version and adds `app/` as the sole subdirectory:
 
 - **`cmake/ProjectSetup.cmake`** → `configure_project()`: compiler settings, Conan, Qt discovery, AUTOMOC
-- **`cmake/MainApp.cmake`** → `configure_main_app()`: creates the executable, registers QML modules, platform sources, code signing, packaging targets
+- **`app/CMakeLists.txt`** → declares `project(QtQuickTemplate VERSION 0.2.0)`, adds `app/libs/` subdirectory, includes `cmake/MainApp.cmake` and calls `configure_main_app()`: creates the executable, registers QML modules, platform sources, code signing, packaging targets
 
 Deploy modules live in `cmake/deploy/` with consistent `{Platform}{Stage}.cmake` naming and define custom build targets that chain together:
 - **iOS**: `IOSArchive → IOSExportIPA → VerifyIOSIPA → IOSUploadASC → ReleaseDistributableIOS`
@@ -103,11 +103,11 @@ QML files use `QT_RESOURCE_ALIAS` for flattened resource paths (e.g., `qml/pages
 
 ### Libraries
 
-Libraries live in `libs/`. Helper macros in `cmake/libs/LibraryCommon.cmake`:
+Libraries live in `app/libs/` — project-internal libraries are an architectural decision of `app/`, not the workspace. Helper macros in `cmake/libs/LibraryCommon.cmake`:
 - `add_portable_cpp_library()` / `add_portable_qt_library()` — static on iOS, shared elsewhere
 - `apply_android_max_page_size()` — 16KB page alignment for Android
 
-`libs/appstyle/tools/` contains Node.js developer utilities for palette extraction (`extract-crowell-palette.js`) and WCAG contrast validation (`validate-contrast.js`).
+`app/libs/appstyle/tools/` contains Node.js developer utilities for palette extraction (`extract-crowell-palette.js`) and WCAG contrast validation (`validate-contrast.js`).
 
 ### Version Generation
 

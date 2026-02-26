@@ -5,10 +5,9 @@ set(CMAKE_POLICY_DEFAULT_CMP0174 NEW)
 include(cmake/toolchain/ClangScanDeps.cmake)
 bootstrap_clang_scan_deps()
 
-project(QtQuickTemplate VERSION 0.2.0 LANGUAGES CXX)
+project(QtQuickTemplate LANGUAGES CXX)          # no VERSION — app/ owns it
 
 include(cmake/ProjectSetup.cmake)
 
 configure_project()
-add_subdirectory(libs)
 add_subdirectory(app)

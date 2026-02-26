@@ -172,10 +172,10 @@ def require_notarization(has_notarization_credentials: bool) -> None:
 
 @pytest.fixture(scope="session")
 def project_version(macos_dmg_build_dir: Path) -> str | None:
-    """Read ``CMAKE_PROJECT_VERSION`` from the first available CMakeCache."""
+    """Read ``QTQUICKTEMPLATE_APP_VERSION`` from the first available CMakeCache."""
     for build_dir in [macos_dmg_build_dir]:
         cache = _read_cmake_cache(build_dir)
-        version = cache.get("CMAKE_PROJECT_VERSION")
+        version = cache.get("QTQUICKTEMPLATE_APP_VERSION")
         if version:
             return version
     return None

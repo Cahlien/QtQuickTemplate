@@ -63,7 +63,7 @@ function(configure_macos_appstore_build target)
         add_custom_target(MacAppStoreArchive
             DEPENDS GenerateMacOSVersion
             COMMAND "${XCODEBUILD_EXECUTABLE}"
-                -project "${CMAKE_BINARY_DIR}/${CMAKE_PROJECT_NAME}.xcodeproj"
+                -project "${CMAKE_BINARY_DIR}/${PROJECT_NAME}.xcodeproj"
                 -scheme "${target}"
                 -configuration "${_config}"
                 -destination "generic/platform=macOS"

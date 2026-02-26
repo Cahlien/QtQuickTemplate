@@ -57,7 +57,7 @@ function(configure_ios_build target)
             DEPENDS ${target} GenerateIOSVersion
             COMMAND ${CMAKE_COMMAND} -E rm -rf "${_app_bundle}" "${_dsym_bundle}"
             COMMAND "${XCODEBUILD_EXECUTABLE}"
-                -project "${CMAKE_BINARY_DIR}/${CMAKE_PROJECT_NAME}.xcodeproj"
+                -project "${CMAKE_BINARY_DIR}/${PROJECT_NAME}.xcodeproj"
                 -scheme "${target}"
                 -configuration "${_config}"
                 -destination "generic/platform=iOS"

@@ -61,7 +61,7 @@ Back handling and app minimization are split cleanly:
 
 ### Docs
 - A `docs` target generates HTML documentation via QDoc (if `qdoc` is found).
-- The `libs/helloworld` sample library also has its own QDoc target.
+- The `app/libs/helloworld` sample library also has its own QDoc target.
 
 ---
 
@@ -72,7 +72,7 @@ Back handling and app minimization are split cleanly:
 ├── .env                                  # tracked defaults (ANDROID_PLAY_TRACK, ANDROID_PLAY_RELEASE_STATUS)
 ├── .env.local                            # gitignored developer overrides (Qt paths, signing credentials)
 ├── .python-version                     # pinned CPython 3.14t (freethreaded) for uv
-├── CMakeLists.txt                      # minimal root; delegates to cmake/ modules
+├── CMakeLists.txt                      # workspace coordinator; no VERSION (app/ owns it)
 ├── CMakePresets.json                   # platform build presets (iOS, macOS, etc.)
 ├── LICENSE
 ├── conanfile.py
@@ -167,16 +167,18 @@ Back handling and app minimization are split cleanly:
 │       └── navigation/
 │           └── navigation_controller.h
 │
-├── libs/
-│   ├── CMakeLists.txt                  # auto-adds child lib dirs
-│   ├── appstyle/                       # custom Qt Quick Controls 2 style
-│   │   ├── CMakeLists.txt
-│   │   ├── README.md
-│   │   └── qml/                        # Button, CheckBox, ComboBox, ...
-│   ├── apptheme/                       # AppTheme singleton (design tokens)
-│   │   ├── CMakeLists.txt
-│   │   └── qml/Theme.qml
-│   └── helloworld/                     # sample C++20 module library
+├── app/
+│   ├── CMakeLists.txt                  # project() with VERSION, adds libs/ subdirectory
+│   ├── libs/
+│   │   ├── CMakeLists.txt              # auto-adds child lib dirs
+│   │   ├── appstyle/                   # custom Qt Quick Controls 2 style
+│   │   │   ├── CMakeLists.txt
+│   │   │   ├── README.md
+│   │   │   └── qml/                    # Button, CheckBox, ComboBox, ...
+│   │   ├── apptheme/                   # AppTheme singleton (design tokens)
+│   │   │   ├── CMakeLists.txt
+│   │   │   └── qml/Theme.qml
+│   │   └── helloworld/                 # sample C++20 module library
 │       ├── CMakeLists.txt
 │       ├── helloworld.cppm
 │       ├── include/helloworld.h
@@ -845,11 +847,11 @@ To build without packaging:
 
 This project intentionally **flattens QML resource paths** using `QT_RESOURCE_ALIAS` so that pages/components can be referenced by simple filenames (e.g. `Qt.resolvedUrl("Readme.qml")`) even if they live under `qml/pages/` in the source tree.
 
-The `AppTheme` and `AppStyle` modules are located in the `libs/` directory.
+The `AppTheme` and `AppStyle` modules are located in the `app/libs/` directory.
 
 Modules:
-- `AppTheme` → `Theme.qml` singleton (located in `libs/apptheme/qml/`)
-- `AppStyle` → custom controls style (depends on `AppTheme`, located in `libs/appstyle/qml/`)
+- `AppTheme` → `Theme.qml` singleton (located in `app/libs/apptheme/qml/`)
+- `AppStyle` → custom controls style (depends on `AppTheme`, located in `app/libs/appstyle/qml/`)
 - `QtQuickTemplate` → main application QML
 
 ---
@@ -1009,7 +1011,7 @@ A quick checklist you'll almost certainly want to do:
 
 ## Style notes
 
-See `libs/appstyle/README.md` for a deeper dive into the Theme/AppStyle approach and how the controls are overridden.
+See `app/libs/appstyle/README.md` for a deeper dive into the Theme/AppStyle approach and how the controls are overridden.
 
 ---
 
