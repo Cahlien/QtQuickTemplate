@@ -69,13 +69,13 @@
         {
             "name": "android-release",
             "displayName": "Android Release",
-            "description": "Configure for Android release builds. Requires QT_ANDROID_ROOT and QT_HOST_ROOT environment variables. For signed builds, set ANDROID_KEYSTORE_PATH, ANDROID_KEYSTORE_PASSWORD, ANDROID_KEY_ALIAS, and ANDROID_KEY_PASSWORD. For Google Play upload, set ANDROID_PLAY_SERVICE_ACCOUNT_FILE, ANDROID_PLAY_TRACK (internal|alpha|beta|production), and ANDROID_PLAY_RELEASE_STATUS (completed|draft|inProgress|halted).",
+            "description": "Configure for Android arm64-v8a release builds. Requires QT_ANDROID_ARM64_ROOT and QT_HOST_ROOT environment variables (set by tools/configure_env.py). For signed builds, set ANDROID_KEYSTORE_PATH, ANDROID_KEYSTORE_PASSWORD, ANDROID_KEY_ALIAS, and ANDROID_KEY_PASSWORD. For Google Play upload, set ANDROID_PLAY_SERVICE_ACCOUNT_FILE, ANDROID_PLAY_TRACK (internal|alpha|beta|production), and ANDROID_PLAY_RELEASE_STATUS (completed|draft|inProgress|halted).",
             "generator": "Ninja",
             "binaryDir": "${sourceDir}/build/Qt_6_10_2_for_Android",
             "cacheVariables": {
                 "CMAKE_BUILD_TYPE": "Release",
-                "CMAKE_PREFIX_PATH": "$env{QT_ANDROID_ROOT}",
-                "CMAKE_TOOLCHAIN_FILE": "$env{QT_ANDROID_ROOT}/lib/cmake/Qt6/qt.toolchain.cmake",
+                "CMAKE_PREFIX_PATH": "$env{QT_ANDROID_ARM64_ROOT}",
+                "CMAKE_TOOLCHAIN_FILE": "$env{QT_ANDROID_ARM64_ROOT}/lib/cmake/Qt6/qt.toolchain.cmake",
                 "QT_HOST_PATH": "$env{QT_HOST_ROOT}",
                 "ANDROID_ABI": "arm64-v8a",
                 "QTQUICKTEMPLATE_ANDROID_KEYSTORE_PATH": "$env{ANDROID_KEYSTORE_PATH}",

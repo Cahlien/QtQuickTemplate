@@ -249,8 +249,8 @@ Back handling and app minimization are split cleanly:
 └── tools/                              # developer tooling
     ├── bootstrap.sh                    # dev environment setup (macOS/Linux)
     ├── bootstrap.ps1                   # dev environment setup (Windows)
-    ├── configure_env.sh                # interactive Qt SDK + signing config wizard (macOS/Linux)
-    ├── configure_env.ps1               # interactive Qt SDK + signing config wizard (Windows)
+    ├── configure_env.py                # interactive Qt SDK + signing config wizard (entry point)
+    ├── configure_env/                  # configure_env Python package
     ├── run                             # env-aware wrapper: loads .env/.env.local before running tools
     ├── run.ps1                         # env-aware wrapper for Windows
     └── configure_package.py            # project renaming/repackaging script
@@ -287,7 +287,7 @@ This installs [uv](https://docs.astral.sh/uv/) into a project-local `tools/` dir
 1. `.env` — tracked defaults (e.g., Android Play defaults)
 2. `.env.local` — developer-specific overrides (gitignored)
 
-If `.env.local` is missing and you run `cmake`, the wrapper prints a warning reminding you to run `configure_env.sh`.
+If `.env.local` is missing and you run `cmake`, the wrapper prints a warning reminding you to run `configure_env.py`.
 
 Alternatively, activate the venv to put all tools on your `PATH` directly:
 
@@ -307,8 +307,8 @@ After bootstrapping, set up your Qt SDK paths and platform signing credentials. 
 Run the configure script to interactively prompt for your SDK paths and credentials:
 
 ```bash
-./tools/configure_env.sh       # macOS/Linux
-.\tools\configure_env.ps1      # Windows
+./tools/uv run python tools/configure_env.py       # macOS/Linux
+.\tools\run.ps1 python tools/configure_env.py      # Windows
 ```
 
 This creates `.env.local` with your settings. The wizard:
@@ -577,7 +577,7 @@ The full pipeline — build → archive → sign → export IPA → verify → u
 
 **Two ways to set environment variables:**
 
-1. **`.env.local`** (recommended) — set `QT_MACOS_ROOT`, `APPLE_DEVELOPMENT_TEAM`, `ASC_API_KEY_ID`, `ASC_API_ISSUER_ID` in `.env.local`. Run `./tools/configure_env.sh` to interactively configure.
+1. **`.env.local`** (recommended) — set `QT_MACOS_ROOT`, `APPLE_DEVELOPMENT_TEAM`, `ASC_API_KEY_ID`, `ASC_API_ISSUER_ID` in `.env.local`. Run `./tools/uv run python tools/configure_env.py` to interactively configure.
 2. **`CMakeUserPresets.json`** — set these values in the preset's `environment` block as shown above.
 
 Both approaches work; `.env.local` is simpler for single-machine setups, while `CMakeUserPresets.json` enables per-preset configurations.
@@ -694,7 +694,7 @@ xcrun notarytool store-credentials "my-notary-profile" \
 
 **Two ways to set environment variables:**
 
-1. **`.env.local`** (recommended) — set `QT_MACOS_ROOT`, `MACOS_NOTARY_KEYCHAIN_PROFILE`, `MACOS_APP_SIGN_IDENTITY`, `MACOS_DMG_SIGN_IDENTITY` in `.env.local`. Run `./tools/configure_env.sh` to interactively configure.
+1. **`.env.local`** (recommended) — set `QT_MACOS_ROOT`, `MACOS_NOTARY_KEYCHAIN_PROFILE`, `MACOS_APP_SIGN_IDENTITY`, `MACOS_DMG_SIGN_IDENTITY` in `.env.local`. Run `./tools/uv run python tools/configure_env.py` to interactively configure.
 2. **`CMakeUserPresets.json`** — set these values in the preset's `environment` block as shown above.
 
 Both approaches work; `.env.local` is simpler for single-machine setups, while `CMakeUserPresets.json` enables per-preset configurations.
@@ -793,7 +793,7 @@ The Mac App Store pipeline uses the Xcode generator (separate build directory fr
 
 **Two ways to set environment variables:**
 
-1. **`.env.local`** (recommended) — set `QT_MACOS_ROOT`, `APPLE_DEVELOPMENT_TEAM`, `ASC_API_KEY_ID`, `ASC_API_ISSUER_ID` in `.env.local`. Run `./tools/configure_env.sh` to interactively configure.
+1. **`.env.local`** (recommended) — set `QT_MACOS_ROOT`, `APPLE_DEVELOPMENT_TEAM`, `ASC_API_KEY_ID`, `ASC_API_ISSUER_ID` in `.env.local`. Run `./tools/uv run python tools/configure_env.py` to interactively configure.
 2. **`CMakeUserPresets.json`** — set these values in the preset's `environment` block as shown above.
 
 Both approaches work; `.env.local` is simpler for single-machine setups, while `CMakeUserPresets.json` enables per-preset configurations.

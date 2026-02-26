@@ -31,9 +31,9 @@ endfunction()
 function(configure_release_distributables target)
     # macOS DMG pipeline
     if (APPLE AND NOT IOS)
-        _add_release_meta(ReleaseDistributableMacOS ""
+        _add_release_meta(ReleaseDistributableMacOS "${target}"
             "Full macOS DMG release pipeline"
-            VerifyMacOSPackage NotarizeMacOS)
+            VerifyMacOSPackage NotarizeMacOS DMG MacDeployQt)
 
         if (TARGET ReleaseDistributableMacOS)
             register_help_target(

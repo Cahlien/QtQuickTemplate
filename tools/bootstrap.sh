@@ -111,7 +111,7 @@ fi
 printf "\n${BOLD}Bootstrap complete!${RESET}\n"
 
 if [ ! -f "$PROJECT_ROOT/.env.local" ]; then
-    printf "${YELLOW}Next step:${RESET} Run ${CYAN}./tools/configure_env.sh${RESET} to set Qt SDK paths and signing credentials.\n\n"
+    printf "${YELLOW}Next step:${RESET} Run ${CYAN}./tools/uv run python tools/configure_env.py${RESET} to set Qt SDK paths and signing credentials.\n\n"
 fi
 
 printf "Run commands through the env-aware wrapper with ${CYAN}./tools/run${RESET}:\n"
