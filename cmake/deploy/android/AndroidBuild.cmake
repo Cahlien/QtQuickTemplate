@@ -17,6 +17,7 @@ set(QTQUICKTEMPLATE_ANDROID_KEY_PASSWORD "" CACHE STRING
 )
 
 function(_resolve_android_signing_vars out_ks out_ksp out_ka out_kp)
+    set(_idx 0)
     foreach (_pair "QTQUICKTEMPLATE_ANDROID_KEYSTORE_PATH;QT_ANDROID_KEYSTORE_PATH"
                    "QTQUICKTEMPLATE_ANDROID_KEYSTORE_PASSWORD;QT_ANDROID_KEYSTORE_PASSWORD"
                    "QTQUICKTEMPLATE_ANDROID_KEY_ALIAS;QT_ANDROID_KEY_ALIAS"
@@ -24,21 +25,17 @@ function(_resolve_android_signing_vars out_ks out_ksp out_ka out_kp)
         list(GET _pair 0 _cache_var)
         list(GET _pair 1 _env_var)
         if (${_cache_var})
-            set(_val "${${_cache_var}}")
+            set(_resolved_${_idx} "${${_cache_var}}")
         else ()
-            set(_val "$ENV{${_env_var}}")
+            set(_resolved_${_idx} "$ENV{${_env_var}}")
         endif ()
-        list(APPEND _resolved "${_val}")
+        math(EXPR _idx "${_idx} + 1")
     endforeach ()
 
-    list(GET _resolved 0 _ks)
-    list(GET _resolved 1 _ksp)
-    list(GET _resolved 2 _ka)
-    list(GET _resolved 3 _kp)
-    set(${out_ks} "${_ks}" PARENT_SCOPE)
-    set(${out_ksp} "${_ksp}" PARENT_SCOPE)
-    set(${out_ka} "${_ka}" PARENT_SCOPE)
-    set(${out_kp} "${_kp}" PARENT_SCOPE)
+    set(${out_ks} "${_resolved_0}" PARENT_SCOPE)
+    set(${out_ksp} "${_resolved_1}" PARENT_SCOPE)
+    set(${out_ka} "${_resolved_2}" PARENT_SCOPE)
+    set(${out_kp} "${_resolved_3}" PARENT_SCOPE)
 endfunction()
 
 function(_configure_android_gradle_build target_name depends qt_target comment)
