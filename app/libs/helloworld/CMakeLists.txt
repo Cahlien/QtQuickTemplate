@@ -8,11 +8,11 @@ set(HELLOWORLD_MODULES_ENABLED ${QTQUICKTEMPLATE_CXX_MODULES_SUPPORTED})
 set_property(GLOBAL PROPERTY QTQUICKTEMPLATE_HELLOWORLD_MODULE_ENABLED ${HELLOWORLD_MODULES_ENABLED})
 
 set(HELLOWORLD_SOURCES
-    src/helloworld.cpp
+    src/main/helloworld.cpp
 )
 
 set(HELLOWORLD_HEADERS
-    include/helloworld.h
+    include/main/helloworld.h
 )
 
 if (HELLOWORLD_EXPORT_HEADER)
@@ -25,9 +25,9 @@ if (HELLOWORLD_MODULES_ENABLED)
             ${HELLOWORLD_SOURCES}
         PUBLIC
             FILE_SET CXX_MODULES FILES
-                helloworld.cppm
+                src/main/helloworld.cppm
             FILE_SET HEADERS
-                BASE_DIRS include ${CMAKE_CURRENT_BINARY_DIR}/include
+                BASE_DIRS include/main ${CMAKE_CURRENT_BINARY_DIR}/include
                 FILES
                     ${HELLOWORLD_HEADERS}
     )
@@ -37,7 +37,7 @@ else ()
             ${HELLOWORLD_SOURCES}
         PUBLIC
             FILE_SET HEADERS
-                BASE_DIRS include ${CMAKE_CURRENT_BINARY_DIR}/include
+                BASE_DIRS include/main ${CMAKE_CURRENT_BINARY_DIR}/include
                 FILES
                     ${HELLOWORLD_HEADERS}
     )
@@ -51,7 +51,7 @@ else ()
 endif ()
 
 target_include_directories(${TARGET} PUBLIC
-    ${CMAKE_CURRENT_SOURCE_DIR}/include
+    ${CMAKE_CURRENT_SOURCE_DIR}/include/main
     ${CMAKE_CURRENT_BINARY_DIR}/include
 )
 

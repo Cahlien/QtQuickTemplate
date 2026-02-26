@@ -103,7 +103,9 @@ QML files use `QT_RESOURCE_ALIAS` for flattened resource paths (e.g., `qml/pages
 
 ### Libraries
 
-Libraries live in `app/libs/` — project-internal libraries are an architectural decision of `app/`, not the workspace. Helper macros in `cmake/libs/LibraryCommon.cmake`:
+Libraries live in `app/libs/` — project-internal libraries are an architectural decision of `app/`, not the workspace. Libraries mirror the `app/` directory convention: C++ production code lives in `src/main/` and `include/main/`, test code in `src/test/` and `include/test/`, and QML files in a top-level `qml/` directory (sibling to `src/`).
+
+Helper macros in `cmake/libs/LibraryCommon.cmake`:
 - `add_portable_cpp_library()` / `add_portable_qt_library()` — static on iOS, shared elsewhere
 - `apply_android_max_page_size()` — 16KB page alignment for Android
 
