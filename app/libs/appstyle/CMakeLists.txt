@@ -41,3 +41,7 @@ target_link_libraries(${TARGET}
         Qt6::QuickPrivate
         Qt6::QuickTemplates2Private
 )
+
+if (QTQUICKTEMPLATE_ENABLE_TESTING)
+    add_subdirectory(src/test)
+endif ()

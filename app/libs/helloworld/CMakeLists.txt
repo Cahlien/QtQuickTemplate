@@ -73,3 +73,7 @@ if (QDOC_EXECUTABLE)
         COMMENT "Generating HelloWorld documentation with QDoc"
     )
 endif ()
+
+if (QTQUICKTEMPLATE_ENABLE_TESTING)
+    add_subdirectory(src/test)
+endif ()

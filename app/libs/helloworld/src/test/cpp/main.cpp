@@ -1,7 +1,7 @@
 #include <QCoreApplication>
 #include <QTest>
 
-#include "common/navigation/tst_navigation_controller.h"
+#include "helloworld/tst_helloworld.h"
 
 int main(int argc, char *argv[])
 {
@@ -9,8 +9,8 @@ int main(int argc, char *argv[])
 
     int status{0};
 
-    tst_NavigationController nc{};
-    status |= QTest::qExec(&nc, argc, argv);
+    tst_HelloWorld hw{};
+    status |= QTest::qExec(&hw, argc, argv);
 
     return status;
 }

@@ -149,8 +149,11 @@ C++ unit tests use Qt Test; QML tests use Qt Quick Test. Gated by `QTQUICKTEMPLA
 ./tools/uv run ctest --preset linux-tests
 
 # Run individual tests
-./tools/uv run ctest --preset linux-tests -R tst_cpp          # All C++ tests (HelloWorld + NavigationController)
-./tools/uv run ctest --preset linux-tests -R tst_qml_navigation  # QML tests
+./tools/uv run ctest --preset linux-tests -R tst_helloworld      # HelloWorld C++ tests
+./tools/uv run ctest --preset linux-tests -R tst_cpp             # NavigationController C++ tests
+./tools/uv run ctest --preset linux-tests -R tst_qml_apptheme    # AppTheme QML tests
+./tools/uv run ctest --preset linux-tests -R tst_qml_appstyle    # AppStyle QML tests
+./tools/uv run ctest --preset linux-tests -R tst_qml_navigation  # Navigation QML tests
 
 # Disable testing (e.g. for mobile builds)
 ./tools/uv run cmake -S . -B build/no-tests -DQTQUICKTEMPLATE_ENABLE_TESTING=OFF
@@ -159,9 +162,16 @@ C++ unit tests use Qt Test; QML tests use Qt Quick Test. Gated by `QTQUICKTEMPLA
 Test infrastructure:
 - **`cmake/testing/TestingSetup.cmake`** — `configure_testing()`: option, `enable_testing()`, `find_package(Qt6 … Test QuickTest)`
 - **`cmake/testing/TestTargets.cmake`** — `add_qt_test()` and `add_qt_quick_test()` helper functions
+
+App-level tests:
 - **`app/include/test/`** — test suite headers (declarations with Q_OBJECT)
-- **`app/src/test/cpp/`** — single C++ test runner (`tst_cpp`) with custom `main()`, HelloWorld + NavigationController implementations
-- **`app/src/test/qml/`** — QML test runner (`tst_qml_navigation`)
+- **`app/src/test/cpp/`** — NavigationController C++ test runner (`tst_cpp`)
+- **`app/src/test/qml/`** — Navigation QML test runner (`tst_qml_navigation`)
+
+Library tests (each library owns its own tests):
+- **`app/libs/helloworld/src/test/cpp/`** — HelloWorld C++ tests (`tst_helloworld`)
+- **`app/libs/apptheme/src/test/qml/`** — AppTheme QML tests (`tst_qml_apptheme`)
+- **`app/libs/appstyle/src/test/qml/`** — AppStyle QML tests (`tst_qml_appstyle`)
 
 ## Key Conventions
 

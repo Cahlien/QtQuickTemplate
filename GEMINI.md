@@ -116,6 +116,45 @@ Libraries live in `app/libs/` — project-internal libraries are an architectura
 - Android: generates `platforms/android/version.properties`
 - Format: `MARKETING_VERSION = 1.0`, `CURRENT_PROJECT_VERSION = 1.0.0.<commit_count>`
 
+## Testing
+
+C++ unit tests use Qt Test; QML tests use Qt Quick Test. Gated by `QTQUICKTEMPLATE_ENABLE_TESTING` (ON by default on desktop, OFF on iOS/Android).
+
+```bash
+# Configure (testing enabled by default on desktop)
+./tools/uv run cmake --preset linux-release
+
+# Build all (includes test targets)
+./tools/uv run cmake --build build/Qt_6_10_2_for_Linux
+
+# Run all tests via CTest preset
+./tools/uv run ctest --preset linux-tests
+
+# Run individual tests
+./tools/uv run ctest --preset linux-tests -R tst_helloworld      # HelloWorld C++ tests
+./tools/uv run ctest --preset linux-tests -R tst_cpp             # NavigationController C++ tests
+./tools/uv run ctest --preset linux-tests -R tst_qml_apptheme    # AppTheme QML tests
+./tools/uv run ctest --preset linux-tests -R tst_qml_appstyle    # AppStyle QML tests
+./tools/uv run ctest --preset linux-tests -R tst_qml_navigation  # Navigation QML tests
+
+# Disable testing (e.g. for mobile builds)
+./tools/uv run cmake -S . -B build/no-tests -DQTQUICKTEMPLATE_ENABLE_TESTING=OFF
+```
+
+Test infrastructure:
+- **`cmake/testing/TestingSetup.cmake`** — `configure_testing()`: option, `enable_testing()`, `find_package(Qt6 … Test QuickTest)`
+- **`cmake/testing/TestTargets.cmake`** — `add_qt_test()` and `add_qt_quick_test()` helper functions
+
+App-level tests:
+- **`app/include/test/`** — test suite headers (declarations with Q_OBJECT)
+- **`app/src/test/cpp/`** — NavigationController C++ test runner (`tst_cpp`)
+- **`app/src/test/qml/`** — Navigation QML test runner (`tst_qml_navigation`)
+
+Library tests (each library owns its own tests):
+- **`app/libs/helloworld/src/test/cpp/`** — HelloWorld C++ tests (`tst_helloworld`)
+- **`app/libs/apptheme/src/test/qml/`** — AppTheme QML tests (`tst_qml_apptheme`)
+- **`app/libs/appstyle/src/test/qml/`** — AppStyle QML tests (`tst_qml_appstyle`)
+
 ## Key Conventions
 
 - **C++23** project-wide (C++20 for the helloworld sample library demonstrating modules)

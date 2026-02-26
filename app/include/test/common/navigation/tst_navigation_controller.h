@@ -13,53 +13,47 @@ class tst_NavigationController : public QObject
 
 private slots:
     void initTestCase();
-    void init();
+    void init() const;
 
-    // initialState
-    void initialState_currentUrlIsEmpty();
-    void initialState_currentPropsAreEmpty();
-    void initialState_showChromeIsTrue();
-    void initialState_canGoBackIsFalse();
-    void initialState_canGoForwardIsFalse();
-    void initialState_historyLimitIsPositive();
+    void initialState_currentUrlIsEmpty() const;
+    void initialState_currentPropsAreEmpty() const;
+    void initialState_showChromeIsTrue() const;
+    void initialState_canGoBackIsFalse() const;
+    void initialState_canGoForwardIsFalse() const;
+    void initialState_historyLimitIsPositive() const;
 
-    // push
-    void push_emitsPushRequested();
-    void push_signalContainsUrl();
-    void push_signalContainsProps();
-    void push_signalContainsShowChrome();
-    void push_clearsForwardStack();
-    void push_clearingForwardStackEmitsCurrentChanged();
-    void push_atHistoryLimitEmitsReplaceRequested();
-    void push_atHistoryLimitDoesNotEmitPushRequested();
+    void push_emitsPushRequested() const;
+    void push_signalContainsUrl() const;
+    void push_signalContainsProps() const;
+    void push_signalContainsShowChrome() const;
+    void push_clearsForwardStack() const;
+    void push_clearingForwardStackEmitsCurrentChanged() const;
+    void push_atHistoryLimitEmitsReplaceRequested() const;
+    void push_atHistoryLimitDoesNotEmitPushRequested() const;
 
-    // setCurrent
-    void setCurrent_emitsCurrentChanged();
-    void setCurrent_updatesCurrentUrl();
-    void setCurrent_updatesCurrentProps();
-    void setCurrent_updatesShowChrome();
-    void setCurrent_updatesCanGoBack();
-    void setCurrent_identicalValuesEmitNoSignal();
+    void setCurrent_emitsCurrentChanged() const;
+    void setCurrent_updatesCurrentUrl() const;
+    void setCurrent_updatesCurrentProps() const;
+    void setCurrent_updatesShowChrome() const;
+    void setCurrent_updatesCanGoBack() const;
+    void setCurrent_identicalValuesEmitNoSignal() const;
 
-    // pop
-    void pop_atRootEmitsBackAtRoot();
-    void pop_atRootDoesNotEmitPopRequested();
-    void pop_emitsPopRequested();
-    void pop_enablesCanGoForward();
+    void pop_atRootEmitsBackAtRoot() const;
+    void pop_atRootDoesNotEmitPopRequested() const;
+    void pop_emitsPopRequested() const;
+    void pop_enablesCanGoForward() const;
 
-    // forward
-    void forward_emptyStackIsNoOp();
-    void forward_emitsPushRequested();
-    void forward_signalContainsSavedUrl();
-    void forward_signalContainsSavedProps();
-    void forward_signalContainsSavedShowChrome();
+    void forward_emptyStackIsNoOp() const;
+    void forward_emitsPushRequested() const;
+    void forward_signalContainsSavedUrl() const;
+    void forward_signalContainsSavedProps() const;
+    void forward_signalContainsSavedShowChrome() const;
 
-    // replace
-    void replace_emitsReplaceRequested();
-    void replace_signalContainsUrl();
-    void replace_signalContainsProps();
-    void replace_signalContainsShowChrome();
-    void replace_clearsForwardStack();
+    void replace_emitsReplaceRequested() const;
+    void replace_signalContainsUrl() const;
+    void replace_signalContainsProps() const;
+    void replace_signalContainsShowChrome() const;
+    void replace_clearsForwardStack() const;
 
 private:
     NavigationController *nav{};
