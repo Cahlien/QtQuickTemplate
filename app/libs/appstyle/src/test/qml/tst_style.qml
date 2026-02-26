@@ -5,9 +5,6 @@ import dev.crowell.AppTheme
 TestCase {
     name: "AppStyle"
 
-    // AppStyle depends on AppTheme; verify the dependency is accessible and
-    // exposes the expected design-token properties.
-
     function test_primaryColorIsNonEmpty() {
         verify(Theme.primary !== "", "Theme.primary should be a non-empty color string")
     }
@@ -28,16 +25,22 @@ TestCase {
         verify(Theme.radiusMd > 0, "Theme.radiusMd should be positive")
     }
 
+    function cleanup() {
+        Theme.darkMode = true
+    }
+
     function test_darkModeDefaultIsTrue() {
         compare(Theme.darkMode, true)
     }
 
-    function test_darkModeToggleChangesPrimaryColor() {
-        const darkPrimary = Theme.primary
+    function test_darkModePrimaryColor() {
+        compare(Theme.primary, "#40e0d0")
+    }
+
+    function test_lightModePrimaryColor() {
+        const darkPrimary = "" + Theme.primary
         Theme.darkMode = false
-        const lightPrimary = Theme.primary
-        Theme.darkMode = true
-        verify(darkPrimary !== lightPrimary,
-               "primary color should differ between dark and light mode")
+        const lightPrimary = "" + Theme.primary
+        verify(lightPrimary !== darkPrimary)
     }
 }
