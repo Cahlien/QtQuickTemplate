@@ -2,10 +2,9 @@
 
 #include <QSignalSpy>
 
-void tst_NavigationController::init() const
+void tst_NavigationController::init()
 {
-    m_nav.push(QStringLiteral("__reset__"));
-    m_nav.setCurrent(QString(), QVariantMap(), true, 0);
+    m_nav.resetForTesting();
 }
 
 void tst_NavigationController::initialState_currentUrlIsEmpty() const

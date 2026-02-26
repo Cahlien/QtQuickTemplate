@@ -19,7 +19,7 @@ from configure_env._sections import (
     derive_defaults,
     has_android_qt,
 )
-from configure_env._types import Section
+from configure_env._types import Platform, Section
 
 
 def _prompt_section(
@@ -70,7 +70,7 @@ def main() -> int:
     for var in android_qt.variables:
         prompt_var(var, defaults, result, out)
 
-    if plat == plat.DARWIN:
+    if plat == Platform.DARWIN:
         for section in build_apple_sections(defaults):
             _prompt_section(section, defaults, result, out)
 
@@ -78,7 +78,7 @@ def main() -> int:
         for section in build_android_sdk_sections(plat, home, defaults, result):
             _prompt_section(section, defaults, result, out)
 
-    if plat == plat.LINUX:
+    if plat == Platform.LINUX:
         linux_section = build_linux_signing_section(defaults)
         _prompt_section(linux_section, defaults, result, out)
 
@@ -87,7 +87,7 @@ def main() -> int:
     emit_env_local(env_local, emit_sections, result)
     out.ok(f"Wrote {env_local}")
 
-    run_cmd = "./tools/run" if plat != plat.WINDOWS else r".\tools\run.ps1"
+    run_cmd = "./tools/run" if plat != Platform.WINDOWS else r".\tools\run.ps1"
     print(f"\nYou can now run builds with {out.cyan(run_cmd)}:")
     print(f"  {run_cmd} cmake --preset <preset>        # configure")
     print(f"  {run_cmd} cmake --build --preset <preset> # build")

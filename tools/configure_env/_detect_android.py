@@ -95,10 +95,16 @@ def detect_android_ndk(sdk_root: str, qt_abi_root: str = "") -> str:
     ndk_dir = Path(sdk_root) / "ndk"
     if not ndk_dir.is_dir():
         return ""
+    def _ndk_version_key(p: Path) -> tuple[int, ...]:
+        try:
+            return tuple(int(x) for x in p.name.split("."))
+        except ValueError:
+            return (0,)
+
     try:
         installed = sorted(
             (d for d in ndk_dir.iterdir() if d.is_dir() and _VERSION_RE.match(d.name)),
-            key=lambda p: p.name,
+            key=_ndk_version_key,
         )
     except OSError:
         return ""
@@ -132,10 +138,12 @@ def detect_java_home(plat: Platform) -> str:
 
     if plat == Platform.LINUX:
         candidates = [
-            "/usr/lib/jvm/java-17-openjdk",
-            "/usr/lib/jvm/java-17-openjdk-amd64",
             "/usr/lib/jvm/java-21-openjdk",
             "/usr/lib/jvm/java-21-openjdk-amd64",
+            "/usr/lib/jvm/java-21-openjdk-aarch64",
+            "/usr/lib/jvm/java-17-openjdk",
+            "/usr/lib/jvm/java-17-openjdk-amd64",
+            "/usr/lib/jvm/java-17-openjdk-aarch64",
         ]
         for d in candidates:
             if Path(d).is_dir():

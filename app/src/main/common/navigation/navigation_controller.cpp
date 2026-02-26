@@ -114,6 +114,16 @@ void NavigationController::setCurrent(const QString     &url,
     emit currentChanged();
 }
 
+void NavigationController::resetForTesting()
+{
+    m_currentUrl.clear();
+    m_currentProps.clear();
+    m_currentShowChrome = true;
+    m_canGoBack = false;
+    m_stackDepth = 0;
+    m_forward.clear();
+}
+
 void NavigationController::minimizeApp()
 {
 #if defined(Q_OS_ANDROID) && __has_include(<QJniObject>)

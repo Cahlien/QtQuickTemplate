@@ -34,4 +34,4 @@ def emit_env_local(
                 lines.append(f"# {var.name}=")
         lines.append("")
 
-    path.write_text("\n".join(lines), encoding="utf-8")
+    path.write_text("\n".join(lines) + "\n", encoding="utf-8")

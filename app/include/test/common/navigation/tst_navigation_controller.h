@@ -12,7 +12,7 @@ class tst_NavigationController : public QObject
     Q_OBJECT
 
 private slots:
-    void init() const;
+    void init();
 
     void initialState_currentUrlIsEmpty() const;
     void initialState_currentPropsAreEmpty() const;

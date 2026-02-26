@@ -82,6 +82,12 @@ public:
     /// Move the app to the background (Android only; no-op elsewhere).
     Q_INVOKABLE void minimizeApp();
 
+    // ── Test support ──────────────────────────────────────────────────────
+
+    /// Reset all navigation state to defaults without emitting any signals.
+    /// Intended for use in unit test init() methods only.
+    void resetForTesting();
+
     // ── Property accessors ────────────────────────────────────────────────
 
     [[nodiscard]] QString     currentUrl()        const;

@@ -54,8 +54,8 @@ function(add_qt_quick_test)
     set_tests_properties(${ARG_NAME} PROPERTIES TIMEOUT 60)
 
     if (ARG_QML_IMPORT_PATHS)
-        list(JOIN ARG_QML_IMPORT_PATHS ":" _import_paths)
+        cmake_path(CONVERT "${ARG_QML_IMPORT_PATHS}" TO_NATIVE_PATH_LIST _import_paths)
         set_tests_properties(${ARG_NAME} PROPERTIES
-            ENVIRONMENT "QML2_IMPORT_PATH=${_import_paths}")
+            ENVIRONMENT "QML_IMPORT_PATH=${_import_paths}")
     endif ()
 endfunction()
