@@ -12,6 +12,8 @@ set(QTQUICKTEMPLATE_ASC_API_ISSUER_ID "" CACHE STRING
     "App Store Connect API issuer ID (UUID) used for upload"
 )
 
+set(_ASC_UPLOAD_DIR "${CMAKE_CURRENT_LIST_DIR}")
+
 # Private helper shared by iOS and macOS App Store upload targets.
 function(_configure_asc_upload target_name depends_target export_path artifact_glob comment)
     if (NOT QTQUICKTEMPLATE_ASC_API_KEY_ID OR NOT QTQUICKTEMPLATE_ASC_API_ISSUER_ID)
@@ -25,7 +27,7 @@ function(_configure_asc_upload target_name depends_target export_path artifact_g
         return()
     endif ()
 
-    set(_upload_script "${CMAKE_CURRENT_SOURCE_DIR}/cmake/deploy/apple/UploadAsc.cmake")
+    set(_upload_script "${_ASC_UPLOAD_DIR}/UploadAsc.cmake")
 
     if (NOT TARGET ${target_name})
         add_custom_target(${target_name}

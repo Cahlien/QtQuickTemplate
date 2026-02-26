@@ -111,7 +111,7 @@ CMakeUserPresets.json
 .gradle/
 **/build/
 local.properties
-platforms/android/version.properties
+app/platforms/android/version.properties
 
 # Cache
 .cache/**

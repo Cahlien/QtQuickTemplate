@@ -7,6 +7,8 @@ set(QTQUICKTEMPLATE_MACOS_NOTARY_KEYCHAIN_PROFILE "" CACHE STRING
     "Keychain profile name used by notarytool for macOS notarization"
 )
 
+set(_MACOS_SIGN_DIR "${CMAKE_CURRENT_LIST_DIR}")
+
 function(configure_macos_sign target)
     if (NOT APPLE OR IOS)
         return()
@@ -28,7 +30,7 @@ function(configure_macos_sign target)
     endif ()
 
     set(_artifact "${CMAKE_BINARY_DIR}/${PROJECT_NAME}-${PROJECT_VERSION}-macOS.dmg")
-    set(_notary_script "${CMAKE_CURRENT_SOURCE_DIR}/cmake/deploy/macos/Notarize.cmake")
+    set(_notary_script "${_MACOS_SIGN_DIR}/Notarize.cmake")
 
     add_custom_target(NotarizeMacOS
         DEPENDS DMG

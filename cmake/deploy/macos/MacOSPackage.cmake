@@ -7,6 +7,8 @@ set(QTQUICKTEMPLATE_MACOS_DMG_SIGN_IDENTITY "" CACHE STRING
     "Optional macOS signing identity for signing the generated DMG"
 )
 
+set(_MACOS_PACKAGE_DIR "${CMAKE_CURRENT_LIST_DIR}")
+
 function(configure_macos_package target)
     if (NOT APPLE OR IOS)
         return()
@@ -32,7 +34,7 @@ function(configure_macos_package target)
         set(_dmg_dep MacDeployQt)
     endif ()
 
-    set(_sign_script "${CMAKE_CURRENT_SOURCE_DIR}/cmake/deploy/macos/SignDmg.cmake")
+    set(_sign_script "${_MACOS_PACKAGE_DIR}/SignDmg.cmake")
 
     add_custom_target(DMG
         DEPENDS ${_dmg_dep}

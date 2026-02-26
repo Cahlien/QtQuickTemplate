@@ -7,6 +7,8 @@ include("${CMAKE_CURRENT_LIST_DIR}/../apple/FindMacDeployQt.cmake")
 
 option(QTQUICKTEMPLATE_MACOS_USE_MACDEPLOYQT "Use macdeployqt for macOS app deployment" ON)
 
+set(_MACOS_BUILD_DIR "${CMAKE_CURRENT_LIST_DIR}")
+
 function(configure_macos_build target)
     if (NOT APPLE OR IOS OR NOT QTQUICKTEMPLATE_MACOS_USE_MACDEPLOYQT)
         return()
@@ -18,7 +20,7 @@ function(configure_macos_build target)
         return()
     endif ()
 
-    set(_deploy_script "${CMAKE_CURRENT_SOURCE_DIR}/cmake/deploy/macos/RunMacDeployQt.cmake")
+    set(_deploy_script "${_MACOS_BUILD_DIR}/RunMacDeployQt.cmake")
 
     if (TARGET MacDeployQt)
         return()

@@ -65,10 +65,10 @@ Build via Qt Creator (recommended) or the generated Gradle project in `<build-di
 
 ### CMake Module Organization
 
-Root `CMakeLists.txt` is minimal (14 lines) — it delegates to two entry points:
+Root `CMakeLists.txt` is a workspace coordinator — it calls `configure_project()` then adds `libs/` and `app/` as subdirectories:
 
 - **`cmake/ProjectSetup.cmake`** → `configure_project()`: compiler settings, Conan, Qt discovery, AUTOMOC
-- **`cmake/MainApp.cmake`** → `configure_main_app()`: creates the executable, registers QML modules, platform sources, code signing, packaging targets
+- **`app/CMakeLists.txt`** → includes `cmake/MainApp.cmake` and calls `configure_main_app()`: creates the executable, registers QML modules, platform sources, code signing, packaging targets
 
 Deploy modules live in `cmake/deploy/` organized by platform subdirectory, with custom build targets that chain together:
 - **iOS**: `IOSArchive → IOSExportIPA → VerifyIOSIPA → IOSUploadASC → ReleaseDistributableIOS`
@@ -98,24 +98,26 @@ All CMake modules use `include_guard(GLOBAL)`.
 
 ### Application Structure
 
-- **Entry point**: `src/main/common/main.cpp` — creates QGuiApplication, sets AppStyle, loads `Main.qml`
-- **Navigation**: C++ `NavigationController` singleton (`include/main/common/navigation/`) manages a back-stack of `(url, props, showChrome)` entries. QML drives a `Loader` from `currentUrl`/`currentProps`.
-- **QML root**: `qml/Main.qml` — `ApplicationWindow` with adaptive portrait/landscape layouts
-- **Organisms**: `qml/organisms/` — reusable composite components (Header, Footer, NavBar, NavigationStack)
-- **Pages**: `qml/pages/` (Readme, StyleShowcase, License) with content components in `qml/pages/content/`
-- **Layouts**: `qml/templates/` (AdaptiveLayout, MainPortraitLayout, MainLandscapeLayout)
-- **Android back**: JNI glue in `src/main/android/` queues `NavigationController::pop()` onto the Qt thread
+The main application lives in `app/`, which is a peer of `libs/` under the workspace root.
+
+- **Entry point**: `app/src/main/common/main.cpp` — creates QGuiApplication, sets AppStyle, loads `Main.qml`
+- **Navigation**: C++ `NavigationController` singleton (`app/include/main/common/navigation/`) manages a back-stack of `(url, props, showChrome)` entries. QML drives a `Loader` from `currentUrl`/`currentProps`.
+- **QML root**: `app/qml/Main.qml` — `ApplicationWindow` with adaptive portrait/landscape layouts
+- **Organisms**: `app/qml/organisms/` — reusable composite components (Header, Footer, NavBar, NavigationStack)
+- **Pages**: `app/qml/pages/` (Readme, StyleShowcase, License) with content components in `app/qml/pages/content/`
+- **Layouts**: `app/qml/templates/` (AdaptiveLayout, MainPortraitLayout, MainLandscapeLayout)
+- **Android back**: JNI glue in `app/src/main/android/` queues `NavigationController::pop()` onto the Qt thread
 
 ### QML Modules
 
 Three QML modules, each a separate CMake target:
-- **`dev.crowell.QtQuickTemplate`** — main app QML (files in `qml/`)
+- **`dev.crowell.QtQuickTemplate`** — main app QML (files in `app/qml/`)
 - **`dev.crowell.AppTheme`** — `Theme.qml` singleton with design tokens (colors, spacing, radii, typography)
 - **`dev.crowell.AppStyle`** — custom Qt Quick Controls 2 style overriding Button, TextField, etc.
 
 AppTheme and AppStyle link against Qt Private modules (`Qt6::QmlPrivate`, `Qt6::QuickPrivate`, `Qt6::QuickTemplates2Private`) for deep style customization. Both have the Qt type compiler enabled.
 
-QML files use `QT_RESOURCE_ALIAS` for flattened resource paths (e.g., `qml/pages/Readme.qml` → `pages/Readme.qml`).
+QML files use `QT_RESOURCE_ALIAS` for flattened resource paths (e.g., `app/qml/pages/Readme.qml` → `pages/Readme.qml`).
 
 ### Libraries
 
@@ -128,8 +130,8 @@ Libraries live in `libs/`. Helper macros in `cmake/libs/LibraryCommon.cmake`:
 ### Version Generation
 
 `cmake/deploy/GenerateVersion.cmake` computes build number from `git rev-list --count HEAD`:
-- iOS: generates `platforms/ios/version.xcconfig`
-- Android: generates `platforms/android/version.properties`
+- iOS: generates `app/platforms/ios/version.xcconfig`
+- Android: generates `app/platforms/android/version.properties`
 - Format: `MARKETING_VERSION = 1.0`, `CURRENT_PROJECT_VERSION = 1.0.0.<commit_count>`
 
 ## Key Conventions
@@ -137,8 +139,8 @@ Libraries live in `libs/`. Helper macros in `cmake/libs/LibraryCommon.cmake`:
 - **C++23** project-wide (C++20 for the helloworld sample library demonstrating modules)
 - **Qt minimum**: 6.10 — the FFmpeg static-linking workaround in `cmake/qt/QtProject.cmake` is specific to this version
 - **Cache variable prefix**: all project-specific CMake cache variables use the `QTQUICKTEMPLATE_` prefix
-- **Platform resources**: `platforms/{ios,macos,android,linux,windows}/` — Info.plists, entitlements, icons, manifests
-- **QML directory is `qml/`** — used by macdeployqt's `-qmldir` flag; organized by atomic design level (atoms, molecules, organisms, templates, pages)
+- **Platform resources**: `app/platforms/{ios,macos,android,linux,windows}/` — Info.plists, entitlements, icons, manifests
+- **QML directory is `app/qml/`** — used by macdeployqt's `-qmldir` flag; organized by atomic design level (atoms, molecules, organisms, templates, pages)
 
 ## Known Harmless Warnings
 

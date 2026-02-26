@@ -11,6 +11,8 @@ set(QTQUICKTEMPLATE_MACOS_APP_STORE_ARCHIVE_CONFIGURATION "Release" CACHE STRING
     "Build configuration used for macOS App Store archive/export"
 )
 
+set(_MACOS_APPSTORE_BUILD_DIR "${CMAKE_CURRENT_LIST_DIR}")
+
 function(configure_macos_appstore_build target)
     if (NOT APPLE OR IOS OR NOT CMAKE_GENERATOR STREQUAL "Xcode")
         return()
@@ -52,8 +54,8 @@ function(configure_macos_appstore_build target)
 ]=])
 
     set(_version_xcconfig "${CMAKE_BINARY_DIR}/macos/version.xcconfig")
-    set(_patch_script "${CMAKE_CURRENT_SOURCE_DIR}/cmake/deploy/macos/PatchArchiveInfo.cmake")
-    set(_deployqt_script "${CMAKE_CURRENT_SOURCE_DIR}/cmake/deploy/macos/RunMacDeployQt.cmake")
+    set(_patch_script "${_MACOS_APPSTORE_BUILD_DIR}/PatchArchiveInfo.cmake")
+    set(_deployqt_script "${_MACOS_APPSTORE_BUILD_DIR}/RunMacDeployQt.cmake")
 
     add_version_target(GenerateMacOSVersion macos "${_version_xcconfig}")
 

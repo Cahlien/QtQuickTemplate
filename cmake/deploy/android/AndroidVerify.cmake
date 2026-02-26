@@ -3,6 +3,8 @@ include_guard(GLOBAL)
 # AndroidVerify.cmake — Configures VerifyAndroidAAB and VerifyAndroidAPK targets
 # that verify release artifact signatures via jarsigner and apksigner.
 
+set(_ANDROID_VERIFY_DIR "${CMAKE_CURRENT_LIST_DIR}")
+
 function(configure_android_verify_aab target)
     if (NOT ANDROID)
         return()
@@ -19,7 +21,7 @@ function(configure_android_verify_aab target)
     endif ()
 
     set(_build_dir "${CMAKE_BINARY_DIR}/android-build")
-    set(_verify_script "${CMAKE_CURRENT_SOURCE_DIR}/cmake/deploy/android/VerifyAab.cmake")
+    set(_verify_script "${_ANDROID_VERIFY_DIR}/VerifyAab.cmake")
 
     _resolve_android_signing_vars(_ks _ksp _ka _kp)
 
@@ -58,7 +60,7 @@ function(configure_android_verify_apk target)
     endif ()
 
     set(_build_dir "${CMAKE_BINARY_DIR}/android-build")
-    set(_verify_script "${CMAKE_CURRENT_SOURCE_DIR}/cmake/deploy/android/VerifyApk.cmake")
+    set(_verify_script "${_ANDROID_VERIFY_DIR}/VerifyApk.cmake")
 
     if (NOT TARGET VerifyAndroidAPK)
         add_custom_target(VerifyAndroidAPK
