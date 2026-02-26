@@ -134,6 +134,35 @@ Libraries live in `app/libs/` — project-internal libraries are an architectura
 - Android: generates `app/platforms/android/version.properties`
 - Format: `MARKETING_VERSION = 1.0`, `CURRENT_PROJECT_VERSION = 1.0.0.<commit_count>`
 
+## Testing
+
+C++ unit tests use Qt Test; QML tests use Qt Quick Test. Gated by `QTQUICKTEMPLATE_ENABLE_TESTING` (ON by default on desktop, OFF on iOS/Android).
+
+```bash
+# Configure (testing enabled by default on desktop)
+./tools/uv run cmake --preset linux-release
+
+# Build all (includes test targets)
+./tools/uv run cmake --build build/Qt_6_10_2_for_Linux
+
+# Run all tests via CTest preset
+./tools/uv run ctest --preset linux-tests
+
+# Run individual tests
+./tools/uv run ctest --preset linux-tests -R tst_helloworld
+./tools/uv run ctest --preset linux-tests -R tst_navigation_controller
+./tools/uv run ctest --preset linux-tests -R tst_qml_navigation
+
+# Disable testing (e.g. for mobile builds)
+./tools/uv run cmake -S . -B build/no-tests -DQTQUICKTEMPLATE_ENABLE_TESTING=OFF
+```
+
+Test infrastructure:
+- **`cmake/testing/TestingSetup.cmake`** — `configure_testing()`: option, `enable_testing()`, `find_package(Qt6 … Test QuickTest)`
+- **`cmake/testing/TestTargets.cmake`** — `add_qt_test()` and `add_qt_quick_test()` helper functions
+- **`app/src/test/`** — NavigationController C++ tests and QML baseline test
+- **`app/libs/helloworld/src/test/`** — HelloWorld library tests
+
 ## Key Conventions
 
 - **C++23** project-wide (C++20 for the helloworld sample library demonstrating modules)

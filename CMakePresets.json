@@ -179,5 +179,27 @@
             "configurePreset": "linux-release",
             "targets": ["ReleaseDistributableLinux"]
         }
+    ],
+    "testPresets": [
+        {
+            "name": "linux-tests",
+            "configurePreset": "linux-release",
+            "output": { "outputOnFailure": true },
+            "condition": {
+                "type": "equals",
+                "lhs": "${hostSystemName}",
+                "rhs": "Linux"
+            }
+        },
+        {
+            "name": "macos-tests",
+            "configurePreset": "macos-release",
+            "output": { "outputOnFailure": true },
+            "condition": {
+                "type": "equals",
+                "lhs": "${hostSystemName}",
+                "rhs": "Darwin"
+            }
+        }
     ]
 }
