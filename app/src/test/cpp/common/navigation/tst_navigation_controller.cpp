@@ -40,14 +40,14 @@ void tst_NavigationController::initialState_historyLimitIsPositive() const
 
 void tst_NavigationController::push_emitsPushRequested() const
 {
-    QSignalSpy spy{&m_nav, &NavigationController::pushRequested};
+    const QSignalSpy spy{&m_nav, &NavigationController::pushRequested};
     m_nav.push(QStringLiteral("pages/Readme.qml"), {{"key", "value"}}, false);
     QCOMPARE(spy.count(), 1);
 }
 
 void tst_NavigationController::push_signalContainsUrl() const
 {
-    QSignalSpy spy{&m_nav, &NavigationController::pushRequested};
+    const QSignalSpy spy{&m_nav, &NavigationController::pushRequested};
     m_nav.push(QStringLiteral("pages/Readme.qml"), {{"key", "value"}}, false);
     QCOMPARE(spy.at(0).at(0).toString(), QStringLiteral("pages/Readme.qml"));
 }
@@ -55,14 +55,14 @@ void tst_NavigationController::push_signalContainsUrl() const
 void tst_NavigationController::push_signalContainsProps() const
 {
     const QVariantMap props{{"key", "value"}};
-    QSignalSpy spy{&m_nav, &NavigationController::pushRequested};
+    const QSignalSpy spy{&m_nav, &NavigationController::pushRequested};
     m_nav.push(QStringLiteral("pages/Readme.qml"), props, false);
     QCOMPARE(spy.at(0).at(1).toMap(), props);
 }
 
 void tst_NavigationController::push_signalContainsShowChrome() const
 {
-    QSignalSpy spy{&m_nav, &NavigationController::pushRequested};
+    const QSignalSpy spy{&m_nav, &NavigationController::pushRequested};
     m_nav.push(QStringLiteral("pages/Readme.qml"), {{"key", "value"}}, false);
     QCOMPARE(spy.at(0).at(2).toBool(), false);
 }
@@ -82,7 +82,7 @@ void tst_NavigationController::push_clearingForwardStackEmitsCurrentChanged() co
     m_nav.setCurrent(QStringLiteral("page1"), QVariantMap(), true, 2);
     m_nav.pop();
 
-    QSignalSpy spy{&m_nav, &NavigationController::currentChanged};
+    const QSignalSpy spy{&m_nav, &NavigationController::currentChanged};
     m_nav.push(QStringLiteral("page2"));
     QVERIFY(spy.count() >= 1);
 }
@@ -92,7 +92,7 @@ void tst_NavigationController::push_atHistoryLimitEmitsReplaceRequested() const
     const int limit{m_nav.historyLimit()};
     m_nav.setCurrent(QStringLiteral("deep"), QVariantMap(), true, limit);
 
-    QSignalSpy spy{&m_nav, &NavigationController::replaceRequested};
+    const QSignalSpy spy{&m_nav, &NavigationController::replaceRequested};
     m_nav.push(QStringLiteral("next"));
     QCOMPARE(spy.count(), 1);
 }
@@ -102,14 +102,14 @@ void tst_NavigationController::push_atHistoryLimitDoesNotEmitPushRequested() con
     const int limit{m_nav.historyLimit()};
     m_nav.setCurrent(QStringLiteral("deep"), QVariantMap(), true, limit);
 
-    QSignalSpy spy{&m_nav, &NavigationController::pushRequested};
+    const QSignalSpy spy{&m_nav, &NavigationController::pushRequested};
     m_nav.push(QStringLiteral("next"));
     QCOMPARE(spy.count(), 0);
 }
 
 void tst_NavigationController::setCurrent_emitsCurrentChanged() const
 {
-    QSignalSpy spy{&m_nav, &NavigationController::currentChanged};
+    const QSignalSpy spy{&m_nav, &NavigationController::currentChanged};
     m_nav.setCurrent(QStringLiteral("pages/License.qml"), {{"id", 42}}, false, 2);
     QCOMPARE(spy.count(), 1);
 }
@@ -143,21 +143,21 @@ void tst_NavigationController::setCurrent_identicalValuesEmitNoSignal() const
 {
     m_nav.setCurrent(QStringLiteral("page"), QVariantMap(), true, 1);
 
-    QSignalSpy spy{&m_nav, &NavigationController::currentChanged};
+    const QSignalSpy spy{&m_nav, &NavigationController::currentChanged};
     m_nav.setCurrent(QStringLiteral("page"), QVariantMap(), true, 1);
     QCOMPARE(spy.count(), 0);
 }
 
 void tst_NavigationController::pop_atRootEmitsBackAtRoot() const
 {
-    QSignalSpy spy{&m_nav, &NavigationController::backAtRoot};
+    const QSignalSpy spy{&m_nav, &NavigationController::backAtRoot};
     m_nav.pop();
     QCOMPARE(spy.count(), 1);
 }
 
 void tst_NavigationController::pop_atRootDoesNotEmitPopRequested() const
 {
-    QSignalSpy spy{&m_nav, &NavigationController::popRequested};
+    const QSignalSpy spy{&m_nav, &NavigationController::popRequested};
     m_nav.pop();
     QCOMPARE(spy.count(), 0);
 }
@@ -166,7 +166,7 @@ void tst_NavigationController::pop_emitsPopRequested() const
 {
     m_nav.setCurrent(QStringLiteral("pages/Readme.qml"), QVariantMap(), true, 2);
 
-    QSignalSpy spy{&m_nav, &NavigationController::popRequested};
+    const QSignalSpy spy{&m_nav, &NavigationController::popRequested};
     m_nav.pop();
     QCOMPARE(spy.count(), 1);
 }
@@ -180,7 +180,7 @@ void tst_NavigationController::pop_enablesCanGoForward() const
 
 void tst_NavigationController::forward_emptyStackIsNoOp() const
 {
-    QSignalSpy spy{&m_nav, &NavigationController::pushRequested};
+    const QSignalSpy spy{&m_nav, &NavigationController::pushRequested};
     m_nav.forward();
     QCOMPARE(spy.count(), 0);
 }
@@ -190,7 +190,7 @@ void tst_NavigationController::forward_emitsPushRequested() const
     m_nav.setCurrent(QStringLiteral("pages/Readme.qml"), {{"key", "val"}}, false, 2);
     m_nav.pop();
 
-    QSignalSpy spy{&m_nav, &NavigationController::pushRequested};
+    const QSignalSpy spy{&m_nav, &NavigationController::pushRequested};
     m_nav.forward();
     QCOMPARE(spy.count(), 1);
 }
@@ -200,7 +200,7 @@ void tst_NavigationController::forward_signalContainsSavedUrl() const
     m_nav.setCurrent(QStringLiteral("pages/Readme.qml"), {{"key", "val"}}, false, 2);
     m_nav.pop();
 
-    QSignalSpy spy{&m_nav, &NavigationController::pushRequested};
+    const QSignalSpy spy{&m_nav, &NavigationController::pushRequested};
     m_nav.forward();
     QCOMPARE(spy.at(0).at(0).toString(), QStringLiteral("pages/Readme.qml"));
 }
@@ -211,7 +211,7 @@ void tst_NavigationController::forward_signalContainsSavedProps() const
     m_nav.setCurrent(QStringLiteral("pages/Readme.qml"), props, false, 2);
     m_nav.pop();
 
-    QSignalSpy spy{&m_nav, &NavigationController::pushRequested};
+    const QSignalSpy spy{&m_nav, &NavigationController::pushRequested};
     m_nav.forward();
     QCOMPARE(spy.at(0).at(1).toMap(), props);
 }
@@ -221,21 +221,21 @@ void tst_NavigationController::forward_signalContainsSavedShowChrome() const
     m_nav.setCurrent(QStringLiteral("pages/Readme.qml"), {{"key", "val"}}, false, 2);
     m_nav.pop();
 
-    QSignalSpy spy{&m_nav, &NavigationController::pushRequested};
+    const QSignalSpy spy{&m_nav, &NavigationController::pushRequested};
     m_nav.forward();
     QCOMPARE(spy.at(0).at(2).toBool(), false);
 }
 
 void tst_NavigationController::replace_emitsReplaceRequested() const
 {
-    QSignalSpy spy{&m_nav, &NavigationController::replaceRequested};
+    const QSignalSpy spy{&m_nav, &NavigationController::replaceRequested};
     m_nav.replace(QStringLiteral("pages/StyleShowcase.qml"), {{"mode", "edit"}}, false);
     QCOMPARE(spy.count(), 1);
 }
 
 void tst_NavigationController::replace_signalContainsUrl() const
 {
-    QSignalSpy spy{&m_nav, &NavigationController::replaceRequested};
+    const QSignalSpy spy{&m_nav, &NavigationController::replaceRequested};
     m_nav.replace(QStringLiteral("pages/StyleShowcase.qml"), {{"mode", "edit"}}, false);
     QCOMPARE(spy.at(0).at(0).toString(), QStringLiteral("pages/StyleShowcase.qml"));
 }
@@ -243,14 +243,14 @@ void tst_NavigationController::replace_signalContainsUrl() const
 void tst_NavigationController::replace_signalContainsProps() const
 {
     const QVariantMap props{{"mode", "edit"}};
-    QSignalSpy spy{&m_nav, &NavigationController::replaceRequested};
+    const QSignalSpy spy{&m_nav, &NavigationController::replaceRequested};
     m_nav.replace(QStringLiteral("pages/StyleShowcase.qml"), props, false);
     QCOMPARE(spy.at(0).at(1).toMap(), props);
 }
 
 void tst_NavigationController::replace_signalContainsShowChrome() const
 {
-    QSignalSpy spy{&m_nav, &NavigationController::replaceRequested};
+    const QSignalSpy spy{&m_nav, &NavigationController::replaceRequested};
     m_nav.replace(QStringLiteral("pages/StyleShowcase.qml"), {{"mode", "edit"}}, false);
     QCOMPARE(spy.at(0).at(2).toBool(), false);
 }
