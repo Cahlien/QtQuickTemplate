@@ -12,7 +12,6 @@ class tst_NavigationController : public QObject
     Q_OBJECT
 
 private slots:
-    void initTestCase();
     void init() const;
 
     void initialState_currentUrlIsEmpty() const;
@@ -56,5 +55,5 @@ private slots:
     void replace_clearsForwardStack() const;
 
 private:
-    NavigationController *nav{};
+    NavigationController &m_nav = *NavigationController::instance();
 };

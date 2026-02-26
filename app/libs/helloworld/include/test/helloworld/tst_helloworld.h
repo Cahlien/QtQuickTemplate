@@ -14,5 +14,5 @@ private slots:
     void message_isNotEmpty() const;
 
 private:
-    HelloWorld m_hw{};
+    const HelloWorld m_hw{};
 };
