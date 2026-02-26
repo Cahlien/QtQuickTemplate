@@ -26,17 +26,16 @@ else
     BOLD='' GREEN='' CYAN='' YELLOW='' RESET=''
 fi
 
-info()  { printf "${CYAN}[configure_env]${RESET} %s\n" "$*"; }
-ok()    { printf "${GREEN}[configure_env]${RESET} %s\n" "$*"; }
-warn()  { printf "${YELLOW}[configure_env]${RESET} %s\n" "$*"; }
-header(){ printf "\n${BOLD}── %s ──${RESET}\n" "$*"; }
+info()  { printf '%b[configure_env]%b %s\n' "$CYAN" "$RESET" "$*"; }
+ok()    { printf '%b[configure_env]%b %s\n' "$GREEN" "$RESET" "$*"; }
+warn()  { printf '%b[configure_env]%b %s\n' "$YELLOW" "$RESET" "$*"; }
+header(){ printf '\n%b── %s ──%b\n' "$BOLD" "$*" "$RESET"; }
 
 # ── Load existing .env.local as defaults ─────────────────────────────────────
 declare -A DEFAULTS
 if [ -f "$ENV_LOCAL" ]; then
     info "Loading existing .env.local for defaults..."
     while IFS= read -r line; do
-        # Skip comments and blank lines
         [[ "$line" =~ ^[[:space:]]*# ]] && continue
         [[ -z "$line" ]] && continue
         key="${line%%=*}"
@@ -51,7 +50,9 @@ fi
 declare -A RESULT
 
 prompt() {
-    local var="$1" desc="$2" default="${3:-${DEFAULTS[$var]:-}}"
+    local var="$1"
+    local desc="$2"
+    local default="${3:-${DEFAULTS[$var]:-}}"
     local input
 
     if [ -n "$default" ]; then
@@ -62,7 +63,6 @@ prompt() {
     read -r input
     input="${input:-$default}"
 
-    # Soft path validation
     if [ -n "$input" ] && [[ "$desc" == *path* || "$desc" == *root* || "$desc" == *Root* || "$desc" == *PATH* || "$desc" == *ROOT* ]]; then
         if [ ! -e "$input" ]; then
             warn "    Path does not exist yet: $input (continuing anyway)"
@@ -112,9 +112,8 @@ detect_android_sdk() {
 detect_android_ndk() {
     local sdk_root="${1:-}"
     if [ -n "$sdk_root" ] && [ -d "$sdk_root/ndk" ]; then
-        # Pick the highest-versioned NDK directory
         local latest
-        latest=$(ls -1d "$sdk_root/ndk"/*/ 2>/dev/null | sort -V | tail -1)
+        latest=$(find "$sdk_root/ndk" -maxdepth 1 -mindepth 1 -type d 2>/dev/null | sort -V | tail -1)
         if [ -n "$latest" ]; then
             echo "${latest%/}"
             return
@@ -143,7 +142,6 @@ detect_java_home() {
                     return
                 fi
             done
-            # Fallback: follow the java binary
             if command -v java &>/dev/null; then
                 local java_bin
                 java_bin="$(readlink -f "$(command -v java)")"
@@ -155,9 +153,9 @@ detect_java_home() {
 }
 
 # ── Start ────────────────────────────────────────────────────────────────────
-printf "\n${BOLD}QtQuickTemplate — Developer Environment Configuration${RESET}\n"
-printf "Detected platform: ${CYAN}%s${RESET}\n" "$PLATFORM"
-printf "Values are written to ${CYAN}.env.local${RESET} (gitignored).\n"
+printf '\n%bQtQuickTemplate — Developer Environment Configuration%b\n' "$BOLD" "$RESET"
+printf 'Detected platform: %b%s%b\n' "$CYAN" "$PLATFORM" "$RESET"
+printf 'Values are written to %b.env.local%b (gitignored).\n' "$CYAN" "$RESET"
 printf "Press Enter to keep the default shown in [brackets].\n"
 
 # ── Qt SDK Paths ─────────────────────────────────────────────────────────────
@@ -169,24 +167,20 @@ case "$PLATFORM" in
         prompt QT_IOS_ROOT    "iOS Qt SDK root (e.g. ~/Qt/6.10.2/ios)"
         prompt QT_ANDROID_ROOT "Android Qt SDK root (e.g. ~/Qt/6.10.2/android_arm64_v8a)"
         prompt QT_HOST_ROOT    "Host Qt root for cross-compilation (e.g. ~/Qt/6.10.2/macos)"
-        # Derive Qt6_DIR and CMAKE_PREFIX_PATH from macOS root
         derive_qt_paths "${RESULT[QT_MACOS_ROOT]:-${DEFAULTS[QT_MACOS_ROOT]:-}}"
         ;;
     Linux)
         prompt QT_LINUX_ROOT  "Linux Qt SDK root (e.g. ~/Qt/6.10.2/gcc_64)"
         prompt QT_ANDROID_ROOT "Android Qt SDK root (leave empty to skip)"
         prompt QT_HOST_ROOT    "Host Qt root for cross-compilation (leave empty to skip)"
-        # Derive Qt6_DIR and CMAKE_PREFIX_PATH from Linux root
         derive_qt_paths "${RESULT[QT_LINUX_ROOT]:-${DEFAULTS[QT_LINUX_ROOT]:-}}"
         ;;
     *)
-        # Generic fallback
         prompt QT_ROOT "Qt SDK root"
         derive_qt_paths "${RESULT[QT_ROOT]:-${DEFAULTS[QT_ROOT]:-}}"
         ;;
 esac
 
-# Show derived paths
 if [ -n "${RESULT[Qt6_DIR]:-}" ]; then
     info "Derived Qt6_DIR=${RESULT[Qt6_DIR]}"
 fi
@@ -215,7 +209,6 @@ fi
 if [ -n "${RESULT[QT_ANDROID_ROOT]:-${DEFAULTS[QT_ANDROID_ROOT]:-}}" ]; then
     header "Android SDK"
 
-    # Auto-detect defaults for Android toolchain paths
     detected_sdk="$(detect_android_sdk || true)"
     prompt ANDROID_SDK_ROOT "Android SDK root" "${DEFAULTS[ANDROID_SDK_ROOT]:-$detected_sdk}"
 
@@ -246,85 +239,72 @@ fi
 # ── Write .env.local ─────────────────────────────────────────────────────────
 header "Writing .env.local"
 
+# emit VAR — writes VAR=value if set in RESULT, otherwise writes # VAR=
+emit() {
+    local name="$1"
+    if [ -n "${RESULT[$name]:-}" ]; then
+        echo "${name}=${RESULT[$name]}"
+    else
+        echo "# ${name}="
+    fi
+}
+
+# emit_section "Header" VAR1 VAR2 ...
+emit_section() {
+    local heading="$1"; shift
+    echo "# ${heading}"
+    for name in "$@"; do
+        emit "$name"
+    done
+    echo ""
+}
+
+has_android="${RESULT[QT_ANDROID_ROOT]:-${DEFAULTS[QT_ANDROID_ROOT]:-}}"
+
 {
     echo "# Generated by tools/configure_env.sh on $(date -u +%Y-%m-%dT%H:%M:%SZ)"
     echo "# Re-run the script to update. Manual edits are preserved as defaults."
     echo ""
 
-    # Qt SDK Paths
-    has_qt=false
-    for var in QT_MACOS_ROOT QT_IOS_ROOT QT_LINUX_ROOT QT_ANDROID_ROOT QT_HOST_ROOT QT_ROOT Qt6_DIR CMAKE_PREFIX_PATH; do
-        if [ -n "${RESULT[$var]:-}" ]; then
-            if [ "$has_qt" = false ]; then
-                echo "# Qt SDK Paths"
-                has_qt=true
-            fi
-            echo "${var}=${RESULT[$var]}"
-        fi
-    done
-    [ "$has_qt" = true ] && echo ""
+    case "$PLATFORM" in
+        Linux)
+            emit_section "Qt SDK Paths" \
+                QT_LINUX_ROOT Qt6_DIR CMAKE_PREFIX_PATH QT_HOST_ROOT
+            emit_section "Linux Signing" \
+                GPG_KEY_ID
+            ;;
+        Darwin)
+            emit_section "Qt SDK Paths" \
+                QT_MACOS_ROOT QT_IOS_ROOT Qt6_DIR CMAKE_PREFIX_PATH QT_HOST_ROOT
+            emit_section "macOS Signing" \
+                MACOS_APP_SIGN_IDENTITY MACOS_DMG_SIGN_IDENTITY MACOS_NOTARY_KEYCHAIN_PROFILE
+            emit_section "App Store" \
+                APPLE_DEVELOPMENT_TEAM MACOS_APP_STORE_PROVISIONING_PROFILE \
+                ASC_API_KEY_ID ASC_API_ISSUER_ID
+            emit_section "iOS Signing" \
+                IOS_PROVISIONING_PROFILE
+            ;;
+        *)
+            emit_section "Qt SDK Paths" \
+                QT_ROOT Qt6_DIR CMAKE_PREFIX_PATH
+            ;;
+    esac
 
-    # Apple Signing
-    has_apple=false
-    for var in APPLE_DEVELOPMENT_TEAM MACOS_APP_SIGN_IDENTITY MACOS_DMG_SIGN_IDENTITY MACOS_NOTARY_KEYCHAIN_PROFILE MACOS_APP_STORE_PROVISIONING_PROFILE ASC_API_KEY_ID ASC_API_ISSUER_ID IOS_PROVISIONING_PROFILE; do
-        if [ -n "${RESULT[$var]:-}" ]; then
-            if [ "$has_apple" = false ]; then
-                echo "# Apple Signing"
-                has_apple=true
-            fi
-            echo "${var}=${RESULT[$var]}"
-        fi
-    done
-    [ "$has_apple" = true ] && echo ""
-
-    # Android SDK
-    has_android_sdk=false
-    for var in ANDROID_SDK_ROOT ANDROID_NDK_ROOT JAVA_HOME; do
-        if [ -n "${RESULT[$var]:-}" ]; then
-            if [ "$has_android_sdk" = false ]; then
-                echo "# Android SDK"
-                has_android_sdk=true
-            fi
-            echo "${var}=${RESULT[$var]}"
-        fi
-    done
-    [ "$has_android_sdk" = true ] && echo ""
-
-    # Android Signing
-    has_android_signing=false
-    for var in ANDROID_KEYSTORE_PATH ANDROID_KEYSTORE_PASSWORD ANDROID_KEY_ALIAS ANDROID_KEY_PASSWORD; do
-        if [ -n "${RESULT[$var]:-}" ]; then
-            if [ "$has_android_signing" = false ]; then
-                echo "# Android Signing"
-                has_android_signing=true
-            fi
-            echo "${var}=${RESULT[$var]}"
-        fi
-    done
-    [ "$has_android_signing" = true ] && echo ""
-
-    # Android Play Upload
-    has_play=false
-    for var in ANDROID_PLAY_SERVICE_ACCOUNT_FILE ANDROID_PLAY_TRACK ANDROID_PLAY_RELEASE_STATUS; do
-        if [ -n "${RESULT[$var]:-}" ]; then
-            if [ "$has_play" = false ]; then
-                echo "# Google Play Upload"
-                has_play=true
-            fi
-            echo "${var}=${RESULT[$var]}"
-        fi
-    done
-    [ "$has_play" = true ] && echo ""
-
-    # Linux Signing
-    if [ -n "${RESULT[GPG_KEY_ID]:-}" ]; then
-        echo "# Linux Signing"
-        echo "GPG_KEY_ID=${RESULT[GPG_KEY_ID]}"
-        echo ""
+    if [ -n "$has_android" ]; then
+        emit_section "Android Qt SDK" \
+            QT_ANDROID_ROOT
+        emit_section "Android SDK" \
+            ANDROID_SDK_ROOT ANDROID_NDK_ROOT JAVA_HOME
+        emit_section "Android Signing" \
+            ANDROID_KEYSTORE_PATH ANDROID_KEYSTORE_PASSWORD \
+            ANDROID_KEY_ALIAS ANDROID_KEY_PASSWORD
+        emit_section "Google Play Upload" \
+            ANDROID_PLAY_SERVICE_ACCOUNT_FILE ANDROID_PLAY_TRACK \
+            ANDROID_PLAY_RELEASE_STATUS
     fi
 } > "$ENV_LOCAL"
 
 ok "Wrote $ENV_LOCAL"
-printf "\nYou can now run builds with ${CYAN}./tools/run${RESET}:\n"
+printf '\nYou can now run builds with %b./tools/run%b:\n' "$CYAN" "$RESET"
 printf "  ./tools/run cmake --preset <preset>        # configure\n"
 printf "  ./tools/run cmake --build --preset <preset> # build\n"

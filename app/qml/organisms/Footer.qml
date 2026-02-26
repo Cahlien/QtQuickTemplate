@@ -29,9 +29,6 @@ Item {
         anchors.fill: parent
         color: Theme.surface
 
-        // Block pointer events so they don't fall through the non-interactive
-        // background to handlers underneath (the root Item's back-gesture
-        // TapHandler covers the entire window).
         MouseArea { anchors.fill: parent }
 
         Rectangle {

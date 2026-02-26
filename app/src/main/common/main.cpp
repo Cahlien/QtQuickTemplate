@@ -63,7 +63,6 @@ int main(int argc, char *argv[])
 
     HelloWorld helloWorld{};
 
-    // Demonstrating successful use of the HelloWorld library API.
     qDebug() << helloWorld.formatMessage();
 
     engine.loadFromModule("dev.crowell.QtQuickTemplate", "Main");
