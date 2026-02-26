@@ -149,9 +149,8 @@ C++ unit tests use Qt Test; QML tests use Qt Quick Test. Gated by `QTQUICKTEMPLA
 ./tools/uv run ctest --preset linux-tests
 
 # Run individual tests
-./tools/uv run ctest --preset linux-tests -R tst_helloworld
-./tools/uv run ctest --preset linux-tests -R tst_navigation_controller
-./tools/uv run ctest --preset linux-tests -R tst_qml_navigation
+./tools/uv run ctest --preset linux-tests -R tst_cpp          # All C++ tests (HelloWorld + NavigationController)
+./tools/uv run ctest --preset linux-tests -R tst_qml_navigation  # QML tests
 
 # Disable testing (e.g. for mobile builds)
 ./tools/uv run cmake -S . -B build/no-tests -DQTQUICKTEMPLATE_ENABLE_TESTING=OFF
@@ -160,8 +159,9 @@ C++ unit tests use Qt Test; QML tests use Qt Quick Test. Gated by `QTQUICKTEMPLA
 Test infrastructure:
 - **`cmake/testing/TestingSetup.cmake`** — `configure_testing()`: option, `enable_testing()`, `find_package(Qt6 … Test QuickTest)`
 - **`cmake/testing/TestTargets.cmake`** — `add_qt_test()` and `add_qt_quick_test()` helper functions
-- **`app/src/test/`** — NavigationController C++ tests and QML baseline test
-- **`app/libs/helloworld/src/test/`** — HelloWorld library tests
+- **`app/include/test/`** — test suite headers (declarations with Q_OBJECT)
+- **`app/src/test/cpp/`** — single C++ test runner (`tst_cpp`) with custom `main()`, HelloWorld + NavigationController implementations
+- **`app/src/test/qml/`** — QML test runner (`tst_qml_navigation`)
 
 ## Key Conventions
 
