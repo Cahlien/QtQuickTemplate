@@ -14,10 +14,12 @@ import pytest
 # ---------------------------------------------------------------------------
 
 def pytest_collection_modifyitems(config: pytest.Config, items: list[pytest.Item]) -> None:
-    """Skip all tests on non-macOS platforms."""
-    if sys.platform != "darwin":
-        skip = pytest.mark.skip(reason="Apple deploy tests require macOS")
-        for item in items:
+    """Tag every test in this directory as 'integration' and skip all on non-macOS."""
+    integration = pytest.mark.integration
+    skip = pytest.mark.skip(reason="Apple deploy tests require macOS")
+    for item in items:
+        item.add_marker(integration)
+        if sys.platform != "darwin":
             item.add_marker(skip)
 
 

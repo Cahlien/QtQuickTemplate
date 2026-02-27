@@ -40,8 +40,8 @@ function(setup_app_qml_module target)
     )
     set_qml_resource_aliases(_qml_all_files)
 
-    set_source_files_properties(${CMAKE_SOURCE_DIR}/README.md PROPERTIES QT_RESOURCE_ALIAS "README.md")
-    set_source_files_properties(${CMAKE_SOURCE_DIR}/LICENSE PROPERTIES QT_RESOURCE_ALIAS "LICENSE")
+    set_source_files_properties(${CMAKE_CURRENT_SOURCE_DIR}/README.md PROPERTIES QT_RESOURCE_ALIAS "README.md")
+    set_source_files_properties(${CMAKE_CURRENT_SOURCE_DIR}/LICENSE PROPERTIES QT_RESOURCE_ALIAS "LICENSE")
 
     qt_add_qml_module(${target}
         URI dev.crowell.${PROJECT_NAME}
@@ -50,13 +50,12 @@ function(setup_app_qml_module target)
         QML_FILES
             ${_qml_all_files}
         RESOURCES
-            ${CMAKE_SOURCE_DIR}/README.md
-            ${CMAKE_SOURCE_DIR}/LICENSE
+            ${CMAKE_CURRENT_SOURCE_DIR}/README.md
+            ${CMAKE_CURRENT_SOURCE_DIR}/LICENSE
             ${_app_icon_resource}
         SOURCES
             src/main/common/app_info.cpp
             include/main/common/app_info.h
-            src/main/common/navigation/navigation_controller.cpp
             include/main/common/navigation/navigation_controller.h
         DEPENDENCIES
             dev.crowell.AppTheme

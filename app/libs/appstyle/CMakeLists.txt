@@ -43,5 +43,5 @@ target_link_libraries(${TARGET}
 )
 
 if (QTQUICKTEMPLATE_ENABLE_TESTING)
-    add_subdirectory(src/test)
+    add_subdirectory(test)
 endif ()

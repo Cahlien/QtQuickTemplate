@@ -1,4 +1,4 @@
-#include "helloworld/tst_helloworld.h"
+#include "tst_helloworld.h"
 
 void tst_HelloWorld::message_returnsHelloWorld() const
 {

@@ -10,12 +10,12 @@ from pathlib import Path
 
 import pytest
 
-from tests.helpers.artifacts import (
+from integration.helpers.artifacts import (
     macos_app_bundle_path,
     macos_dmg_glob,
     macos_dmg_path,
 )
-from tests.helpers.codesign import (
+from integration.helpers.codesign import (
     codesign_display,
     codesign_verify,
     parse_codesign_authority,

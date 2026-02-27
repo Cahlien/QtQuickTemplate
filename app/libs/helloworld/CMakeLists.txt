@@ -75,5 +75,5 @@ if (QDOC_EXECUTABLE)
 endif ()
 
 if (QTQUICKTEMPLATE_ENABLE_TESTING)
-    add_subdirectory(src/test)
+    add_subdirectory(test)
 endif ()

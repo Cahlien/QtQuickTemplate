@@ -7,5 +7,5 @@ include("${CMAKE_SOURCE_DIR}/cmake/MainApp.cmake")
 configure_main_app()
 
 if (QTQUICKTEMPLATE_ENABLE_TESTING)
-    add_subdirectory(src/test)
+    add_subdirectory(test)
 endif ()

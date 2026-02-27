@@ -12,12 +12,33 @@ Run `./tools/bootstrap.sh` (macOS/Linux) or `.\tools\bootstrap.ps1` (Windows) to
 
 Key files:
 - **`.python-version`** — pins CPython 3.14t (freethreaded); uv auto-downloads this interpreter
-- **`pyproject.toml`** — project metadata and Python dependency declarations (cmake, conan, pytest, etc.)
+- **`pyproject.toml`** — workspace Python metadata and dependency declarations (cmake, conan, pytest, etc.)
 - **`uv.lock`** — cross-platform lockfile; regenerate with `./tools/uv lock` after changing `pyproject.toml`
 - **`tools/bootstrap.sh`** / **`tools/bootstrap.ps1`** — idempotent bootstrap scripts
 - **`tools/uv`** — project-local uv binary (gitignored, installed by bootstrap)
+- **`conanws.yml`** — Conan workspace definition; lists all monorepo products for `conan workspace install`
+- **`conanfile.py`** — workspace version-authority recipe; records canonical versions for the single-version rule
+- **`app/conanfile.py`** — app-level Conan recipe; declares which packages the app needs
+- **`app/pyproject.toml`** — app-level pytest configuration (testpaths, markers, addopts)
 
 After bootstrapping, prefix build/test commands with `./tools/uv run` (e.g. `./tools/uv run cmake --preset <name>`) or activate the venv directly (`source .venv/bin/activate`).
+
+## Conan Workspace
+
+C++ dependencies are managed via Conan 2. The workspace (`conanws.yml`) lists every product in the monorepo; `conanfile.py` at the workspace root is the single-version-rule authority for canonical dependency versions.
+
+```bash
+# Install dependencies for all workspace products
+./tools/uv run conan workspace install conanws.yml
+
+# Regenerate the lockfile after adding or bumping a dependency
+./tools/uv run conan lock create conanws.yml
+
+# Install dependencies for the app only (e.g. during iterative development)
+./tools/uv run conan install app/ --build=missing
+```
+
+Single-version rule: when adding a dependency to `app/conanfile.py`, record the same version as a comment under `requirements()` in the root `conanfile.py` so the canonical version list is visible in one place. Regenerate `conan.lock` and commit it.
 
 ## Build Commands
 
@@ -121,7 +142,7 @@ QML files use `QT_RESOURCE_ALIAS` for flattened resource paths (e.g., `app/qml/p
 
 ### Libraries
 
-Libraries live in `app/libs/` — project-internal libraries are an architectural decision of `app/`, not the workspace. Libraries mirror the `app/` directory convention: C++ production code lives in `src/main/` and `include/main/`, test code in `src/test/` and `include/test/`, and QML files in a top-level `qml/` directory (sibling to `src/`).
+Libraries live in `app/libs/` — project-internal libraries are an architectural decision of `app/`, not the workspace. Libraries mirror the `app/` directory convention: C++ production code lives in `src/main/` and `include/main/`, tests live in a top-level `test/` directory (sibling to `src/`) with a `unit/cpp/` or `unit/qml/` hierarchy, and QML files in a top-level `qml/` directory.
 
 Helper macros in `cmake/libs/LibraryCommon.cmake`:
 - `add_portable_cpp_library()` / `add_portable_qt_library()` — static on iOS, shared elsewhere
@@ -161,19 +182,30 @@ C++ unit tests use Qt Test; QML tests use Qt Quick Test. Gated by `QTQUICKTEMPLA
 ./tools/uv run cmake -S . -B build/no-tests -DQTQUICKTEMPLATE_ENABLE_TESTING=OFF
 ```
 
+Integration tests (Apple deploy pipeline, pytest, macOS only):
+
+```bash
+# -c app/pyproject.toml sets rootdir=app/ and loads app-level pytest config
+./tools/uv run pytest -c app/pyproject.toml                 # 0 tests (all integration, excluded by default)
+./tools/uv run pytest -c app/pyproject.toml -m integration  # all 48 integration tests
+./tools/uv run pytest -c app/pyproject.toml -m ios          # iOS pipeline only
+./tools/uv run pytest -c app/pyproject.toml -m macos_dmg    # macOS DMG pipeline only
+./tools/uv run pytest -c app/pyproject.toml -m macos_appstore  # macOS App Store pipeline only
+```
+
 Test infrastructure:
 - **`cmake/testing/TestingSetup.cmake`** — `configure_testing()`: option, `enable_testing()`, `find_package(Qt6 … Test QuickTest)`
 - **`cmake/testing/TestTargets.cmake`** — `add_qt_test()` and `add_qt_quick_test()` helper functions
 
 App-level tests:
-- **`app/include/test/`** — test suite headers (declarations with Q_OBJECT)
-- **`app/src/test/cpp/`** — NavigationController C++ test runner (`tst_cpp`)
-- **`app/src/test/qml/`** — Navigation QML test runner (`tst_qml_navigation`)
+- **`app/test/unit/cpp/`** — NavigationController C++ test runner + Q_OBJECT headers (`tst_cpp`)
+- **`app/test/unit/qml/`** — Navigation QML test runner (`tst_qml_navigation`)
+- **`app/test/integration/`** — Apple deploy pipeline integration tests (pytest, macOS only); verifies macOS DMG, macOS App Store PKG, and iOS IPA artifacts produced by the CMake deploy targets
 
 Library tests (each library owns its own tests):
-- **`app/libs/helloworld/src/test/cpp/`** — HelloWorld C++ tests (`tst_helloworld`)
-- **`app/libs/apptheme/src/test/qml/`** — AppTheme QML tests (`tst_qml_apptheme`)
-- **`app/libs/appstyle/src/test/qml/`** — AppStyle QML tests (`tst_qml_appstyle`)
+- **`app/libs/helloworld/test/unit/cpp/`** — HelloWorld C++ tests + Q_OBJECT headers (`tst_helloworld`)
+- **`app/libs/apptheme/test/unit/qml/`** — AppTheme QML tests (`tst_qml_apptheme`)
+- **`app/libs/appstyle/test/unit/qml/`** — AppStyle QML tests (`tst_qml_appstyle`)
 
 ## Key Conventions
 

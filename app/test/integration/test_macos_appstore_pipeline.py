@@ -11,7 +11,7 @@ from pathlib import Path
 
 import pytest
 
-from tests.helpers.artifacts import (
+from integration.helpers.artifacts import (
     macos_appstore_archive_app_path,
     macos_appstore_archive_path,
     macos_appstore_export_dir,
@@ -19,8 +19,8 @@ from tests.helpers.artifacts import (
     macos_pkg_path,
     parse_version_xcconfig,
 )
-from tests.helpers.asc_api import altool_upload
-from tests.helpers.codesign import (
+from integration.helpers.asc_api import altool_upload
+from integration.helpers.codesign import (
     codesign_display,
     codesign_verify,
     parse_codesign_authority,
@@ -249,7 +249,7 @@ class TestMacOSAppStoreAscProcessing:
         require_asc: None,
     ) -> None:
         """Uploaded macOS build must reach VALID processing state in ASC."""
-        from tests.helpers.asc_api import (
+        from integration.helpers.asc_api import (
             find_latest_build,
             generate_asc_jwt,
             poll_build_processing,

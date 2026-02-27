@@ -1,7 +1,7 @@
 #include <QCoreApplication>
 #include <QTest>
 
-#include "helloworld/tst_helloworld.h"
+#include "tst_helloworld.h"
 
 int main(int argc, char *argv[])
 {
