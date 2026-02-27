@@ -83,6 +83,9 @@ tools/*
 !tools/bootstrap.sh
 !tools/bootstrap.ps1
 !tools/configure_package.py
+!tools/devcro.py
+!tools/configure_env.py
+!tools/configure_env/
 !tools/run
 !tools/run.ps1
 !tools/configure_env.sh
@@ -100,6 +103,7 @@ tools/*
 .rcc/
 .uic/
 /build*/
+cmake-build-*/
 
 # Developer-local environment overrides (secrets, machine-specific paths)
 .env.local

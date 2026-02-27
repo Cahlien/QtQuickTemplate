@@ -9,21 +9,9 @@ import re
 import shutil
 import subprocess
 import sys
+import tomllib
 from pathlib import Path
 from typing import NamedTuple
-
-# ---------------------------------------------------------------------------
-# Old (template) constants — hardcoded current values
-# ---------------------------------------------------------------------------
-OLD_PACKAGE = "dev.crowell.qtquicktemplate"
-OLD_DOMAIN = "dev.crowell"
-OLD_APP_CAMEL = "QtQuickTemplate"
-OLD_APP_LOWER = "qtquicktemplate"
-OLD_APP_UPPER = "QTQUICKTEMPLATE"
-OLD_DOMAIN_PATH = "dev/crowell"
-OLD_PACKAGE_PATH = "dev/crowell/qtquicktemplate"
-OLD_PACKAGE_NS = "dev::crowell::qtquicktemplate"
-OLD_PACKAGE_UNDERSCORE = "dev_crowell_qtquicktemplate"
 
 # ---------------------------------------------------------------------------
 # Skip rules
@@ -102,11 +90,28 @@ def parse_package(raw: str) -> PackageIdentity:
     )
 
 
+def read_current_identity(root: Path) -> str:
+    """Read the current package identity from devcro.toml.
+
+    Reconstructs a dotted package string with CamelCase app name so that
+    ``parse_package()`` derives the correct ``app_camel`` field.
+    """
+    devcro_path = root / "devcro.toml"
+    with open(devcro_path, "rb") as f:
+        data = tomllib.load(f)
+    package_name = data["config"]["package_name"]   # e.g. dev.crowell.qtquicktemplate
+    app_name = data["application"]["name"]           # e.g. "QtQuick Template"
+    app_camel = app_name.replace(" ", "")            # e.g. QtQuickTemplate
+    segments = package_name.split(".")
+    segments[-1] = app_camel  # CamelCase for parse_package()
+    return ".".join(segments)                        # e.g. dev.crowell.QtQuickTemplate
+
+
 # ---------------------------------------------------------------------------
 # Replacement table (longest-first order)
 # ---------------------------------------------------------------------------
 
-def build_replacements(new: PackageIdentity) -> list[tuple[str, str]]:
+def build_replacements(old: PackageIdentity, new: PackageIdentity) -> list[tuple[str, str]]:
     """Return an ordered list of (old, new) string replacements.
 
     Entries are sorted longest-first so that more-specific patterns are
@@ -114,47 +119,47 @@ def build_replacements(new: PackageIdentity) -> list[tuple[str, str]]:
     """
     return [
         # 1  JNI mangled prefix
-        (f"Java_{OLD_PACKAGE_UNDERSCORE}", f"Java_{new.package_underscore}"),
+        (f"Java_{old.package_underscore}", f"Java_{new.package_underscore}"),
         # 2  C++ namespace with sub-namespace
-        (f"{OLD_PACKAGE_NS}::navigation", f"{new.package_ns}::navigation"),
+        (f"{old.package_ns}::navigation", f"{new.package_ns}::navigation"),
         # 3  C++ namespace
-        (OLD_PACKAGE_NS, new.package_ns),
+        (old.package_ns, new.package_ns),
         # 4  Java/Kotlin sub-package: activities
-        (f"{OLD_PACKAGE}.activities", f"{new.package}.activities"),
+        (f"{old.package}.activities", f"{new.package}.activities"),
         # 5  Java/Kotlin sub-package: extensions
-        (f"{OLD_PACKAGE}.extensions", f"{new.package}.extensions"),
+        (f"{old.package}.extensions", f"{new.package}.extensions"),
         # 6  Android resource import
-        (f"{OLD_PACKAGE}.R", f"{new.package}.R"),
+        (f"{old.package}.R", f"{new.package}.R"),
         # 7  Windows manifest
-        (f"{OLD_DOMAIN}.app.{OLD_APP_CAMEL}", f"{new.domain}.app.{new.app_camel}"),
+        (f"{old.domain}.app.{old.app_camel}", f"{new.domain}.app.{new.app_camel}"),
         # 8  QML module URI (main app)
-        (f"{OLD_DOMAIN}.{OLD_APP_CAMEL}", f"{new.domain}.{new.app_camel}"),
+        (f"{old.domain}.{old.app_camel}", f"{new.domain}.{new.app_camel}"),
         # 9  QML module URI (AppTheme)
-        (f"{OLD_DOMAIN}.AppTheme", f"{new.domain}.AppTheme"),
+        (f"{old.domain}.AppTheme", f"{new.domain}.AppTheme"),
         # 10 QML module URI (AppStyle)
-        (f"{OLD_DOMAIN}.AppStyle", f"{new.domain}.AppStyle"),
+        (f"{old.domain}.AppStyle", f"{new.domain}.AppStyle"),
         # 11 Full package dotted (Android/Apple/Linux ID)
-        (OLD_PACKAGE, new.package),
+        (old.package, new.package),
         # 11b Bare domain dotted (catches `dev.crowell.${PROJECT_NAME}` etc.)
-        (OLD_DOMAIN, new.domain),
+        (old.domain, new.domain),
         # 12 QRC resource path (CamelCase app)
-        (f"{OLD_DOMAIN_PATH}/{OLD_APP_CAMEL}", f"{new.domain_path}/{new.app_camel}"),
+        (f"{old.domain_path}/{old.app_camel}", f"{new.domain_path}/{new.app_camel}"),
         # 13 JNI class path
-        (OLD_PACKAGE_PATH, new.package_path),
+        (old.package_path, new.package_path),
         # 14 QML output dir (AppTheme)
-        (f"{OLD_DOMAIN_PATH}/AppTheme", f"{new.domain_path}/AppTheme"),
+        (f"{old.domain_path}/AppTheme", f"{new.domain_path}/AppTheme"),
         # 15 QML output dir (AppStyle)
-        (f"{OLD_DOMAIN_PATH}/AppStyle", f"{new.domain_path}/AppStyle"),
+        (f"{old.domain_path}/AppStyle", f"{new.domain_path}/AppStyle"),
         # 15b Bare domain path (catches `dev/crowell/${PROJECT_NAME}` etc.)
-        (OLD_DOMAIN_PATH, new.domain_path),
+        (old.domain_path, new.domain_path),
         # 16 CMake cache variable prefix
-        (f"{OLD_APP_UPPER}_", f"{new.app_upper}_"),
+        (f"{old.app_upper}_", f"{new.app_upper}_"),
         # 17 Conan recipe class name
-        (f"{OLD_APP_CAMEL}Recipe", f"{new.app_camel}Recipe"),
+        (f"{old.app_camel}Recipe", f"{new.app_camel}Recipe"),
         # 18 CMake project name / display name
-        (OLD_APP_CAMEL, new.app_camel),
+        (old.app_camel, new.app_camel),
         # 19 Lowercase name (pyproject, conan)
-        (OLD_APP_LOWER, new.app_lower),
+        (old.app_lower, new.app_lower),
     ]
 
 
@@ -189,6 +194,7 @@ def project_files(root: Path) -> list[Path]:
 
 def rename_android_kotlin_tree(
     root: Path,
+    old: PackageIdentity,
     new: PackageIdentity,
 ) -> list[str]:
     """Move the Android Kotlin source tree to the new package path.
@@ -198,7 +204,7 @@ def rename_android_kotlin_tree(
     actions: list[str] = []
 
     base = root / "app" / "platforms" / "android" / "src" / "main" / "kotlin"
-    old_dir = base / OLD_PACKAGE_PATH.replace("/", os.sep)
+    old_dir = base / old.package_path.replace("/", os.sep)
     new_dir = base / new.package_path.replace("/", os.sep)
 
     if not old_dir.exists():
@@ -229,24 +235,24 @@ def rename_android_kotlin_tree(
     return actions
 
 
-def rename_files(root: Path, new: PackageIdentity) -> list[str]:
+def rename_files(root: Path, old: PackageIdentity, new: PackageIdentity) -> list[str]:
     """Rename individual platform/config files. Returns action descriptions."""
     actions: list[str] = []
     renames = [
         (
-            root / "app" / "platforms" / "linux" / f"{OLD_PACKAGE}.metainfo.xml.in",
+            root / "app" / "platforms" / "linux" / f"{old.package}.metainfo.xml.in",
             root / "app" / "platforms" / "linux" / f"{new.package}.metainfo.xml.in",
         ),
         (
-            root / "app" / "platforms" / "macos" / f"{OLD_APP_CAMEL}.entitlements",
+            root / "app" / "platforms" / "macos" / f"{old.app_camel}.entitlements",
             root / "app" / "platforms" / "macos" / f"{new.app_camel}.entitlements",
         ),
         (
-            root / "app" / "platforms" / "linux" / f"{OLD_APP_CAMEL}.desktop.in",
+            root / "app" / "platforms" / "linux" / f"{old.app_camel}.desktop.in",
             root / "app" / "platforms" / "linux" / f"{new.app_camel}.desktop.in",
         ),
         (
-            root / "app" / "doc" / f"{OLD_APP_LOWER}.qdocconf",
+            root / "app" / "doc" / f"{old.app_lower}.qdocconf",
             root / "app" / "doc" / f"{new.app_lower}.qdocconf",
         ),
     ]
@@ -346,45 +352,53 @@ def main() -> int:
 
     root = Path(__file__).resolve().parent.parent  # tools/ -> project root
 
-    # 2. Git status check
+    # 2. Read current identity from devcro.toml
+    try:
+        current_id = read_current_identity(root)
+        old = parse_package(current_id)
+    except (FileNotFoundError, KeyError, ValueError) as exc:
+        print(f"ERROR: Cannot read current identity from devcro.toml: {exc}", file=sys.stderr)
+        return 1
+
+    # 3. Git status check
     if not args.force:
         if not check_git_clean(root):
             print("\nUse --force to skip this check.")
             return 1
 
-    # 3. Print mapping table
+    # 4. Print mapping table
     print("\n=== Package Rename Configuration ===\n")
-    print(f"  Package (dotted):    {OLD_PACKAGE}  ->  {new.package}")
-    print(f"  Domain:              {OLD_DOMAIN}  ->  {new.domain}")
-    print(f"  App name (CamelCase):{OLD_APP_CAMEL}  ->  {new.app_camel}")
-    print(f"  App name (lower):    {OLD_APP_LOWER}  ->  {new.app_lower}")
-    print(f"  App name (UPPER):    {OLD_APP_UPPER}  ->  {new.app_upper}")
-    print(f"  Namespace:           {OLD_PACKAGE_NS}  ->  {new.package_ns}")
-    print(f"  Path:                {OLD_PACKAGE_PATH}  ->  {new.package_path}")
-    print(f"  Underscore:          {OLD_PACKAGE_UNDERSCORE}  ->  {new.package_underscore}")
+    print(f"  Package (dotted):    {old.package}  ->  {new.package}")
+    print(f"  Domain:              {old.domain}  ->  {new.domain}")
+    print(f"  App name (CamelCase):{old.app_camel}  ->  {new.app_camel}")
+    print(f"  App name (lower):    {old.app_lower}  ->  {new.app_lower}")
+    print(f"  App name (UPPER):    {old.app_upper}  ->  {new.app_upper}")
+    print(f"  Namespace:           {old.package_ns}  ->  {new.package_ns}")
+    print(f"  Path:                {old.package_path}  ->  {new.package_path}")
+    print(f"  Underscore:          {old.package_underscore}  ->  {new.package_underscore}")
     print()
 
-    # 4. Rename Android Kotlin directory tree
+    # 5. Rename Android Kotlin directory tree
     print("--- Renaming Android Kotlin directory tree ---")
-    kotlin_actions = rename_android_kotlin_tree(root, new)
+    kotlin_actions = rename_android_kotlin_tree(root, old, new)
     if kotlin_actions:
         for action in kotlin_actions:
             print(action)
     else:
         print("  (no changes needed)")
 
-    # 5. Rename individual files
+    # 6. Rename individual files
     print("\n--- Renaming platform/config files ---")
-    file_actions = rename_files(root, new)
+    file_actions = rename_files(root, old, new)
     if file_actions:
         for action in file_actions:
             print(action)
     else:
         print("  (no changes needed)")
 
-    # 6. Apply content replacements to all text files
+    # 7. Apply content replacements to all text files
     print("\n--- Applying content replacements ---")
-    replacements = build_replacements(new)
+    replacements = build_replacements(old, new)
     files = project_files(root)
     modified_count = 0
     for fpath in files:
@@ -392,22 +406,17 @@ def main() -> int:
             modified_count += 1
             print(f"  modified {fpath.relative_to(root)}")
 
-    # 7. Summary
+    # 8. Summary
     print(f"\n=== Summary ===")
     print(f"  Files modified:   {modified_count}")
     print(f"  Files renamed:    {len(file_actions)}")
     print(f"  Dirs moved:       {len(kotlin_actions)}")
 
-    # 8. Post-run instructions
+    # 9. Post-run instructions
     print("\n=== Next Steps ===")
-    print("  1. Update the display name \"QtQuick Template\" in:")
-    print("       app/qml/Main.qml  (window title)")
-    print("       app/platforms/linux/*.desktop.in  (Name, GenericName, Comment)")
-    print("       app/platforms/linux/*.metainfo.xml.in  (name, summary, description)")
-    print("       app/platforms/windows/app.rc.in  (FileDescription, ProductName)")
-    print("  2. Run  ./tools/uv lock  to regenerate the lockfile")
-    print("  3. Delete all build directories:  rm -rf build/ cmake-build-*/")
-    print("  4. Reconfigure and build to verify everything works")
+    print("  1. Run  ./tools/uv lock  to regenerate the lockfile")
+    print("  2. Delete all build directories:  rm -rf build/ cmake-build-*/")
+    print("  3. Reconfigure and build to verify everything works")
     print()
     return 0
 

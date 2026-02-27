@@ -14,13 +14,99 @@ A cross-platform **[Qt 6](https://www.qt.io/) / [Qt Quick (QML)](https://doc.qt.
 
 ---
 
+## Getting Started
+
+### 1. Bootstrap the development environment
+
+Run the bootstrap script once to install [uv](https://docs.astral.sh/uv/), download the pinned CPython (from `.python-version`), and create an isolated `.venv/` with [cmake](https://cmake.org/), [conan](https://conan.io/), [pytest](https://docs.pytest.org/), and all Python-based build/test tools at pinned versions:
+
+```bash
+./tools/bootstrap.sh       # macOS / Linux
+.\tools\bootstrap.ps1      # Windows
+```
+
+On Linux the script also downloads the [linuxdeploy](https://github.com/linuxdeploy/linuxdeploy) AppImage toolchain. Both platforms install Google's [bundletool](https://github.com/google/bundletool) for Android builds.
+
+### 2. Configure your project identity
+
+Bootstrap automatically runs `tools/devcro.py`, which prompts you to personalize the template:
+
+```
+=== Project Configuration ===
+
+  Application name [QtQuick Template]:
+  Package name (e.g. com.example.myapp) [dev.crowell.qtquicktemplate]:
+  Version [0.1.0]:
+```
+
+The orchestrator:
+- Renames all package identifiers project-wide (Java/Kotlin packages, QML module URIs, bundle IDs, CMake variables, etc.) via `tools/configure_package.py`. The CamelCase identifier (e.g. `QtQuickTemplate`) is derived from the name by stripping spaces.
+- Propagates the **name** to the window title (`Main.qml`), Linux desktop entry, AppStream metainfo, and Windows version resource.
+- Propagates the **version** to `CMakeLists.txt`, `conanfile.py`, `pyproject.toml`, and all library recipes.
+- Records the result in `devcro.toml` and sets `bootstrapped = true`.
+
+To accept defaults non-interactively (useful in CI): `python tools/devcro.py --yes`
+
+### 3. `devcro.toml` — project identity file
+
+```toml
+[application]
+name = "QtQuick Template"
+description = "..."
+version = "0.1.0"
+build_number = 1
+
+[config]
+bootstrapped = false
+package_name = "dev.crowell.qtquicktemplate"
+```
+
+| Field | Purpose |
+|-------|---------|
+| `name` | Human-readable application name; CamelCase form (for CMake, Conan, file names) is derived by stripping spaces |
+| `version` | Semantic version propagated to all version-bearing files |
+| `package_name` | Reverse-domain package ID (Android, Linux, Apple bundle ID) |
+| `bootstrapped` | Set to `true` after first-time setup; re-runs only propagate version |
+
+### 4. Configure environment (Qt SDK paths & signing)
+
+After bootstrapping, set up Qt SDK paths and platform signing credentials:
+
+```bash
+./tools/uv run python tools/configure_env.py       # macOS / Linux
+.\tools\run.ps1 python tools/configure_env.py      # Windows
+```
+
+This creates `.env.local` (gitignored) with your settings. See [Environment Variables](#environment-variables) for the full list.
+
+### 5. Build
+
+Run tools with `./tools/run` (a thin wrapper that loads `.env` + `.env.local` before calling `uv run`):
+
+```bash
+./tools/run cmake -S . -B build/linux-release -DCMAKE_BUILD_TYPE=Release
+./tools/run cmake --build build/linux-release -j
+```
+
+Or activate the venv directly:
+
+```bash
+source .venv/bin/activate   # macOS / Linux
+.venv\Scripts\Activate.ps1  # Windows
+cmake -S . -B build/linux-release -DCMAKE_BUILD_TYPE=Release
+```
+
+> **IDE users:** Point your IDE's CMake executable to `.venv/bin/cmake` (macOS/Linux) or `.venv\Scripts\cmake.exe` (Windows) to use the pinned version.
+
+---
+
 ## What you get out of the box
 
 ### UI & QML architecture
 - `Main.qml` is the `ApplicationWindow` entry point.
 - A C++ `NavigationController` singleton manages both overlay pages (via `StackView`) and content pages (via `Loader`).
 - Two layout templates:
-  - `MainPortraitLayout.qml` (header → content → footer)
+  - `MainPortraitLayout.qml` (header -> content -> footer)
   - `MainLandscapeLayout.qml` (side column for header/footer + content on the right)
 - A sample set of pages (`Readme`, `StyleShowcase`, `License`) and simple `Header`/`Footer` components.
 
@@ -51,7 +137,7 @@ Back handling and app minimization are split cleanly:
 - Platform specialization lives next to the app:
   - `app/src/main/android/` contains Android-specific C++ glue (JNI back gesture + startup integration).
 
-### Build/[CMake](https://cmake.org/) architecture
+### Build/CMake architecture
 - Root `CMakeLists.txt` is a workspace coordinator — it calls `configure_project()` then adds `app/` as the sole subdirectory.
 - `app/CMakeLists.txt` declares `project(QtQuickTemplate VERSION 0.2.0)`, adds `app/libs/`, and calls `configure_main_app()`.
 - Toolchain logic is centralized under `cmake/toolchain/`:
@@ -88,7 +174,7 @@ Back handling and app minimization are split cleanly:
 ├── LICENSE
 ├── conanfile.py                       # workspace version-authority recipe (single-version rule)
 ├── conanws.py                         # Conan workspace definition; lists monorepo products
-├── devcro.toml                        # application metadata and configuration
+├── devcro.toml                        # project identity file (name, version, package)
 ├── pyproject.toml                     # workspace Python metadata and dependency declarations
 ├── uv.lock                            # cross-platform dependency lockfile
 │
@@ -97,204 +183,30 @@ Back handling and app minimization are split cleanly:
 │   ├── conanfile.py                   # app-level Conan recipe
 │   ├── pyproject.toml                 # app-level pytest configuration
 │   │
-│   ├── doc/
-│   │   ├── qtquicktemplate.qdocconf
-│   │   └── modules.qdoc
-│   │
-│   ├── include/
-│   │   └── main/common/
-│   │       ├── app_info.h
-│   │       ├── platform_init.h
-│   │       └── navigation/
-│   │           └── navigation_controller.h
-│   │
-│   ├── libs/
-│   │   ├── CMakeLists.txt             # auto-adds child lib dirs
-│   │   ├── appstyle/                  # custom Qt Quick Controls 2 style
-│   │   │   ├── CMakeLists.txt
-│   │   │   ├── conanfile.py
-│   │   │   ├── README.md
-│   │   │   ├── qml/                   # Button, CheckBox, ComboBox, ...
-│   │   │   └── test/unit/qml/         # AppStyle QML tests (tst_qml_appstyle)
-│   │   ├── apptheme/                  # AppTheme singleton (design tokens)
-│   │   │   ├── CMakeLists.txt
-│   │   │   ├── conanfile.py
-│   │   │   ├── qml/Theme.qml
-│   │   │   └── test/unit/qml/         # AppTheme QML tests (tst_qml_apptheme)
-│   │   └── helloworld/               # sample C++20 module library
-│   │       ├── CMakeLists.txt
-│   │       ├── conanfile.py
-│   │       ├── include/main/helloworld.h
-│   │       ├── src/main/helloworld.cpp
-│   │       ├── src/main/helloworld.cppm
-│   │       ├── doc/helloworld.qdocconf
-│   │       └── test/unit/cpp/         # HelloWorld C++ tests (tst_helloworld)
-│   │
-│   ├── platforms/
-│   │   ├── android/                   # Gradle project, resources, Kotlin sources
-│   │   │   ├── AndroidManifest.xml
-│   │   │   ├── build.gradle
-│   │   │   ├── gradle.properties
-│   │   │   ├── settings.gradle
-│   │   │   ├── proguard-rules.pro
-│   │   │   ├── gradlew / gradlew.bat
-│   │   │   ├── gradle/               # wrapper + version catalog
-│   │   │   ├── res/                   # icons, splash, layouts, values
-│   │   │   └── src/main/kotlin/       # MainActivity + extensions
-│   │   ├── ios/                       # Info.plist, Assets.xcassets, LaunchScreen
-│   │   ├── linux/                     # .desktop template, metainfo, icons
-│   │   ├── macos/                     # Info.plist, entitlements, app.icns
-│   │   └── windows/                   # app.ico, app.manifest, app.rc.in
-│   │
-│   ├── qml/
-│   │   ├── Main.qml                   # ApplicationWindow entry point
-│   │   ├── atoms/                     # atomic design: smallest components
-│   │   ├── molecules/                 # atomic design: composed atoms
-│   │   ├── organisms/                 # composite components
-│   │   │   ├── Header.qml
-│   │   │   ├── Footer.qml
-│   │   │   ├── NavBar.qml
-│   │   │   └── NavigationStack.qml
-│   │   ├── pages/                     # full-page views
-│   │   │   ├── BasePage.qml
-│   │   │   ├── License.qml
-│   │   │   ├── Readme.qml
-│   │   │   ├── StyleShowcase.qml
-│   │   │   └── content/              # page content components
-│   │   │       ├── LicenseContent.qml
-│   │   │       ├── ReadmeContent.qml
-│   │   │       └── StyleShowcaseContent.qml
-│   │   ├── scripts/                   # QML JavaScript modules
-│   │   └── templates/                 # layout templates
-│   │       ├── AdaptiveLayout.qml
-│   │       ├── MainPortraitLayout.qml
-│   │       └── MainLandscapeLayout.qml
-│   │
-│   ├── src/
-│   │   └── main/
-│   │       ├── common/
-│   │       │   ├── main.cpp           # application entry point
-│   │       │   ├── app_info.cpp
-│   │       │   ├── platform_init_default.cpp
-│   │       │   └── navigation/
-│   │       │       └── navigation_controller.cpp
-│   │       └── android/
-│   │           ├── android_back_handler.cpp
-│   │           └── platform_init_android.cpp
-│   │
-│   └── test/
-│       ├── unit/
-│       │   ├── cpp/                   # NavigationController C++ tests (tst_cpp)
-│       │   │   ├── include/
-│       │   │   └── src/
-│       │   └── qml/                   # Navigation QML tests (tst_qml_navigation)
-│       ├── ui/
-│       │   └── cpp/                   # Spix UI navigation test (tst_ui_navigation)
-│       │       ├── include/
-│       │       └── src/
-│       └── integration/               # pytest integration tests (macOS only)
-│           ├── conftest.py
-│           ├── test_ios_pipeline.py
-│           ├── test_macos_appstore_pipeline.py
-│           ├── test_macos_dmg_pipeline.py
-│           └── helpers/               # shared test utilities
+│   ├── include/                       # public C++ headers
+│   ├── src/                           # C++ source (main/common/, main/android/)
+│   ├── qml/                           # QML files (atoms, molecules, organisms, templates, pages)
+│   ├── platforms/                     # platform resources (ios, macos, android, linux, windows)
+│   ├── libs/                          # project-internal libraries (appstyle, apptheme, helloworld)
+│   └── test/                          # unit (cpp, qml), ui (spix), integration (pytest)
 │
-├── cmake/
-│   ├── MainApp.cmake                  # executable, QML modules, deploy wiring
+├── cmake/                             # CMake modules
 │   ├── ProjectSetup.cmake             # compiler settings, Conan, Qt discovery
-│   │
+│   ├── MainApp.cmake                  # executable, QML modules, deploy wiring
 │   ├── deploy/                        # platform packaging pipelines
-│   │   ├── DeployPipelines.cmake      # platform-conditional dispatcher
-│   │   ├── ReleaseDistributables.cmake # meta-targets aggregating pipelines
-│   │   ├── Install.cmake              # cross-platform install rules
-│   │   ├── GenerateVersion.cmake      # git-derived build numbers
-│   │   ├── VersionTarget.cmake        # shared version target helper
-│   │   │
-│   │   ├── android/
-│   │   │   ├── AndroidBuild.cmake     # AndroidAAB / AndroidAPK / SignAndroidAAB
-│   │   │   ├── AndroidVerify.cmake    # VerifyAndroidAAB / VerifyAndroidAPK
-│   │   │   ├── AndroidUpload.cmake    # UploadAndroidPlay (Google Play)
-│   │   │   ├── AndroidVersion.cmake   # GenerateAndroidVersion target
-│   │   │   ├── AndroidHelpTargets.cmake # unconditional Android help registration
-│   │   │   ├── GenerateVersion.cmake  # -P script for version.properties
-│   │   │   ├── VerifyAab.cmake        # -P script for AAB verification
-│   │   │   └── VerifyApk.cmake        # -P script for APK verification
-│   │   │
-│   │   ├── apple/                     # shared iOS + macOS helpers
-│   │   │   ├── AppleCodeSigning.cmake # release code signing config
-│   │   │   ├── ArtifactVerify.cmake   # unified artifact verification
-│   │   │   ├── AscUpload.cmake        # unified App Store Connect upload
-│   │   │   ├── FindMacDeployQt.cmake  # macdeployqt discovery
-│   │   │   ├── XcodeExport.cmake      # unified xcodebuild -exportArchive
-│   │   │   ├── UploadAsc.cmake        # -P script for ASC upload
-│   │   │   └── VerifyArtifact.cmake   # -P script for artifact verification
-│   │   │
-│   │   ├── ios/
-│   │   │   ├── IOSBuild.cmake         # IOSArchive target
-│   │   │   ├── IOSResources.cmake     # asset catalog + launch screen
-│   │   │   └── GenerateLaunchScreen.cmake
-│   │   │
-│   │   ├── linux/
-│   │   │   ├── LinuxPackage.cmake     # AppImage target
-│   │   │   ├── StageWaylandSupport.cmake
-│   │   │   └── VerifyWaylandDeps.cmake
-│   │   │
-│   │   └── macos/
-│   │       ├── MacOSBuild.cmake       # MacDeployQt target
-│   │       ├── MacOSPackage.cmake     # DMG target
-│   │       ├── MacOSSign.cmake        # NotarizeMacOS target
-│   │       ├── MacOSVerify.cmake      # VerifyMacOSPackage target
-│   │       ├── MacOSAppStoreBuild.cmake # MacAppStoreArchive target
-│   │       ├── Notarize.cmake         # -P script for notarization
-│   │       ├── PatchArchiveInfo.cmake # -P script for archive patching
-│   │       ├── RunMacDeployQt.cmake   # -P script for macdeployqt
-│   │       ├── SignDmg.cmake          # -P script for DMG signing
-│   │       └── VerifyPackage.cmake    # -P script for package verification
-│   │
-│   ├── docs/
-│   │   └── QDoc.cmake                 # docs target (QDoc documentation)
-│   │
-│   ├── help/
-│   │   ├── HelpTargets.cmake          # register_help_target() + finalize
-│   │   └── PrintHelp.cmake            # -P script for formatted help output
-│   │
-│   ├── integration/
-│   │   └── Conan.cmake                # Conan package manager integration
-│   │
-│   ├── libs/
-│   │   └── LibraryCommon.cmake        # add_portable_cpp_library() helpers
-│   │
-│   ├── platform/
-│   │   └── PlatformSources.cmake      # platform-specific source selection
-│   │
-│   ├── qt/
-│   │   ├── QmlModule.cmake            # QML module registration
-│   │   └── QtProject.cmake            # Qt discovery + FFmpeg workaround
-│   │
-│   ├── testing/
-│   │   ├── TestingSetup.cmake         # configure_testing(): option, enable_testing()
-│   │   ├── TestTargets.cmake          # add_qt_test() and add_qt_quick_test()
-│   │   ├── FetchSpix.cmake            # fetch_spix(): anyrpc + Spix via FetchContent
-│   │   ├── PatchAnyrpcSanitizer.cmake # anyrpc ASan opt-in patch
-│   │   └── PatchSpixInstall.cmake     # Spix install/export rule patch
-│   │
-│   └── toolchain/
-│       ├── CompilerSettings.cmake     # C++23, warnings, IPO
-│       ├── CxxModules.cmake           # C++20 module support detection
-│       └── ClangScanDeps.cmake        # clang-scan-deps configuration
-│
-├── profiles/                          # Conan profiles
-│   ├── build
-│   └── host
+│   ├── testing/                       # test infrastructure (TestTargets, FetchSpix)
+│   ├── toolchain/                     # CompilerSettings, CxxModules, ClangScanDeps
+│   ├── libs/                          # LibraryCommon.cmake helpers
+│   └── qt/                            # QmlModule, QtProject
 │
 └── tools/                             # developer tooling
-    ├── bootstrap.sh                   # dev environment setup (macOS/Linux)
-    ├── bootstrap.ps1                  # dev environment setup (Windows)
-    ├── configure_env.py               # interactive Qt SDK + signing config wizard (entry point)
+    ├── bootstrap.sh / bootstrap.ps1   # dev environment setup
+    ├── devcro.py                      # project identity orchestrator
+    ├── configure_package.py           # project renaming/repackaging engine
+    ├── configure_env.py               # interactive Qt SDK + signing config wizard
     ├── configure_env/                 # configure_env Python package
-    ├── configure_package.py           # project renaming/repackaging script
-    ├── run                            # env-aware wrapper: loads .env/.env.local before running tools
-    └── run.ps1                        # env-aware wrapper for Windows
+    ├── run / run.ps1                  # env-aware wrapper: loads .env/.env.local before running tools
+    └── configure_env.sh / .ps1        # platform env configuration helpers
 ```
 
 ---
@@ -309,66 +221,7 @@ Back handling and app minimization are split cleanly:
   - On Apple targets (and unsupported generators/toolchains), the app automatically uses the header/library path.
   - If using Clang with modules enabled, `clang-scan-deps` must be available (the project attempts to locate it automatically, including Android NDK hints).
 
-### Recommended: bootstrap script
-
-The fastest way to get [cmake](https://cmake.org/), [conan](https://conan.io/), [pytest](https://docs.pytest.org/), and all Python-based tools at the correct versions:
-
-```bash
-./tools/bootstrap.sh       # macOS/Linux
-.\tools\bootstrap.ps1      # Windows
-```
-
-This installs [uv](https://docs.astral.sh/uv/) into a project-local `tools/` directory, downloads the pinned CPython (from `.python-version`), and creates an isolated `.venv/` with all dependencies locked in `uv.lock`. Run tools with `./tools/run`:
-
-```bash
-./tools/run cmake --preset <preset>
-./tools/run pytest
-```
-
-`./tools/run` is a thin wrapper around `uv run` that automatically loads environment variables from:
-1. `.env` — tracked defaults (e.g., Android Play defaults)
-2. `.env.local` — developer-specific overrides (gitignored)
-
-If `.env.local` is missing and you run `cmake`, the wrapper prints a warning reminding you to run `configure_env.py`.
-
-Alternatively, activate the venv to put all tools on your `PATH` directly:
-
-```bash
-source .venv/bin/activate   # macOS/Linux
-.venv\Scripts\Activate.ps1  # Windows
-```
-
-> **IDE users:** Activating the venv only affects your current terminal session. IDEs (Qt Creator, CLion, Xcode, Visual Studio) have their own tool discovery and will not see the activated venv. Point your IDE's CMake executable setting to `.venv/bin/cmake` (macOS/Linux) or `.venv\Scripts\cmake.exe` (Windows) to use the pinned version.
-
-### Configure environment
-
-After bootstrapping, set up your Qt SDK paths and platform signing credentials. You have two options:
-
-#### Option 1: Interactive wizard (recommended)
-
-Run the configure script to interactively prompt for your SDK paths and credentials:
-
-```bash
-./tools/uv run python tools/configure_env.py       # macOS/Linux
-.\tools\run.ps1 python tools/configure_env.py      # Windows
-```
-
-This creates `.env.local` with your settings. The wizard:
-- Detects your platform and prompts for relevant fields
-- Loads existing `.env.local` values as defaults (safe to re-run)
-- Validates paths exist (with a warning if missing)
-- Writes organized, commented output
-
-#### Option 2: Manual .env.local
-
-Create `.env.local` manually with your values. See the [Environment Variables](#environment-variables) section for the full list.
-
-### Manual alternative
-
-If you prefer to manage tools globally:
-- **[CMake 4.2.1+](https://cmake.org/download/)**
-- **[Conan 2](https://conan.io/)** (optional; the repo includes a `conanfile.py`)
-- **[Python 3.14+](https://www.python.org/)** with [pytest](https://docs.pytest.org/) for running integration tests
+All of the above (except Qt and a system compiler) are installed by the bootstrap script.
 
 ---
 
@@ -511,7 +364,7 @@ Use a Qt Android kit in [Qt Creator](https://www.qt.io/product/development-tools
 
 - `app/platforms/android/version.properties`
 
-from project version values via the `GenerateAndroidVersion` [CMake](https://cmake.org/) target.
+from project version values via the `GenerateAndroidVersion` CMake target.
 
 If you need to change app identifiers or Android metadata, start here:
 
@@ -566,7 +419,7 @@ jarsigner -verify -verbose app-release.aab
 
 ## iOS: build, archive, sign, export, upload (App Store)
 
-The full pipeline — build → archive → sign → export IPA → verify → upload to App Store Connect — runs with a single CMake build preset.
+The full pipeline — build -> archive -> sign -> export IPA -> verify -> upload to App Store Connect — runs with a single CMake build preset.
 
 ### Prerequisites
 
@@ -597,8 +450,7 @@ The full pipeline — build → archive → sign → export IPA → verify → u
             },
             "cacheVariables": {
                 "CMAKE_OSX_ARCHITECTURES": "arm64",
-                "CMAKE_OSX_DEPLOYMENT_TARGET": "17.0",
-                "QTQUICKTEMPLATE_APPLE_BUNDLE_IDENTIFIER": "com.example.yourapp"
+                "CMAKE_XCODE_ATTRIBUTE_CODE_SIGN_IDENTITY": "Apple Distribution"
             }
         }
     ],
@@ -617,438 +469,148 @@ The full pipeline — build → archive → sign → export IPA → verify → u
 }
 ```
 
-**Two ways to set environment variables:**
-
-1. **`.env.local`** (recommended) — set `QT_MACOS_ROOT`, `APPLE_DEVELOPMENT_TEAM`, `ASC_API_KEY_ID`, `ASC_API_ISSUER_ID` in `.env.local`. Run `./tools/configure_env.sh` to interactively configure.
-2. **`CMakeUserPresets.json`** — set these values in the preset's `environment` block as shown above.
-
-Both approaches work; `.env.local` is simpler for single-machine setups, while `CMakeUserPresets.json` enables per-preset configurations.
-
-### Full pipeline (one command after first configure)
+### Build & deploy
 
 ```bash
-# Configure (once, or after CMake changes)
-./tools/run cmake --preset ios-release-local
-
-# Build → archive → sign → export IPA → verify → upload to App Store Connect
-./tools/run cmake --build --preset ios-distributable-local
+./tools/run cmake --preset ios-release-local               # Configure
+./tools/run cmake --build --preset ios-app-local            # Build only
+./tools/run cmake --build --preset ios-distributable-local  # Full pipeline
 ```
-
-Output IPA: `build/Qt_6_10_2_for_iOS/ios/export/QtQuickTemplate.ipa`
-
-### Individual targets
-
-| Target | What it does |
-|--------|-------------|
-| `IOSArchive` | Runs `xcodebuild archive` with the Apple Distribution identity |
-| `IOSExportIPA` | Exports the archive as a signed `.ipa` (App Store method) |
-| `VerifyIOSIPA` | Confirms the `.ipa` was created successfully |
-| `IOSUploadASC` | Uploads the `.ipa` to App Store Connect via `xcrun altool` |
-| `ReleaseDistributableIOS` | Meta-target: runs all of the above in order |
-
-To build without uploading:
-
-```bash
-./tools/run cmake --build --preset ios-app-local
-```
-
-### CMake cache variables
-
-| Variable | Purpose | Default |
-|----------|---------|---------|
-| `QTQUICKTEMPLATE_APPLE_DEVELOPMENT_TEAM` | 10-char Team ID | (from `APPLE_DEVELOPMENT_TEAM` env) |
-| `QTQUICKTEMPLATE_APPLE_BUNDLE_IDENTIFIER` | Bundle identifier | `dev.crowell.qtquicktemplate` |
-| `QTQUICKTEMPLATE_IOS_PROVISIONING_PROFILE` | Provisioning profile name | (from `IOS_PROVISIONING_PROFILE` env) |
-| `QTQUICKTEMPLATE_IOS_ARCHIVE_CONFIGURATION` | Xcode build configuration | `Release` |
-| `QTQUICKTEMPLATE_ASC_API_KEY_ID` | App Store Connect API key ID | (from `ASC_API_KEY_ID` env) |
-| `QTQUICKTEMPLATE_ASC_API_ISSUER_ID` | App Store Connect API issuer UUID | (from `ASC_API_ISSUER_ID` env) |
 
 ---
 
 ## macOS: two distribution channels
 
-macOS has two independent pipelines sharing the same source:
-
-| Channel | Signing | Output | Destination |
-|---------|---------|--------|-------------|
-| **Direct (Developer ID)** | `Developer ID Application` | Notarized `.dmg` | Your website / direct download |
-| **Mac App Store** | `Apple Distribution` | Signed `.pkg` | App Store Connect |
+| Channel | Format | Signing | Notarization |
+|---------|--------|---------|--------------|
+| **Direct distribution** | DMG | Developer ID | Yes (notarytool) |
+| **App Store** | PKG | Apple Distribution | No (Apple reviews) |
 
 ---
 
-## macOS — Direct distribution: build, deploy, sign, notarize, verify (DMG)
-
-The full pipeline — build → deploy Qt frameworks → sign app → create DMG → sign DMG → notarize → staple → verify — runs with a single CMake build preset.
-
-### Prerequisites
-
-- **Xcode** with command-line tools (`xcode-select --install`)
-- **Qt 6.10+** for macOS (e.g. `~/Qt/6.10.2/macos`)
-- An **Apple Developer** account with:
-  - "Developer ID Application" certificate in your Keychain (for direct distribution outside the App Store)
-  - App Store Connect API key stored as a notarytool keychain profile (see below)
-
-Set up the notarytool keychain profile once (substitute your own values):
-
-```bash
-xcrun notarytool store-credentials "my-notary-profile" \
-  --key ~/.appstoreconnect/private_keys/AuthKey_<KEY_ID>.p8 \
-  --key-id <KEY_ID> \
-  --issuer <ISSUER_UUID>
-```
+## macOS — Direct distribution (DMG)
 
 ### Setup
 
-`CMakeUserPresets.json` is gitignored. Create it at the repo root with your local signing details:
+Add a macOS DMG preset to `CMakeUserPresets.json`:
 
 ```json
 {
-    "version": 6,
-    "configurePresets": [
-        {
-            "name": "macos-release-local",
-            "inherits": "macos-release",
-            "environment": {
-                "QT_MACOS_ROOT": "/path/to/Qt/6.10.2/macos",
-                "MACOS_NOTARY_KEYCHAIN_PROFILE": "<profile name from store-credentials>",
-                "MACOS_APP_SIGN_IDENTITY": "Developer ID Application: Your Name (TEAMID)",
-                "MACOS_DMG_SIGN_IDENTITY": "Developer ID Application: Your Name (TEAMID)"
-            },
-            "cacheVariables": {
-                "QTQUICKTEMPLATE_APPLE_BUNDLE_IDENTIFIER": "com.example.yourapp"
-            }
-        }
-    ],
-    "buildPresets": [
-        {
-            "name": "macos-app-local",
-            "inherits": "macos-app",
-            "configurePreset": "macos-release-local"
-        },
-        {
-            "name": "macos-distributable-local",
-            "inherits": "macos-distributable",
-            "configurePreset": "macos-release-local"
-        }
-    ]
+    "name": "macos-release-local",
+    "inherits": "macos-release",
+    "environment": {
+        "QT_MACOS_ROOT": "/path/to/Qt/6.10.2/macos",
+        "APPLE_DEVELOPMENT_TEAM": "<Team ID>",
+        "MACOS_APP_SIGN_IDENTITY": "Developer ID Application: Your Name (TEAMID)",
+        "MACOS_DMG_SIGN_IDENTITY": "Developer ID Application: Your Name (TEAMID)",
+        "MACOS_NOTARY_KEYCHAIN_PROFILE": "<notarytool profile name>"
+    }
 }
 ```
 
-**Two ways to set environment variables:**
-
-1. **`.env.local`** (recommended) — set `QT_MACOS_ROOT`, `MACOS_NOTARY_KEYCHAIN_PROFILE`, `MACOS_APP_SIGN_IDENTITY`, `MACOS_DMG_SIGN_IDENTITY` in `.env.local`. Run `./tools/configure_env.sh` to interactively configure.
-2. **`CMakeUserPresets.json`** — set these values in the preset's `environment` block as shown above.
-
-Both approaches work; `.env.local` is simpler for single-machine setups, while `CMakeUserPresets.json` enables per-preset configurations.
-
-### Full pipeline (one command after first configure)
+### Build & deploy
 
 ```bash
-# Configure (once, or after CMake changes)
-./tools/run cmake --preset macos-release-local
-
-# Build → deploy Qt → sign → DMG → notarize → staple → verify
-./tools/run cmake --build --preset macos-distributable-local
+./tools/run cmake --preset macos-release-local                    # Configure
+./tools/run cmake --build --preset macos-app-local                # Build only
+./tools/run cmake --build --preset macos-distributable-local      # Full: build -> macdeployqt -> DMG -> notarize -> staple -> verify
 ```
-
-Output DMG: `build/Qt_6_10_2_for_macOS/QtQuickTemplate-<version>-macOS.dmg`
-
-### Individual targets
-
-| Target | What it does |
-|--------|-------------|
-| `MacDeployQt` | Runs `macdeployqt` to bundle Qt frameworks and optionally signs the app bundle |
-| `DMG` | Runs CPack DragNDrop to create a `.dmg`, then signs it with Developer ID |
-| `NotarizeMacOS` | Submits the DMG to Apple's notary service via `xcrun notarytool --wait`, then staples the ticket to both the DMG and the app bundle |
-| `VerifyMacOSPackage` | Verifies codesign, Gatekeeper acceptance, and stapler validation of the notarized artifacts |
-| `ReleaseDistributableMacOS` | Meta-target: runs all of the above in order |
-
-To build without packaging:
-
-```bash
-./tools/run cmake --build --preset macos-app-local
-```
-
-### CMake cache variables
-
-| Variable | Purpose | Default |
-|----------|---------|---------|
-| `QTQUICKTEMPLATE_MACOS_APP_SIGN_IDENTITY` | Developer ID for signing the app bundle via macdeployqt | (from `MACOS_APP_SIGN_IDENTITY` env) |
-| `QTQUICKTEMPLATE_MACOS_DMG_SIGN_IDENTITY` | Developer ID for signing the DMG | (from `MACOS_DMG_SIGN_IDENTITY` env) |
-| `QTQUICKTEMPLATE_MACOS_NOTARY_KEYCHAIN_PROFILE` | Keychain profile name for `xcrun notarytool` | (from `MACOS_NOTARY_KEYCHAIN_PROFILE` env) |
-| `QTQUICKTEMPLATE_APPLE_BUNDLE_IDENTIFIER` | Bundle identifier | `dev.crowell.qtquicktemplate` |
-| `QTQUICKTEMPLATE_MACOS_USE_MACDEPLOYQT` | Enable/disable macdeployqt deployment step | `ON` |
-
-> **Note:** Signing is optional — if identities are left empty, macdeployqt runs unsigned and DMG signing is skipped. Notarization requires a signed app and DMG, so `MACOS_APP_SIGN_IDENTITY` and `MACOS_DMG_SIGN_IDENTITY` must be set for the full pipeline to succeed.
 
 ---
 
-## macOS — App Store distribution: build, archive, export, verify, upload (PKG)
-
-The Mac App Store pipeline uses the Xcode generator (separate build directory from the DMG pipeline). The full chain — build → archive → export signed `.pkg` → verify → upload to App Store Connect — runs with a single CMake build preset.
-
-### Prerequisites
-
-- **Xcode** with command-line tools
-- **Qt 6.10+** for macOS (e.g. `~/Qt/6.10.2/macos`)
-- An **Apple Developer** account with:
-  - `Apple Distribution` certificate in your Keychain (the Mac App Store signing identity — different from the `Developer ID Application` cert used for DMG distribution)
-  - App Store Connect API key (`.p8` file) at `~/.appstoreconnect/private_keys/AuthKey_<KEY_ID>.p8`
-  - Your app record created in App Store Connect
+## macOS — App Store distribution (PKG)
 
 ### Setup
 
-`CMakeUserPresets.json` is gitignored. Add the following preset to your local copy at the repo root:
+Add a macOS App Store preset to `CMakeUserPresets.json`:
 
 ```json
 {
-    "version": 6,
-    "configurePresets": [
-        {
-            "name": "macos-appstore-local",
-            "inherits": "macos-appstore",
-            "environment": {
-                "QT_MACOS_ROOT": "/path/to/Qt/6.10.2/macos",
-                "APPLE_DEVELOPMENT_TEAM": "<YOUR_TEAM_ID>",
-                "ASC_API_KEY_ID": "<YOUR_ASC_API_KEY_ID>",
-                "ASC_API_ISSUER_ID": "<YOUR_ASC_API_ISSUER_UUID>"
-            },
-            "cacheVariables": {
-                "QTQUICKTEMPLATE_APPLE_BUNDLE_IDENTIFIER": "com.example.yourapp"
-            }
-        }
-    ],
-    "buildPresets": [
-        {
-            "name": "macos-appstore-app-local",
-            "inherits": "macos-appstore-app",
-            "configurePreset": "macos-appstore-local"
-        },
-        {
-            "name": "macos-appstore-distributable-local",
-            "inherits": "macos-appstore-distributable",
-            "configurePreset": "macos-appstore-local"
-        }
-    ]
+    "name": "macos-appstore-local",
+    "inherits": "macos-appstore",
+    "environment": {
+        "QT_MACOS_ROOT": "/path/to/Qt/6.10.2/macos",
+        "APPLE_DEVELOPMENT_TEAM": "<Team ID>",
+        "MACOS_APP_STORE_PROVISIONING_PROFILE": "<Profile name>",
+        "ASC_API_KEY_ID": "<Key ID>",
+        "ASC_API_ISSUER_ID": "<Issuer UUID>"
+    }
 }
 ```
 
-**Two ways to set environment variables:**
-
-1. **`.env.local`** (recommended) — set `QT_MACOS_ROOT`, `APPLE_DEVELOPMENT_TEAM`, `ASC_API_KEY_ID`, `ASC_API_ISSUER_ID` in `.env.local`. Run `./tools/configure_env.sh` to interactively configure.
-2. **`CMakeUserPresets.json`** — set these values in the preset's `environment` block as shown above.
-
-Both approaches work; `.env.local` is simpler for single-machine setups, while `CMakeUserPresets.json` enables per-preset configurations.
-
-### Full pipeline (one command after first configure)
+### Build & deploy
 
 ```bash
-# Configure (once, or after CMake changes)
-./tools/run cmake --preset macos-appstore-local
-
-# Build → archive → export PKG → verify → upload to App Store Connect
-./tools/run cmake --build --preset macos-appstore-distributable-local
+./tools/run cmake --preset macos-appstore-local                              # Configure
+./tools/run cmake --build --preset macos-appstore-distributable-local        # Full: build -> archive -> export PKG -> verify -> upload
 ```
-
-The exported `.pkg` lands in `build/Qt_6_10_2_for_macOS_AppStore/macos/export/`.
-
-### Individual targets
-
-| Target | What it does |
-|--------|-------------|
-| `MacAppStoreArchive` | Runs `xcodebuild archive` with the `Apple Distribution` identity to produce an `.xcarchive` |
-| `MacExportPkg` | Runs `xcodebuild -exportArchive` to produce a signed `.pkg` from the archive |
-| `VerifyMacPkg` | Verifies that a `.pkg` file exists in the export directory |
-| `MacUploadASC` | Uploads the `.pkg` to App Store Connect using `xcrun altool --upload-app` with ASC API key auth |
-| `ReleaseDistributableMacOSAppStore` | Meta-target: runs all of the above in order |
-
-To build without packaging:
-
-```bash
-./tools/run cmake --build --preset macos-appstore-app-local
-```
-
-### CMake cache variables
-
-| Variable | Purpose | Default |
-|----------|---------|---------|
-| `QTQUICKTEMPLATE_APPLE_DEVELOPMENT_TEAM` | Apple team ID used during archive and export | (from `APPLE_DEVELOPMENT_TEAM` env) |
-| `QTQUICKTEMPLATE_MACOS_APP_STORE_PROVISIONING_PROFILE` | Mac App Store Distribution provisioning profile name | (from `MACOS_APP_STORE_PROVISIONING_PROFILE` env) |
-| `QTQUICKTEMPLATE_ASC_API_KEY_ID` | App Store Connect API key ID | (from `ASC_API_KEY_ID` env) |
-| `QTQUICKTEMPLATE_ASC_API_ISSUER_ID` | App Store Connect API issuer UUID | (from `ASC_API_ISSUER_ID` env) |
-| `QTQUICKTEMPLATE_APPLE_BUNDLE_IDENTIFIER` | Bundle identifier | `dev.crowell.qtquicktemplate` |
-| `QTQUICKTEMPLATE_MACOS_APP_STORE_ARCHIVE_CONFIGURATION` | Build configuration for archive/export | `Release` |
-
-> **Note:** The API key file must exist at `~/.appstoreconnect/private_keys/AuthKey_<KEY_ID>.p8` on the build machine — this is where `xcrun altool` looks for it automatically.
 
 ---
 
-## [QML](https://doc.qt.io/qt-6/qtqml-index.html) modules & resource layout
+## Testing
 
-This project intentionally **flattens QML resource paths** using `QT_RESOURCE_ALIAS` so that pages/components can be referenced by simple filenames (e.g. `Qt.resolvedUrl("Readme.qml")`) even if they live under `app/qml/pages/` in the source tree.
+C++ unit tests use [Qt Test](https://doc.qt.io/qt-6/qttest-index.html); QML tests use [Qt Quick Test](https://doc.qt.io/qt-6/qtquicktest-index.html). Gated by `QTQUICKTEMPLATE_ENABLE_TESTING` (ON by default on desktop, OFF on iOS/Android).
 
-The `AppTheme` and `AppStyle` modules are located in the `app/libs/` directory.
+```bash
+# Run all tests via CTest
+./tools/run ctest --preset linux-tests
 
-Three [QML modules](https://doc.qt.io/qt-6/qtqml-modules-topic.html), each a separate [CMake](https://cmake.org/) target:
-- **`dev.crowell.AppTheme`** → `Theme.qml` singleton (located in `app/libs/apptheme/qml/`)
-- **`dev.crowell.AppStyle`** → custom [Qt Quick Controls 2](https://doc.qt.io/qt-6/qtquickcontrols-index.html) style (depends on `AppTheme`, located in `app/libs/appstyle/qml/`)
-- **`dev.crowell.QtQuickTemplate`** → main application QML (files in `app/qml/`)
+# Run individual tests
+./tools/run ctest --preset linux-tests -R tst_helloworld      # HelloWorld C++ tests
+./tools/run ctest --preset linux-tests -R tst_cpp             # NavigationController C++ tests
+./tools/run ctest --preset linux-tests -R tst_qml_apptheme    # AppTheme QML tests
+./tools/run ctest --preset linux-tests -R tst_qml_appstyle    # AppStyle QML tests
+./tools/run ctest --preset linux-tests -R tst_qml_navigation  # Navigation QML tests
+./tools/run ctest --preset linux-tests -R tst_ui_navigation   # Spix UI navigation test
 
-AppTheme and AppStyle link against Qt Private modules (`Qt6::QmlPrivate`, `Qt6::QuickPrivate`, `Qt6::QuickTemplates2Private`) for deep style customization.
+# Disable testing (e.g. for mobile builds)
+./tools/run cmake -S . -B build/no-tests -DQTQUICKTEMPLATE_ENABLE_TESTING=OFF
+```
+
+### Integration tests (Apple deploy pipelines, pytest, macOS only)
+
+```bash
+./tools/uv run pytest -c app/pyproject.toml                    # 0 tests (all integration, excluded by default)
+./tools/uv run pytest -c app/pyproject.toml -m integration     # all integration tests
+./tools/uv run pytest -c app/pyproject.toml -m ios             # iOS pipeline only
+./tools/uv run pytest -c app/pyproject.toml -m macos_dmg       # macOS DMG pipeline only
+./tools/uv run pytest -c app/pyproject.toml -m macos_appstore  # macOS App Store pipeline only
+```
 
 ---
 
-## Documentation ([QDoc](https://doc.qt.io/qt-6/qdoc-index.html))
+## QML modules & resource layout
 
-If `qdoc` is available in your [Qt](https://www.qt.io/) installation, you'll get build targets:
+Three QML modules, each a separate CMake target:
 
-- Generate app docs:
-  ```bash
-  ./tools/run cmake --build build --target docs
-  ```
+| Module URI | Source | Description |
+|------------|--------|-------------|
+| `dev.crowell.QtQuickTemplate` | `app/qml/` | Main app QML (pages, organisms, templates) |
+| `dev.crowell.AppTheme` | `app/libs/apptheme/qml/` | `Theme.qml` singleton (design tokens) |
+| `dev.crowell.AppStyle` | `app/libs/appstyle/qml/` | Custom Qt Quick Controls 2 style |
 
-- Generate `helloworld` library docs:
-  ```bash
-  ./tools/run cmake --build build --target helloworld_docs
-  ```
+QML files use `QT_RESOURCE_ALIAS` for flattened resource paths (e.g., `app/qml/pages/Readme.qml` -> `pages/Readme.qml`).
 
-The main QDoc configuration lives in `app/doc/qtquicktemplate.qdocconf`.
+---
+
+## Documentation (QDoc)
+
+```bash
+./tools/run cmake --build build/linux-release --target docs       # main app docs
+./tools/run cmake --build build/linux-release --target helloworld_docs  # library docs
+```
+
+Requires `qdoc` on `PATH` (comes with Qt).
 
 ---
 
 ## Discovering build targets (`help-targets`)
 
-After configuring, run the built-in help target to see every custom target available for the current platform (plus Android, which always appears):
+Every platform defines a `help-targets` meta-target that lists available build targets with descriptions:
 
 ```bash
-cmake --build <dir> --target help-targets
+./tools/run cmake --build <build-dir> --target help-targets
 ```
-
-This prints a grouped, formatted summary of each target with its description, invocation command, and any required or optional CMake variables.
-
-### All custom targets
-
-The table below documents every custom target across all platforms. Only targets for the current platform (and Android) are actually created during configuration; the rest are silently skipped.
-
-#### Linux
-
-| Target | Description | Command |
-|--------|-------------|---------|
-| `AppImage` | Package the app as an AppImage using linuxdeploy | `cmake --build <dir> --target AppImage` |
-| `ReleaseDistributableLinux` | Full Linux release pipeline (depends on AppImage) | `cmake --build <dir> --target ReleaseDistributableLinux` |
-
-**Variables for `AppImage`:**
-
-| Variable | Required | Default | Description |
-|----------|----------|---------|-------------|
-| `GPG_KEY_ID` | No | _(empty)_ | GPG key ID for AppImage signing. If unset, no signing is performed. |
-| `ENABLE_WAYLAND` | No | `ON` | Bundle the Qt Wayland platform plugin into the AppImage. |
-
-#### macOS -- Direct Distribution (DMG)
-
-| Target | Description | Command |
-|--------|-------------|---------|
-| `MacDeployQt` | Deploy Qt frameworks into the macOS app bundle | `cmake --build <dir> --target MacDeployQt` |
-| `DMG` | Package the macOS app bundle into a signed DMG | `cmake --build <dir> --target DMG` |
-| `NotarizeMacOS` | Submit DMG to Apple notary service and staple the ticket | `cmake --build <dir> --target NotarizeMacOS` |
-| `VerifyMacOSPackage` | Verify codesign, spctl, and notarization of the DMG and app bundle | `cmake --build <dir> --target VerifyMacOSPackage` |
-| `ReleaseDistributableMacOS` | Full macOS DMG pipeline (build -> deploy -> DMG -> notarize -> verify) | `cmake --build <dir> --target ReleaseDistributableMacOS` |
-
-**Variables for DMG pipeline:**
-
-| Variable | Required | Default | Description |
-|----------|----------|---------|-------------|
-| `QTQUICKTEMPLATE_MACOS_DMG_SIGN_IDENTITY` | No | _(empty)_ | Signing identity for the DMG. |
-| `QTQUICKTEMPLATE_MACOS_NOTARY_KEYCHAIN_PROFILE` | Yes (for notarization) | _(empty)_ | Keychain profile name for `xcrun notarytool`. |
-
-#### macOS -- App Store (PKG)
-
-| Target | Description | Command |
-|--------|-------------|---------|
-| `MacAppStoreArchive` | Archive macOS app for App Store distribution via xcodebuild | `cmake --build <dir> --target MacAppStoreArchive` |
-| `MacExportPkg` | Export signed macOS PKG from xcarchive for App Store submission | `cmake --build <dir> --target MacExportPkg` |
-| `VerifyMacPkg` | Verify exported macOS PKG output | `cmake --build <dir> --target VerifyMacPkg` |
-| `MacUploadASC` | Upload signed macOS PKG to App Store Connect | `cmake --build <dir> --target MacUploadASC` |
-| `ReleaseDistributableMacOSAppStore` | Full macOS App Store pipeline (archive -> export -> verify -> upload) | `cmake --build <dir> --target ReleaseDistributableMacOSAppStore` |
-
-**Variables for App Store pipeline:**
-
-| Variable | Required | Default | Description |
-|----------|----------|---------|-------------|
-| `QTQUICKTEMPLATE_APPLE_DEVELOPMENT_TEAM` | Yes | _(empty)_ | Apple development team ID (10-char). |
-| `QTQUICKTEMPLATE_ASC_API_KEY_ID` | Yes (for upload) | _(empty)_ | App Store Connect API key ID. |
-| `QTQUICKTEMPLATE_ASC_API_ISSUER_ID` | Yes (for upload) | _(empty)_ | App Store Connect API issuer UUID. |
-
-#### iOS
-
-| Target | Description | Command |
-|--------|-------------|---------|
-| `IOSArchive` | Archive iOS app for App Store distribution via xcodebuild | `cmake --build <dir> --target IOSArchive` |
-| `IOSExportIPA` | Export signed iOS IPA from xcarchive for App Store submission | `cmake --build <dir> --target IOSExportIPA` |
-| `VerifyIOSIPA` | Verify exported iOS IPA output | `cmake --build <dir> --target VerifyIOSIPA` |
-| `IOSUploadASC` | Upload signed iOS IPA to App Store Connect | `cmake --build <dir> --target IOSUploadASC` |
-| `ReleaseDistributableIOS` | Full iOS pipeline (archive -> export -> verify -> upload) | `cmake --build <dir> --target ReleaseDistributableIOS` |
-
-**Variables for iOS pipeline:**
-
-| Variable | Required | Default | Description |
-|----------|----------|---------|-------------|
-| `QTQUICKTEMPLATE_APPLE_DEVELOPMENT_TEAM` | Yes | _(empty)_ | Apple development team ID (10-char). |
-| `QTQUICKTEMPLATE_ASC_API_KEY_ID` | Yes (for upload) | _(empty)_ | App Store Connect API key ID. |
-| `QTQUICKTEMPLATE_ASC_API_ISSUER_ID` | Yes (for upload) | _(empty)_ | App Store Connect API issuer UUID. |
-
-#### Android
-
-Android targets always appear in `help-targets` output regardless of the current build platform.
-
-| Target | Description | Command |
-|--------|-------------|---------|
-| `AndroidAAB` | Build unsigned Android release AAB via Gradle | `cmake --build <dir> --target AndroidAAB` |
-| `SignAndroidAAB` | Sign Android release AAB via Gradle | `cmake --build <dir> --target SignAndroidAAB` |
-| `AndroidAPK` | Build unsigned Android release APK via Gradle | `cmake --build <dir> --target AndroidAPK` |
-| `VerifyAndroidAAB` | Verify Android release AAB signature via jarsigner | `cmake --build <dir> --target VerifyAndroidAAB` |
-| `VerifyAndroidAPK` | Verify Android release APK signature via apksigner | `cmake --build <dir> --target VerifyAndroidAPK` |
-| `UploadAndroidPlay` | Upload signed Android AAB to Google Play via Gradle | `cmake --build <dir> --target UploadAndroidPlay` |
-| `ReleaseDistributableAndroid` | Full Android release pipeline (AAB + APK) | `cmake --build <dir> --target ReleaseDistributableAndroid` |
-
-**Variables for Android pipeline:**
-
-| Variable | Required | Default | Description |
-|----------|----------|---------|-------------|
-| `QTQUICKTEMPLATE_ANDROID_KEYSTORE_PATH` | Yes (for signing) | _(empty)_ | Path to Android keystore file. |
-| `QTQUICKTEMPLATE_ANDROID_KEYSTORE_PASSWORD` | Yes (for signing) | _(empty)_ | Keystore password. |
-| `QTQUICKTEMPLATE_ANDROID_KEY_ALIAS` | Yes (for signing) | _(empty)_ | Key alias within the keystore. |
-| `QTQUICKTEMPLATE_ANDROID_KEY_PASSWORD` | Yes (for signing) | _(empty)_ | Key password. |
-| `QTQUICKTEMPLATE_ANDROID_PLAY_SERVICE_ACCOUNT_FILE` | Yes (for upload) | _(empty)_ | Path to Google Play service-account JSON. |
-| `QTQUICKTEMPLATE_ANDROID_PLAY_TRACK` | No | `internal` | Google Play track (internal, alpha, beta, production). |
-| `QTQUICKTEMPLATE_ANDROID_PLAY_RELEASE_STATUS` | No | `completed` | Release status (completed, draft, inProgress, halted). |
-
-#### Utilities
-
-| Target | Description | Command |
-|--------|-------------|---------|
-| `docs` | Generate project documentation with QDoc | `cmake --build <dir> --target docs` |
-| `ReleaseDistributable` | Build all release distributables for the current platform | `cmake --build <dir> --target ReleaseDistributable` |
-| `help-targets` | Print this help summary | `cmake --build <dir> --target help-targets` |
-
----
-
-## Customizing this template
-
-A quick checklist you'll almost certainly want to do:
-
-- Rename the project: `project(QtQuickTemplate ...)` in `app/CMakeLists.txt`
-- Update `app.setOrganizationName("YourOrganization")` and other branding strings in `app/src/main/common/main.cpp`
-- Replace package identifiers:
-  - Linux metainfo + icon id: `dev.crowell.qtquicktemplate`
-  - macOS bundle id: `CFBundleIdentifier`
-  - Android namespace/package
-- Swap icons:
-  - `app/platforms/windows/app.ico`
-  - `app/platforms/macos/app.icns` (optional)
-  - `app/platforms/linux/icons/*` (optional)
-- Decide on a license and add a LICENSE file (some platform metadata currently contains placeholders)
-- Or run `tools/configure_package.py` to automate project renaming/repackaging
 
 ---
 
@@ -1060,7 +622,7 @@ See `app/libs/appstyle/README.md` for a deeper dive into the Theme/AppStyle appr
 
 ## Contributing
 
-PRs welcome—keep changes small, keep the template sharp, and try not to introduce "magic" unless it removes more pain than it adds.
+PRs welcome — keep changes small, keep the template sharp, and try not to introduce "magic" unless it removes more pain than it adds.
 
 ---
 

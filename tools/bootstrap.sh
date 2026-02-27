@@ -107,12 +107,18 @@ else
     ok "bundletool ${BUNDLETOOL_VERSION} already installed"
 fi
 
+# ── Step 7: Project configuration (devcro.py) ────────────────────────────────
+info "Running project configuration..."
+"$UV" run python tools/devcro.py "$@"
+ok "Project configuration complete."
+
+# ── Step 8: Developer environment (.env.local) ───────────────────────────────
+info "Configuring developer environment..."
+"$UV" run python tools/configure_env.py
+ok "Developer environment configured."
+
 # ── Done ─────────────────────────────────────────────────────────────────────
 printf "\n${BOLD}Bootstrap complete!${RESET}\n"
-
-if [ ! -f "$PROJECT_ROOT/.env.local" ]; then
-    printf "${YELLOW}Next step:${RESET} Run ${CYAN}./tools/uv run python tools/configure_env.py${RESET} to set Qt SDK paths and signing credentials.\n\n"
-fi
 
 printf "Run commands through the env-aware wrapper with ${CYAN}./tools/run${RESET}:\n"
 printf "  ./tools/run cmake --preset <preset>        # configure\n"

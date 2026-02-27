@@ -1,4 +1,6 @@
-project(QtQuickTemplate VERSION 0.2.0 LANGUAGES CXX)
+include("${CMAKE_SOURCE_DIR}/cmake/DevcroVersion.cmake")
+read_devcro_version(_app_version)
+project(QtQuickTemplate VERSION ${_app_version} LANGUAGES CXX)
 set(QTQUICKTEMPLATE_APP_VERSION "${PROJECT_VERSION}" CACHE INTERNAL "Application version")
 
 add_subdirectory(libs)
