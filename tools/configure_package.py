@@ -100,9 +100,10 @@ def read_current_identity(root: Path) -> str:
     with open(devcro_path, "rb") as f:
         data = tomllib.load(f)
     package_name = data["config"]["package_name"]   # e.g. dev.crowell.qtquicktemplate
-    app_name = data["application"]["name"]           # e.g. QtQuickTemplate
+    app_name = data["application"]["name"]           # e.g. "QtQuick Template"
+    app_camel = app_name.replace(" ", "")            # e.g. QtQuickTemplate
     segments = package_name.split(".")
-    segments[-1] = app_name  # preserve CamelCase for parse_package()
+    segments[-1] = app_camel  # CamelCase for parse_package()
     return ".".join(segments)                        # e.g. dev.crowell.QtQuickTemplate
 
 
@@ -413,14 +414,9 @@ def main() -> int:
 
     # 9. Post-run instructions
     print("\n=== Next Steps ===")
-    print("  1. Update the display name \"QtQuick Template\" in:")
-    print("       app/qml/Main.qml  (window title)")
-    print("       app/platforms/linux/*.desktop.in  (Name, GenericName, Comment)")
-    print("       app/platforms/linux/*.metainfo.xml.in  (name, summary, description)")
-    print("       app/platforms/windows/app.rc.in  (FileDescription, ProductName)")
-    print("  2. Run  ./tools/uv lock  to regenerate the lockfile")
-    print("  3. Delete all build directories:  rm -rf build/ cmake-build-*/")
-    print("  4. Reconfigure and build to verify everything works")
+    print("  1. Run  ./tools/uv lock  to regenerate the lockfile")
+    print("  2. Delete all build directories:  rm -rf build/ cmake-build-*/")
+    print("  3. Reconfigure and build to verify everything works")
     print()
     return 0
 

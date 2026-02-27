@@ -1,5 +1,5 @@
 [application]
-name = "QtQuickTemplate"
+name = "QtQuick Template"
 description = "Baseline QtQuick application template from Matthew Crowell and Confederated Technologies, Inc."
 version = "0.1.0"
 build_number = 1

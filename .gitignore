@@ -103,6 +103,7 @@ tools/*
 .rcc/
 .uic/
 /build*/
+cmake-build-*/
 
 # Developer-local environment overrides (secrets, machine-specific paths)
 .env.local

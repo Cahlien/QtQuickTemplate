@@ -1,9 +1,14 @@
 #!/usr/bin/env python3
-"""First-time project setup and version propagation orchestrator.
+"""First-time project setup and version/name propagation orchestrator.
 
 Reads ``devcro.toml`` to decide whether the project needs initial
 configuration (interactive prompts for name, package, version) or just
-version propagation across all version-bearing files.
+version and name propagation across all version-bearing and
+name-bearing files.
+
+The ``name`` field in devcro.toml is the human-readable application
+name (e.g. "QtQuick Template").  The CamelCase identifier used by
+CMake, Conan, and file names is derived by stripping spaces.
 
 Usage::
 
@@ -24,7 +29,15 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parent.parent
 DEVCRO_TOML = ROOT / "devcro.toml"
 
+# Ensure tools/ is on sys.path so we can import configure_package helpers
+_TOOLS_DIR = str(ROOT / "tools")
+if _TOOLS_DIR not in sys.path:
+    sys.path.insert(0, _TOOLS_DIR)
+
+from configure_package import project_files, replace_in_file  # noqa: E402
+
 TEMPLATE_DEFAULT_PACKAGE = "dev.crowell.qtquicktemplate"
+TEMPLATE_DEFAULT_NAME = "QtQuick Template"
 
 
 # ---------------------------------------------------------------------------
@@ -152,6 +165,29 @@ def propagate_version(version: str) -> int:
 
 
 # ---------------------------------------------------------------------------
+# Name propagation
+# ---------------------------------------------------------------------------
+
+def propagate_name(old_name: str, new_name: str) -> int:
+    """Replace old_name with new_name across all project files.
+
+    Returns count of changed files.
+    """
+    if old_name == new_name:
+        return 0
+
+    replacements = [(old_name, new_name)]
+    files = project_files(ROOT)
+    changed = 0
+    for fpath in files:
+        if replace_in_file(fpath, replacements):
+            changed += 1
+            rel = fpath.relative_to(ROOT)
+            print(f"  updated name in {rel}")
+    return changed
+
+
+# ---------------------------------------------------------------------------
 # Main logic
 # ---------------------------------------------------------------------------
 
@@ -183,16 +219,19 @@ def main() -> int:
         else:
             print("\n=== Project Configuration ===\n")
             print("  Configure your project identity. Press Enter to keep defaults.\n")
-            app_name = prompt_value("Application display name", current_name)
+            app_name = prompt_value("Application name", current_name)
             package = prompt_value("Package name (e.g. com.example.myapp)", current_package)
             version = prompt_value("Version", current_version)
             print()
+
+        # Derive CamelCase identifier from the human-readable name
+        app_camel = app_name.replace(" ", "")
 
         # Run configure_package.py if the package changed from template default
         if package != current_package:
             # Reconstruct CamelCase package for configure_package.py
             segments = package.split(".")
-            segments[-1] = app_name
+            segments[-1] = app_camel
             full_package = ".".join(segments)
 
             print(f"--- Renaming package: {current_package} -> {package} ---")
@@ -203,6 +242,13 @@ def main() -> int:
             if result.returncode != 0:
                 print("ERROR: configure_package.py failed.", file=sys.stderr)
                 return 1
+
+        # Propagate name (human-readable form) across project files
+        old_name = TEMPLATE_DEFAULT_NAME if package != current_package else current_name
+        print("--- Propagating application name ---")
+        name_changed = propagate_name(old_name, app_name)
+        if name_changed == 0:
+            print("  (all files already at target name)")
 
         # Propagate version
         print("--- Propagating version ---")
@@ -221,8 +267,12 @@ def main() -> int:
         print("devcro.toml updated with bootstrapped = true")
 
     else:
-        # ── Already bootstrapped — version propagation only ───────────────
+        # ── Already bootstrapped — version propagation ────────────────────
         version = data["application"]["version"]
+        app_name = data["application"]["name"]
+
+        print(f"--- Application: {app_name} ---")
+
         print("--- Checking version propagation ---")
         changed = propagate_version(version)
         if changed == 0:
