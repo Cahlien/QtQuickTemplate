@@ -19,15 +19,22 @@ macro(fetch_spix)
 
     set(CMAKE_POLICY_VERSION_MINIMUM 3.5)
 
+    # PatchAnyrpcSanitizer.cmake fixes a logic bug in anyrpc v1.0.2:
+    # `else(BUILD_WITH_ADDRESS_SANITIZE)` is a plain `else`, so ASan flags
+    # are unconditionally added on non-MSVC/non-MINGW.  The patch rewrites
+    # it to `elseif(BUILD_WITH_ADDRESS_SANITIZE)` so ASan is opt-in only.
     FetchContent_Declare(
         anyrpc
         GIT_REPOSITORY https://github.com/sgieseking/anyrpc.git
         GIT_TAG        v1.0.2
         EXCLUDE_FROM_ALL
         OVERRIDE_FIND_PACKAGE
+        PATCH_COMMAND ${CMAKE_COMMAND} -P ${_FETCH_SPIX_CMAKE_DIR}/PatchAnyrpcSanitizer.cmake
     )
     set(BUILD_EXAMPLES OFF CACHE BOOL "" FORCE)
     set(BUILD_WITH_LOG4CPLUS OFF CACHE BOOL "" FORCE)
+    set(BUILD_WITH_ADDRESS_SANITIZE OFF CACHE BOOL "" FORCE)
+
     FetchContent_MakeAvailable(anyrpc)
 
     # anyrpc's CMakeLists uses include_directories(${CMAKE_SOURCE_DIR}/include)
