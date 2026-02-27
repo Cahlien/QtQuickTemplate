@@ -1,12 +1,16 @@
 # QtQuickTemplate
 
-A cross-platform **Qt 6 / Qt Quick (QML)** starter repo that aims to be "just enough structure" to begin a real app:
+A cross-platform **[Qt 6](https://www.qt.io/) / [Qt Quick (QML)](https://doc.qt.io/qt-6/qtquick-index.html)** starter repo that aims to be "just enough structure" to begin a real app:
 
 - A clean QML app shell with **portrait + landscape** layouts and a C++ navigation controller singleton.
-- A centralized **Theme** singleton (design tokens) and a custom **Qt Quick Controls 2 style** (`AppStyle`).
+- A centralized **Theme** singleton (design tokens) and a custom **[Qt Quick Controls 2](https://doc.qt.io/qt-6/qtquickcontrols-index.html) style** (`AppStyle`), styled from [crowell.dev](https://www.crowell.dev).
 - A place for reusable native/C++ code (including a sample library that exports a **C++20 module** when supported, with a header-based fallback).
-- Platform packaging hooks for **Android, Windows, macOS, and Linux**.
-- Optional **QDoc** targets for documentation generation.
+- [CMake](https://cmake.org/) build system with platform packaging pipelines for **iOS, macOS, Android, Linux, and Windows**.
+- C++ dependencies managed via [Conan 2](https://conan.io/) with a workspace layout.
+- Unit tests ([Qt Test](https://doc.qt.io/qt-6/qttest-index.html), [Qt Quick Test](https://doc.qt.io/qt-6/qtquicktest-index.html)), UI tests ([Spix](https://github.com/faaxm/spix)), and integration tests ([pytest](https://docs.pytest.org/)).
+- Optional **[QDoc](https://doc.qt.io/qt-6/qdoc-index.html)** targets for documentation generation.
+
+> Maintained by [Matthew Crowell](https://www.crowell.dev) / [Confederated Technologies, Inc.](https://confederatedtechnologies.com)
 
 ---
 
@@ -41,26 +45,33 @@ Back handling and app minimization are split cleanly:
   - fallback style: `"Basic"`
 
 ### Native/C++ structure
-- `src/main/common/` holds the application entry point and shared C++ code.
-- `include/main/common/` holds the public headers for that code.
-- `src/main/common/navigation/` contains the `NavigationController` implementation.
+- `app/src/main/common/` holds the application entry point and shared C++ code.
+- `app/include/main/common/` holds the public headers for that code.
+- `app/src/main/common/navigation/` contains the `NavigationController` implementation.
 - Platform specialization lives next to the app:
-  - `src/main/android/` contains Android-specific C++ glue (JNI back gesture + startup integration).
+  - `app/src/main/android/` contains Android-specific C++ glue (JNI back gesture + startup integration).
 
-### Build/CMake architecture
-- Root `CMakeLists.txt` delegates setup to focused modules under `cmake/`.
+### Build/[CMake](https://cmake.org/) architecture
+- Root `CMakeLists.txt` is a workspace coordinator — it calls `configure_project()` then adds `app/` as the sole subdirectory.
+- `app/CMakeLists.txt` declares `project(QtQuickTemplate VERSION 0.2.0)`, adds `app/libs/`, and calls `configure_main_app()`.
 - Toolchain logic is centralized under `cmake/toolchain/`:
   - `CompilerSettings.cmake` sets language/toolchain defaults (project default is C++23).
   - `CxxModules.cmake` detects whether C++ modules are supported for the active compiler + generator + platform.
   - `ClangScanDeps.cmake` configures `clang-scan-deps` only where needed (disabled on Apple targets).
-- Shared library helper chunks live in `cmake/libs/LibraryCommon.cmake` to keep per-library `CMakeLists.txt` readable.
+- Deploy modules live in `cmake/deploy/` organized by platform subdirectory, with custom build targets that chain together.
+- Shared library helper macros live in `cmake/libs/LibraryCommon.cmake` to keep per-library `CMakeLists.txt` readable.
+
+### Testing
+- C++ unit tests use [Qt Test](https://doc.qt.io/qt-6/qttest-index.html); QML tests use [Qt Quick Test](https://doc.qt.io/qt-6/qtquicktest-index.html). Gated by `QTQUICKTEMPLATE_ENABLE_TESTING` (ON by default on desktop).
+- UI tests use [Spix](https://github.com/faaxm/spix) (fetched via [FetchContent](https://cmake.org/cmake/help/latest/module/FetchContent.html)) to simulate user interactions headlessly.
+- Integration tests (Apple deploy pipelines) use [pytest](https://docs.pytest.org/).
 
 ### Platform bootstrapping (Android splash)
 - Android uses a `QtActivity` subclass that shows a lightweight overlay and fades it out when Qt renders its first frame.
 - C++ calls into the Android activity on the first rendered frame (`onFirstFrame(...)`).
 
 ### Docs
-- A `docs` target generates HTML documentation via QDoc (if `qdoc` is found).
+- A `docs` target generates HTML documentation via [QDoc](https://doc.qt.io/qt-6/qdoc-index.html) (if `qdoc` is found).
 - The `app/libs/helloworld` sample library also has its own QDoc target.
 
 ---
@@ -69,200 +80,229 @@ Back handling and app minimization are split cleanly:
 
 ```text
 .
-├── .env                                  # tracked defaults (ANDROID_PLAY_TRACK, ANDROID_PLAY_RELEASE_STATUS)
-├── .env.local                            # gitignored developer overrides (Qt paths, signing credentials)
-├── .python-version                     # pinned CPython 3.14t (freethreaded) for uv
-├── CMakeLists.txt                      # workspace coordinator; no VERSION (app/ owns it)
-├── CMakePresets.json                   # platform build presets (iOS, macOS, etc.)
+├── .env                               # tracked defaults (ANDROID_PLAY_TRACK, ANDROID_PLAY_RELEASE_STATUS)
+├── .env.local                         # gitignored developer overrides (Qt paths, signing credentials)
+├── .python-version                    # pinned CPython 3.14t (freethreaded) for uv
+├── CMakeLists.txt                     # workspace coordinator; no VERSION (app/ owns it)
+├── CMakePresets.json                  # platform build presets (iOS, macOS, etc.)
 ├── LICENSE
-├── conanfile.py
-├── pyproject.toml                      # Python deps and tool config
+├── conanfile.py                       # workspace version-authority recipe (single-version rule)
+├── conanws.py                         # Conan workspace definition; lists monorepo products
+├── devcro.toml                        # application metadata and configuration
+├── pyproject.toml                     # workspace Python metadata and dependency declarations
 ├── uv.lock                            # cross-platform dependency lockfile
 │
-├── cmake/
-│   ├── MainApp.cmake                   # executable, QML modules, deploy wiring
-│   ├── ProjectSetup.cmake              # compiler settings, Conan, Qt discovery
+├── app/                               # main application
+│   ├── CMakeLists.txt                 # project() with VERSION, adds libs/ subdirectory
+│   ├── conanfile.py                   # app-level Conan recipe
+│   ├── pyproject.toml                 # app-level pytest configuration
 │   │
-│   ├── deploy/                         # platform packaging pipelines
-│   │   ├── DeployPipelines.cmake       # platform-conditional dispatcher
+│   ├── doc/
+│   │   ├── qtquicktemplate.qdocconf
+│   │   └── modules.qdoc
+│   │
+│   ├── include/
+│   │   └── main/common/
+│   │       ├── app_info.h
+│   │       ├── platform_init.h
+│   │       └── navigation/
+│   │           └── navigation_controller.h
+│   │
+│   ├── libs/
+│   │   ├── CMakeLists.txt             # auto-adds child lib dirs
+│   │   ├── appstyle/                  # custom Qt Quick Controls 2 style
+│   │   │   ├── CMakeLists.txt
+│   │   │   ├── conanfile.py
+│   │   │   ├── README.md
+│   │   │   ├── qml/                   # Button, CheckBox, ComboBox, ...
+│   │   │   └── test/unit/qml/         # AppStyle QML tests (tst_qml_appstyle)
+│   │   ├── apptheme/                  # AppTheme singleton (design tokens)
+│   │   │   ├── CMakeLists.txt
+│   │   │   ├── conanfile.py
+│   │   │   ├── qml/Theme.qml
+│   │   │   └── test/unit/qml/         # AppTheme QML tests (tst_qml_apptheme)
+│   │   └── helloworld/               # sample C++20 module library
+│   │       ├── CMakeLists.txt
+│   │       ├── conanfile.py
+│   │       ├── include/main/helloworld.h
+│   │       ├── src/main/helloworld.cpp
+│   │       ├── src/main/helloworld.cppm
+│   │       ├── doc/helloworld.qdocconf
+│   │       └── test/unit/cpp/         # HelloWorld C++ tests (tst_helloworld)
+│   │
+│   ├── platforms/
+│   │   ├── android/                   # Gradle project, resources, Kotlin sources
+│   │   │   ├── AndroidManifest.xml
+│   │   │   ├── build.gradle
+│   │   │   ├── gradle.properties
+│   │   │   ├── settings.gradle
+│   │   │   ├── proguard-rules.pro
+│   │   │   ├── gradlew / gradlew.bat
+│   │   │   ├── gradle/               # wrapper + version catalog
+│   │   │   ├── res/                   # icons, splash, layouts, values
+│   │   │   └── src/main/kotlin/       # MainActivity + extensions
+│   │   ├── ios/                       # Info.plist, Assets.xcassets, LaunchScreen
+│   │   ├── linux/                     # .desktop template, metainfo, icons
+│   │   ├── macos/                     # Info.plist, entitlements, app.icns
+│   │   └── windows/                   # app.ico, app.manifest, app.rc.in
+│   │
+│   ├── qml/
+│   │   ├── Main.qml                   # ApplicationWindow entry point
+│   │   ├── atoms/                     # atomic design: smallest components
+│   │   ├── molecules/                 # atomic design: composed atoms
+│   │   ├── organisms/                 # composite components
+│   │   │   ├── Header.qml
+│   │   │   ├── Footer.qml
+│   │   │   ├── NavBar.qml
+│   │   │   └── NavigationStack.qml
+│   │   ├── pages/                     # full-page views
+│   │   │   ├── BasePage.qml
+│   │   │   ├── License.qml
+│   │   │   ├── Readme.qml
+│   │   │   ├── StyleShowcase.qml
+│   │   │   └── content/              # page content components
+│   │   │       ├── LicenseContent.qml
+│   │   │       ├── ReadmeContent.qml
+│   │   │       └── StyleShowcaseContent.qml
+│   │   ├── scripts/                   # QML JavaScript modules
+│   │   └── templates/                 # layout templates
+│   │       ├── AdaptiveLayout.qml
+│   │       ├── MainPortraitLayout.qml
+│   │       └── MainLandscapeLayout.qml
+│   │
+│   ├── src/
+│   │   └── main/
+│   │       ├── common/
+│   │       │   ├── main.cpp           # application entry point
+│   │       │   ├── app_info.cpp
+│   │       │   ├── platform_init_default.cpp
+│   │       │   └── navigation/
+│   │       │       └── navigation_controller.cpp
+│   │       └── android/
+│   │           ├── android_back_handler.cpp
+│   │           └── platform_init_android.cpp
+│   │
+│   └── test/
+│       ├── unit/
+│       │   ├── cpp/                   # NavigationController C++ tests (tst_cpp)
+│       │   │   ├── include/
+│       │   │   └── src/
+│       │   └── qml/                   # Navigation QML tests (tst_qml_navigation)
+│       ├── ui/
+│       │   └── cpp/                   # Spix UI navigation test (tst_ui_navigation)
+│       │       ├── include/
+│       │       └── src/
+│       └── integration/               # pytest integration tests (macOS only)
+│           ├── conftest.py
+│           ├── test_ios_pipeline.py
+│           ├── test_macos_appstore_pipeline.py
+│           ├── test_macos_dmg_pipeline.py
+│           └── helpers/               # shared test utilities
+│
+├── cmake/
+│   ├── MainApp.cmake                  # executable, QML modules, deploy wiring
+│   ├── ProjectSetup.cmake             # compiler settings, Conan, Qt discovery
+│   │
+│   ├── deploy/                        # platform packaging pipelines
+│   │   ├── DeployPipelines.cmake      # platform-conditional dispatcher
 │   │   ├── ReleaseDistributables.cmake # meta-targets aggregating pipelines
-│   │   ├── Install.cmake               # cross-platform install rules
-│   │   ├── GenerateVersion.cmake       # git-derived build numbers
-│   │   ├── VersionTarget.cmake         # shared version target helper
+│   │   ├── Install.cmake              # cross-platform install rules
+│   │   ├── GenerateVersion.cmake      # git-derived build numbers
+│   │   ├── VersionTarget.cmake        # shared version target helper
 │   │   │
 │   │   ├── android/
-│   │   │   ├── AndroidBuild.cmake      # AndroidAAB / AndroidAPK / SignAndroidAAB
-│   │   │   ├── AndroidVerify.cmake     # VerifyAndroidAAB / VerifyAndroidAPK
-│   │   │   ├── AndroidUpload.cmake     # UploadAndroidPlay (Google Play)
-│   │   │   ├── AndroidVersion.cmake    # GenerateAndroidVersion target
+│   │   │   ├── AndroidBuild.cmake     # AndroidAAB / AndroidAPK / SignAndroidAAB
+│   │   │   ├── AndroidVerify.cmake    # VerifyAndroidAAB / VerifyAndroidAPK
+│   │   │   ├── AndroidUpload.cmake    # UploadAndroidPlay (Google Play)
+│   │   │   ├── AndroidVersion.cmake   # GenerateAndroidVersion target
 │   │   │   ├── AndroidHelpTargets.cmake # unconditional Android help registration
-│   │   │   ├── GenerateVersion.cmake   # -P script for version.properties
-│   │   │   ├── VerifyAab.cmake         # -P script for AAB verification
-│   │   │   └── VerifyApk.cmake         # -P script for APK verification
+│   │   │   ├── GenerateVersion.cmake  # -P script for version.properties
+│   │   │   ├── VerifyAab.cmake        # -P script for AAB verification
+│   │   │   └── VerifyApk.cmake        # -P script for APK verification
 │   │   │
-│   │   ├── apple/                      # shared iOS + macOS helpers
-│   │   │   ├── AppleCodeSigning.cmake  # release code signing config
-│   │   │   ├── ArtifactVerify.cmake    # unified artifact verification
-│   │   │   ├── AscUpload.cmake         # unified App Store Connect upload
-│   │   │   ├── FindMacDeployQt.cmake   # macdeployqt discovery
-│   │   │   ├── XcodeExport.cmake       # unified xcodebuild -exportArchive
-│   │   │   ├── UploadAsc.cmake         # -P script for ASC upload
-│   │   │   └── VerifyArtifact.cmake    # -P script for artifact verification
+│   │   ├── apple/                     # shared iOS + macOS helpers
+│   │   │   ├── AppleCodeSigning.cmake # release code signing config
+│   │   │   ├── ArtifactVerify.cmake   # unified artifact verification
+│   │   │   ├── AscUpload.cmake        # unified App Store Connect upload
+│   │   │   ├── FindMacDeployQt.cmake  # macdeployqt discovery
+│   │   │   ├── XcodeExport.cmake      # unified xcodebuild -exportArchive
+│   │   │   ├── UploadAsc.cmake        # -P script for ASC upload
+│   │   │   └── VerifyArtifact.cmake   # -P script for artifact verification
 │   │   │
 │   │   ├── ios/
-│   │   │   ├── IOSBuild.cmake          # IOSArchive target
-│   │   │   ├── IOSResources.cmake      # asset catalog + launch screen
+│   │   │   ├── IOSBuild.cmake         # IOSArchive target
+│   │   │   ├── IOSResources.cmake     # asset catalog + launch screen
 │   │   │   └── GenerateLaunchScreen.cmake
 │   │   │
 │   │   ├── linux/
-│   │   │   ├── LinuxPackage.cmake      # AppImage target
+│   │   │   ├── LinuxPackage.cmake     # AppImage target
 │   │   │   ├── StageWaylandSupport.cmake
 │   │   │   └── VerifyWaylandDeps.cmake
 │   │   │
 │   │   └── macos/
-│   │       ├── MacOSBuild.cmake        # MacDeployQt target
-│   │       ├── MacOSPackage.cmake      # DMG target
-│   │       ├── MacOSSign.cmake         # NotarizeMacOS target
-│   │       ├── MacOSVerify.cmake       # VerifyMacOSPackage target
+│   │       ├── MacOSBuild.cmake       # MacDeployQt target
+│   │       ├── MacOSPackage.cmake     # DMG target
+│   │       ├── MacOSSign.cmake        # NotarizeMacOS target
+│   │       ├── MacOSVerify.cmake      # VerifyMacOSPackage target
 │   │       ├── MacOSAppStoreBuild.cmake # MacAppStoreArchive target
-│   │       ├── Notarize.cmake          # -P script for notarization
-│   │       ├── PatchArchiveInfo.cmake  # -P script for archive patching
-│   │       ├── RunMacDeployQt.cmake    # -P script for macdeployqt
-│   │       ├── SignDmg.cmake           # -P script for DMG signing
-│   │       └── VerifyPackage.cmake     # -P script for package verification
+│   │       ├── Notarize.cmake         # -P script for notarization
+│   │       ├── PatchArchiveInfo.cmake # -P script for archive patching
+│   │       ├── RunMacDeployQt.cmake   # -P script for macdeployqt
+│   │       ├── SignDmg.cmake          # -P script for DMG signing
+│   │       └── VerifyPackage.cmake    # -P script for package verification
 │   │
 │   ├── docs/
-│   │   └── QDoc.cmake                  # docs target (QDoc documentation)
+│   │   └── QDoc.cmake                 # docs target (QDoc documentation)
 │   │
 │   ├── help/
-│   │   ├── HelpTargets.cmake           # register_help_target() + finalize
-│   │   └── PrintHelp.cmake             # -P script for formatted help output
+│   │   ├── HelpTargets.cmake          # register_help_target() + finalize
+│   │   └── PrintHelp.cmake            # -P script for formatted help output
 │   │
 │   ├── integration/
-│   │   └── Conan.cmake                 # Conan package manager integration
+│   │   └── Conan.cmake                # Conan package manager integration
 │   │
 │   ├── libs/
-│   │   └── LibraryCommon.cmake         # add_portable_cpp_library() helpers
+│   │   └── LibraryCommon.cmake        # add_portable_cpp_library() helpers
 │   │
 │   ├── platform/
-│   │   └── PlatformSources.cmake       # platform-specific source selection
+│   │   └── PlatformSources.cmake      # platform-specific source selection
 │   │
 │   ├── qt/
-│   │   ├── QmlModule.cmake             # QML module registration
-│   │   └── QtProject.cmake             # Qt discovery + FFmpeg workaround
+│   │   ├── QmlModule.cmake            # QML module registration
+│   │   └── QtProject.cmake            # Qt discovery + FFmpeg workaround
+│   │
+│   ├── testing/
+│   │   ├── TestingSetup.cmake         # configure_testing(): option, enable_testing()
+│   │   ├── TestTargets.cmake          # add_qt_test() and add_qt_quick_test()
+│   │   ├── FetchSpix.cmake            # fetch_spix(): anyrpc + Spix via FetchContent
+│   │   ├── PatchAnyrpcSanitizer.cmake # anyrpc ASan opt-in patch
+│   │   └── PatchSpixInstall.cmake     # Spix install/export rule patch
 │   │
 │   └── toolchain/
-│       ├── CompilerSettings.cmake      # C++23, warnings, IPO
-│       ├── CxxModules.cmake            # C++20 module support detection
-│       └── ClangScanDeps.cmake         # clang-scan-deps configuration
+│       ├── CompilerSettings.cmake     # C++23, warnings, IPO
+│       ├── CxxModules.cmake           # C++20 module support detection
+│       └── ClangScanDeps.cmake        # clang-scan-deps configuration
 │
-├── doc/
-│   ├── qtquicktemplate.qdocconf
-│   └── modules.qdoc
+├── profiles/                          # Conan profiles
+│   ├── build
+│   └── host
 │
-├── include/
-│   └── main/common/
-│       ├── app_info.h
-│       ├── platform_init.h
-│       └── navigation/
-│           └── navigation_controller.h
-│
-├── app/
-│   ├── CMakeLists.txt                  # project() with VERSION, adds libs/ subdirectory
-│   ├── libs/
-│   │   ├── CMakeLists.txt              # auto-adds child lib dirs
-│   │   ├── appstyle/                   # custom Qt Quick Controls 2 style
-│   │   │   ├── CMakeLists.txt
-│   │   │   ├── README.md
-│   │   │   └── qml/                    # Button, CheckBox, ComboBox, ...
-│   │   ├── apptheme/                   # AppTheme singleton (design tokens)
-│   │   │   ├── CMakeLists.txt
-│   │   │   └── qml/Theme.qml
-│   │   └── helloworld/                 # sample C++20 module library
-│       ├── CMakeLists.txt
-│       ├── helloworld.cppm
-│       ├── include/helloworld.h
-│       ├── src/helloworld.cpp
-│       └── doc/helloworld.qdocconf
-│
-├── platforms/
-│   ├── android/                        # Gradle project, resources, Kotlin sources
-│   │   ├── AndroidManifest.xml
-│   │   ├── build.gradle
-│   │   ├── gradle.properties
-│   │   ├── settings.gradle
-│   │   ├── proguard-rules.pro
-│   │   ├── gradlew / gradlew.bat
-│   │   ├── gradle/                     # wrapper + version catalog
-│   │   ├── res/                        # icons, splash, layouts, values
-│   │   └── src/main/kotlin/            # MainActivity + extensions
-│   ├── ios/                            # Info.plist, Assets.xcassets, LaunchScreen
-│   ├── linux/                          # .desktop template, metainfo, icons
-│   ├── macos/                          # Info.plist, entitlements, app.icns
-│   └── windows/                        # app.ico, app.manifest, app.rc.in
-│
-├── qml/
-│   ├── Main.qml                        # ApplicationWindow entry point
-│   ├── atoms/                          # atomic design: smallest components
-│   ├── molecules/                      # atomic design: composed atoms
-│   ├── organisms/                      # composite components
-│   │   ├── Header.qml
-│   │   ├── Footer.qml
-│   │   ├── NavBar.qml
-│   │   └── NavigationStack.qml
-│   ├── pages/                          # full-page views
-│   │   ├── BasePage.qml
-│   │   ├── License.qml
-│   │   ├── Readme.qml
-│   │   ├── StyleShowcase.qml
-│   │   └── content/                    # page content components
-│   │       ├── LicenseContent.qml
-│   │       ├── ReadmeContent.qml
-│   │       └── StyleShowcaseContent.qml
-│   ├── scripts/                        # QML JavaScript modules
-│   └── templates/                      # layout templates
-│       ├── AdaptiveLayout.qml
-│       ├── MainPortraitLayout.qml
-│       └── MainLandscapeLayout.qml
-│
-├── src/
-│   └── main/
-│       ├── common/
-│       │   ├── main.cpp                # application entry point
-│       │   ├── app_info.cpp
-│       │   ├── platform_init_default.cpp
-│       │   └── navigation/
-│       │       └── navigation_controller.cpp
-│       └── android/
-│           ├── android_back_handler.cpp
-│           └── platform_init_android.cpp
-│
-├── tests/                              # pytest integration tests
-│   ├── conftest.py
-│   ├── test_ios_pipeline.py
-│   ├── test_macos_appstore_pipeline.py
-│   ├── test_macos_dmg_pipeline.py
-│   └── helpers/                        # shared test utilities
-│       ├── artifacts.py
-│       ├── asc_api.py
-│       ├── cmake.py
-│       └── codesign.py
-│
-└── tools/                              # developer tooling
-    ├── bootstrap.sh                    # dev environment setup (macOS/Linux)
-    ├── bootstrap.ps1                   # dev environment setup (Windows)
-    ├── configure_env.py                # interactive Qt SDK + signing config wizard (entry point)
-    ├── configure_env/                  # configure_env Python package
-    ├── run                             # env-aware wrapper: loads .env/.env.local before running tools
-    ├── run.ps1                         # env-aware wrapper for Windows
-    └── configure_package.py            # project renaming/repackaging script
+└── tools/                             # developer tooling
+    ├── bootstrap.sh                   # dev environment setup (macOS/Linux)
+    ├── bootstrap.ps1                  # dev environment setup (Windows)
+    ├── configure_env.py               # interactive Qt SDK + signing config wizard (entry point)
+    ├── configure_env/                 # configure_env Python package
+    ├── configure_package.py           # project renaming/repackaging script
+    ├── run                            # env-aware wrapper: loads .env/.env.local before running tools
+    └── run.ps1                        # env-aware wrapper for Windows
 ```
 
 ---
 
 ## Build prerequisites
 
-- **Qt 6.10+** (Core, Quick, QuickControls2, Qml)
+- **[Qt 6.10+](https://www.qt.io/download)** (Core, Quick, QuickControls2, Qml)
+- **[CMake 4.2.1+](https://cmake.org/download/)**
 - A C++23-capable compiler
 - Optional module path requirements:
   - On supported non-Apple toolchains/generators, `helloworld` exports a C++20 module.
@@ -271,7 +311,7 @@ Back handling and app minimization are split cleanly:
 
 ### Recommended: bootstrap script
 
-The fastest way to get cmake, conan, pytest, and all Python-based tools at the correct versions:
+The fastest way to get [cmake](https://cmake.org/), [conan](https://conan.io/), [pytest](https://docs.pytest.org/), and all Python-based tools at the correct versions:
 
 ```bash
 ./tools/bootstrap.sh       # macOS/Linux
@@ -326,9 +366,9 @@ Create `.env.local` manually with your values. See the [Environment Variables](#
 ### Manual alternative
 
 If you prefer to manage tools globally:
-- **CMake 3.28+**
-- **Conan 2** (optional; the repo includes a `conanfile.py`)
-- **Python 3.14+** with pytest for running integration tests
+- **[CMake 4.2.1+](https://cmake.org/download/)**
+- **[Conan 2](https://conan.io/)** (optional; the repo includes a `conanfile.py`)
+- **[Python 3.14+](https://www.python.org/)** with [pytest](https://docs.pytest.org/) for running integration tests
 
 ---
 
@@ -417,11 +457,11 @@ Run on Linux:
 
 ### Package (AppImage)
 
-AppImage packaging is provided by `cmake/AppImage.cmake` and requires:
+AppImage packaging is provided by `cmake/deploy/linux/LinuxPackage.cmake` and requires:
 
-- `linuxdeploy`
-- `linuxdeploy-plugin-qt`
-- `linuxdeploy-plugin-appimage`
+- [`linuxdeploy`](https://github.com/linuxdeploy/linuxdeploy)
+- [`linuxdeploy-plugin-qt`](https://github.com/linuxdeploy/linuxdeploy-plugin-qt)
+- [`linuxdeploy-plugin-appimage`](https://github.com/linuxdeploy/linuxdeploy-plugin-appimage)
 
 If they are installed in `~/applications`, `~/.local/bin`, or `/usr/local/bin`, CMake auto-detects them and enables the `AppImage` target.
 
@@ -463,21 +503,21 @@ chmod +x validate
 
 ## Android: build, package, sign
 
-This repo is configured for Qt Android deployment (`QT_ANDROID_PACKAGE_SOURCE_DIR=platforms/android`).
+This repo is configured for [Qt Android deployment](https://doc.qt.io/qt-6/android.html) (`QT_ANDROID_PACKAGE_SOURCE_DIR=app/platforms/android`).
 
 ### Build
 
-Use a Qt Android kit in Qt Creator (recommended). The build also regenerates:
+Use a Qt Android kit in [Qt Creator](https://www.qt.io/product/development-tools) (recommended). The build also regenerates:
 
-- `platforms/android/version.properties`
+- `app/platforms/android/version.properties`
 
-from project version values via the `GenerateAndroidVersion` CMake target.
+from project version values via the `GenerateAndroidVersion` [CMake](https://cmake.org/) target.
 
 If you need to change app identifiers or Android metadata, start here:
 
-- `platforms/android/build.gradle` (namespace)
-- `platforms/android/src/main/kotlin/.../MainActivity.kt` (package)
-- `platforms/android/AndroidManifest.xml`
+- `app/platforms/android/build.gradle` (namespace)
+- `app/platforms/android/src/main/kotlin/.../MainActivity.kt` (package)
+- `app/platforms/android/AndroidManifest.xml`
 
 ### Package
 
@@ -579,7 +619,7 @@ The full pipeline — build → archive → sign → export IPA → verify → u
 
 **Two ways to set environment variables:**
 
-1. **`.env.local`** (recommended) — set `QT_MACOS_ROOT`, `APPLE_DEVELOPMENT_TEAM`, `ASC_API_KEY_ID`, `ASC_API_ISSUER_ID` in `.env.local`. Run `./tools/uv run python tools/configure_env.py` to interactively configure.
+1. **`.env.local`** (recommended) — set `QT_MACOS_ROOT`, `APPLE_DEVELOPMENT_TEAM`, `ASC_API_KEY_ID`, `ASC_API_ISSUER_ID` in `.env.local`. Run `./tools/configure_env.sh` to interactively configure.
 2. **`CMakeUserPresets.json`** — set these values in the preset's `environment` block as shown above.
 
 Both approaches work; `.env.local` is simpler for single-machine setups, while `CMakeUserPresets.json` enables per-preset configurations.
@@ -696,7 +736,7 @@ xcrun notarytool store-credentials "my-notary-profile" \
 
 **Two ways to set environment variables:**
 
-1. **`.env.local`** (recommended) — set `QT_MACOS_ROOT`, `MACOS_NOTARY_KEYCHAIN_PROFILE`, `MACOS_APP_SIGN_IDENTITY`, `MACOS_DMG_SIGN_IDENTITY` in `.env.local`. Run `./tools/uv run python tools/configure_env.py` to interactively configure.
+1. **`.env.local`** (recommended) — set `QT_MACOS_ROOT`, `MACOS_NOTARY_KEYCHAIN_PROFILE`, `MACOS_APP_SIGN_IDENTITY`, `MACOS_DMG_SIGN_IDENTITY` in `.env.local`. Run `./tools/configure_env.sh` to interactively configure.
 2. **`CMakeUserPresets.json`** — set these values in the preset's `environment` block as shown above.
 
 Both approaches work; `.env.local` is simpler for single-machine setups, while `CMakeUserPresets.json` enables per-preset configurations.
@@ -795,7 +835,7 @@ The Mac App Store pipeline uses the Xcode generator (separate build directory fr
 
 **Two ways to set environment variables:**
 
-1. **`.env.local`** (recommended) — set `QT_MACOS_ROOT`, `APPLE_DEVELOPMENT_TEAM`, `ASC_API_KEY_ID`, `ASC_API_ISSUER_ID` in `.env.local`. Run `./tools/uv run python tools/configure_env.py` to interactively configure.
+1. **`.env.local`** (recommended) — set `QT_MACOS_ROOT`, `APPLE_DEVELOPMENT_TEAM`, `ASC_API_KEY_ID`, `ASC_API_ISSUER_ID` in `.env.local`. Run `./tools/configure_env.sh` to interactively configure.
 2. **`CMakeUserPresets.json`** — set these values in the preset's `environment` block as shown above.
 
 Both approaches work; `.env.local` is simpler for single-machine setups, while `CMakeUserPresets.json` enables per-preset configurations.
@@ -843,22 +883,24 @@ To build without packaging:
 
 ---
 
-## QML modules & resource layout
+## [QML](https://doc.qt.io/qt-6/qtqml-index.html) modules & resource layout
 
-This project intentionally **flattens QML resource paths** using `QT_RESOURCE_ALIAS` so that pages/components can be referenced by simple filenames (e.g. `Qt.resolvedUrl("Readme.qml")`) even if they live under `qml/pages/` in the source tree.
+This project intentionally **flattens QML resource paths** using `QT_RESOURCE_ALIAS` so that pages/components can be referenced by simple filenames (e.g. `Qt.resolvedUrl("Readme.qml")`) even if they live under `app/qml/pages/` in the source tree.
 
 The `AppTheme` and `AppStyle` modules are located in the `app/libs/` directory.
 
-Modules:
-- `AppTheme` → `Theme.qml` singleton (located in `app/libs/apptheme/qml/`)
-- `AppStyle` → custom controls style (depends on `AppTheme`, located in `app/libs/appstyle/qml/`)
-- `QtQuickTemplate` → main application QML
+Three [QML modules](https://doc.qt.io/qt-6/qtqml-modules-topic.html), each a separate [CMake](https://cmake.org/) target:
+- **`dev.crowell.AppTheme`** → `Theme.qml` singleton (located in `app/libs/apptheme/qml/`)
+- **`dev.crowell.AppStyle`** → custom [Qt Quick Controls 2](https://doc.qt.io/qt-6/qtquickcontrols-index.html) style (depends on `AppTheme`, located in `app/libs/appstyle/qml/`)
+- **`dev.crowell.QtQuickTemplate`** → main application QML (files in `app/qml/`)
+
+AppTheme and AppStyle link against Qt Private modules (`Qt6::QmlPrivate`, `Qt6::QuickPrivate`, `Qt6::QuickTemplates2Private`) for deep style customization.
 
 ---
 
-## Documentation (QDoc)
+## Documentation ([QDoc](https://doc.qt.io/qt-6/qdoc-index.html))
 
-If `qdoc` is available in your Qt installation, you'll get build targets:
+If `qdoc` is available in your [Qt](https://www.qt.io/) installation, you'll get build targets:
 
 - Generate app docs:
   ```bash
@@ -870,7 +912,7 @@ If `qdoc` is available in your Qt installation, you'll get build targets:
   ./tools/run cmake --build build --target helloworld_docs
   ```
 
-The main QDoc configuration lives in `doc/qtquicktemplate.qdocconf`.
+The main QDoc configuration lives in `app/doc/qtquicktemplate.qdocconf`.
 
 ---
 
@@ -995,17 +1037,18 @@ Android targets always appear in `help-targets` output regardless of the current
 
 A quick checklist you'll almost certainly want to do:
 
-- Rename the project: `project(QtQuickTemplate ...)` in `CMakeLists.txt`
-- Update `app.setOrganizationName("YourOrganization")` and other branding strings in `main.cpp`
+- Rename the project: `project(QtQuickTemplate ...)` in `app/CMakeLists.txt`
+- Update `app.setOrganizationName("YourOrganization")` and other branding strings in `app/src/main/common/main.cpp`
 - Replace package identifiers:
   - Linux metainfo + icon id: `dev.crowell.qtquicktemplate`
   - macOS bundle id: `CFBundleIdentifier`
   - Android namespace/package
 - Swap icons:
-  - `platforms/windows/app.ico`
-  - `platforms/macos/app.icns` (optional)
-  - `platforms/linux/icons/*` (optional)
+  - `app/platforms/windows/app.ico`
+  - `app/platforms/macos/app.icns` (optional)
+  - `app/platforms/linux/icons/*` (optional)
 - Decide on a license and add a LICENSE file (some platform metadata currently contains placeholders)
+- Or run `tools/configure_package.py` to automate project renaming/repackaging
 
 ---
 
@@ -1047,10 +1090,10 @@ This repository includes instruction files for several AI coding agents:
 
 | File | Agent(s) |
 |------|----------|
-| `CLAUDE.md` | Claude Code |
-| `AGENTS.md` | OpenAI Codex, OpenCode |
-| `GEMINI.md` | Google Gemini CLI |
-| `.github/copilot-instructions.md` | GitHub Copilot |
-| `.junie/guidelines.md` | JetBrains Junie |
+| `CLAUDE.md` | [Claude Code](https://docs.anthropic.com/en/docs/claude-code) |
+| `AGENTS.md` | [OpenAI Codex](https://openai.com/index/openai-codex/), [OpenCode](https://github.com/opencode-ai/opencode) |
+| `GEMINI.md` | [Google Gemini CLI](https://github.com/google-gemini/gemini-cli) |
+| `.github/copilot-instructions.md` | [GitHub Copilot](https://github.com/features/copilot) |
+| `.junie/guidelines.md` | [JetBrains Junie](https://www.jetbrains.com/junie/) |
 
 These files contain project architecture context, build commands, and conventions to help AI agents produce correct, idiomatic contributions. Each agent is encouraged to decompose complex tasks into focused subtasks and to read existing code before proposing modifications.
