@@ -32,95 +32,97 @@
     Thread safety: \c pop() is always invoked on the Qt main thread via
     \c Qt::QueuedConnection from the JNI back-handler, so no mutex is required.
 */
-namespace dev::crowell::qtquicktemplate::navigation {
-
-class NavigationController : public QObject
+namespace dev::crowell::qtquicktemplate::navigation
 {
-    Q_OBJECT
-    QML_ELEMENT
-    QML_SINGLETON
+    class NavigationController : public QObject
+    {
+        Q_OBJECT
+        QML_ELEMENT
+        QML_SINGLETON
 
-    Q_PROPERTY(QString     currentUrl        READ currentUrl        NOTIFY currentChanged FINAL)
-    Q_PROPERTY(QVariantMap currentProps       READ currentProps       NOTIFY currentChanged FINAL)
-    Q_PROPERTY(bool        currentShowChrome  READ currentShowChrome  NOTIFY currentChanged FINAL)
-    Q_PROPERTY(bool        canGoBack          READ canGoBack          NOTIFY currentChanged FINAL)
-    Q_PROPERTY(bool        canGoForward       READ canGoForward       NOTIFY currentChanged FINAL)
-    Q_PROPERTY(int         historyLimit       READ historyLimit       CONSTANT FINAL)
+        Q_PROPERTY(QString currentUrl READ currentUrl NOTIFY currentChanged FINAL)
+        Q_PROPERTY(QVariantMap currentProps READ currentProps NOTIFY currentChanged FINAL)
+        Q_PROPERTY(bool currentShowChrome READ currentShowChrome NOTIFY currentChanged FINAL)
+        Q_PROPERTY(bool canGoBack READ canGoBack NOTIFY currentChanged FINAL)
+        Q_PROPERTY(bool canGoForward READ canGoForward NOTIFY currentChanged FINAL)
+        Q_PROPERTY(int historyLimit READ historyLimit CONSTANT FINAL)
 
-public:
-    ~NavigationController() override = default;
+    public:
+        ~NavigationController() override = default;
 
-    // ── Singleton plumbing ────────────────────────────────────────────────
+        static NavigationController *create(QQmlEngine *engine, QJSEngine *scriptEngine);
 
-    static NavigationController *create(QQmlEngine *engine, QJSEngine *scriptEngine);
-    static NavigationController *instance();
+        static NavigationController *instance();
 
-    // ── Navigation API ────────────────────────────────────────────────────
+        /// Request that QML pushes a page onto StackView.
+        Q_INVOKABLE void push(const QString &url,
+                              const QVariantMap &props = {},
+                              bool showChrome = true);
 
-    /// Request that QML pushes a page onto StackView.
-    Q_INVOKABLE void push(const QString     &url,
-                          const QVariantMap &props      = {},
-                          bool               showChrome = true);
+        /// Request a pop. Emits \c backAtRoot if there is no page to pop.
+        Q_INVOKABLE void pop();
 
-    /// Request a pop. Emits \c backAtRoot if there is no page to pop.
-    Q_INVOKABLE void pop();
+        /// Request a forward navigation if forward history exists.
+        Q_INVOKABLE void forward();
 
-    /// Request a forward navigation if forward history exists.
-    Q_INVOKABLE void forward();
+        /// Request that QML replaces the top page.
+        Q_INVOKABLE void replace(const QString &url,
+                                 const QVariantMap &props = {},
+                                 bool showChrome = true);
 
-    /// Request that QML replaces the top page.
-    Q_INVOKABLE void replace(const QString     &url,
-                             const QVariantMap &props      = {},
-                             bool               showChrome = true);
+        /// Called by QML whenever StackView top page changes.
+        Q_INVOKABLE void setCurrent(const QString &url,
+                                    const QVariantMap &props,
+                                    bool showChrome,
+                                    int stackDepth);
 
-    /// Called by QML whenever StackView top page changes.
-    Q_INVOKABLE void setCurrent(const QString     &url,
-                                const QVariantMap &props,
-                                bool               showChrome,
-                                int                stackDepth);
+        /// Move the app to the background (Android only; no-op elsewhere).
+        Q_INVOKABLE void minimizeApp();
 
-    /// Move the app to the background (Android only; no-op elsewhere).
-    Q_INVOKABLE void minimizeApp();
+        /// Reset all navigation state to defaults without emitting any signals.
+        /// Intended for use in unit test init() methods only.
+        void resetForTesting();
 
-    // ── Test support ──────────────────────────────────────────────────────
+        [[nodiscard]] QString currentUrl() const;
 
-    /// Reset all navigation state to defaults without emitting any signals.
-    /// Intended for use in unit test init() methods only.
-    void resetForTesting();
+        [[nodiscard]] QVariantMap currentProps() const;
 
-    // ── Property accessors ────────────────────────────────────────────────
+        [[nodiscard]] bool currentShowChrome() const;
 
-    [[nodiscard]] QString     currentUrl()        const;
-    [[nodiscard]] QVariantMap currentProps()       const;
-    [[nodiscard]] bool        currentShowChrome()  const;
-    [[nodiscard]] bool        canGoBack()          const;
-    [[nodiscard]] bool        canGoForward()       const;
-    [[nodiscard]] int         historyLimit()       const;
+        [[nodiscard]] bool canGoBack() const;
 
-signals:
-    void currentChanged();
-    void pushRequested(const QString &url, const QVariantMap &props, bool showChrome);
-    void popRequested();
-    void replaceRequested(const QString &url, const QVariantMap &props, bool showChrome);
-    /// Fired when \c pop() is called with an empty back-stack.
-    void backAtRoot();
+        [[nodiscard]] bool canGoForward() const;
 
-private:
-    explicit NavigationController(QObject *parent = nullptr);
+        [[nodiscard]] int historyLimit() const;
 
-    struct Entry {
-        QString     url;
-        QVariantMap props;
-        bool        showChrome = true;
+    signals:
+        void currentChanged();
+
+        void pushRequested(const QString &url, const QVariantMap &props, bool showChrome);
+
+        void popRequested();
+
+        void replaceRequested(const QString &url, const QVariantMap &props, bool showChrome);
+
+        /// Fired when \c pop() is called with an empty back-stack.
+        void backAtRoot();
+
+    private:
+        explicit NavigationController(QObject *parent = nullptr);
+
+        struct Entry
+        {
+            QString url;
+            QVariantMap props;
+            bool showChrome = true;
+        };
+
+        QString m_currentUrl;
+        QVariantMap m_currentProps;
+        bool m_currentShowChrome = true;
+        bool m_canGoBack = false;
+        int m_stackDepth = 0;
+        int m_historyLimit = 1;
+        QVector<Entry> m_forward;
     };
-
-    QString     m_currentUrl;
-    QVariantMap m_currentProps;
-    bool        m_currentShowChrome = true;
-    bool        m_canGoBack = false;
-    int         m_stackDepth = 0;
-    int         m_historyLimit = 1;
-    QVector<Entry> m_forward;
-};
-
 } // namespace dev::crowell::qtquicktemplate::navigation

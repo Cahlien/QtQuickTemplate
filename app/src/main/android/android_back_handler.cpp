@@ -15,8 +15,6 @@
 #include <QMetaObject>
 #include <jni.h>
 
-// ── JNI back-gesture entry-point ──────────────────────────────────────────────
-
 using dev::crowell::qtquicktemplate::navigation::NavigationController;
 
 extern "C" {

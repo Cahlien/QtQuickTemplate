@@ -54,7 +54,7 @@ int main(int argc, char *argv[])
             auto *window = qobject_cast<QQuickWindow *>(obj);
             if (window) {
                 QObject::connect(window, &QQuickWindow::frameSwapped, window, [window]() {
-                    onFirstFrame(window);
+                    dev::crowell::qtquicktemplate::platform::onFirstFrame(window);
                 }, Qt::SingleShotConnection);
             }
         },

@@ -9,15 +9,20 @@
 #  include "helloworld_export.h"
 #endif
 
-class HELLOWORLD_EXPORT HelloWorld
+namespace dev::crowell::helloworld
 {
-public:
-    HelloWorld();
-    ~HelloWorld() = default;
+    class HELLOWORLD_EXPORT HelloWorld
+    {
+    public:
+        HelloWorld();
 
-    [[nodiscard]] std::string_view message() const noexcept;
-    [[nodiscard]] std::string formatMessage() const;
+        ~HelloWorld() = default;
 
-private:
-    std::string m_message;
-};
+        [[nodiscard]] std::string_view message() const noexcept;
+
+        [[nodiscard]] std::string formatMessage() const;
+
+    private:
+        std::string m_message;
+    };
+} // namespace dev::crowell::helloworld

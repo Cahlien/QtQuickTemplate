@@ -2,7 +2,10 @@
 
 #include <QQuickWindow>
 
-void onFirstFrame(QQuickWindow *window)
+namespace dev::crowell::qtquicktemplate::platform
 {
-    Q_UNUSED(window)
-}
+    void onFirstFrame(QQuickWindow *window)
+    {
+        Q_UNUSED(window)
+    }
+} // namespace dev::crowell::qtquicktemplate::platform

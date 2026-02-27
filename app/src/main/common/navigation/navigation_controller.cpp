@@ -11,8 +11,6 @@
 
 namespace dev::crowell::qtquicktemplate::navigation {
 
-// ── Singleton ─────────────────────────────────────────────────────────────────
-
 NavigationController::NavigationController(QObject *parent)
     : QObject(parent)
 {
@@ -139,8 +137,6 @@ void NavigationController::minimizeApp()
 #endif
 }
 
-// ── Property accessors ────────────────────────────────────────────────────────
-
 QString NavigationController::currentUrl() const
 {
     return m_currentUrl;
@@ -171,4 +167,4 @@ int NavigationController::historyLimit() const
     return m_historyLimit;
 }
 
-} // namespace dev::crowell::qtquicktemplate::navigation
+}  // namespace dev::crowell::qtquicktemplate::navigation

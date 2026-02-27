@@ -4,4 +4,4 @@ module;
 
 export module helloworld;
 
-export using ::HelloWorld;
+export using dev::crowell::helloworld::HelloWorld;

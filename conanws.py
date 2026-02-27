@@ -24,6 +24,13 @@ class Ws(Workspace):
             p = os.path.join(self.folder, f)
             if os.path.isdir(p) and os.path.isfile(os.path.join(p, "conanfile.py")):
                 result.append({"path": f})
+
+        libs_dir = os.path.join(self.folder, "app", "libs")
+        if os.path.isdir(libs_dir):
+            for lib in os.listdir(libs_dir):
+                p = os.path.join(libs_dir, lib)
+                if os.path.isdir(p) and os.path.isfile(os.path.join(p, "conanfile.py")):
+                    result.append({"path": os.path.join("app", "libs", lib)})
         return result
 
     def build_order(self, order):
