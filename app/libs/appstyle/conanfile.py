@@ -2,8 +2,8 @@ from conan import ConanFile
 from conan.tools.cmake import CMake, cmake_layout
 
 
-class QtQuickTemplateAppRecipe(ConanFile):
-    name = "qtquicktemplate-app"
+class AppStyleRecipe(ConanFile):
+    name = "qtquicktemplate-appstyle"
     version = "0.2.0"
 
     settings = "os", "compiler", "build_type", "arch"

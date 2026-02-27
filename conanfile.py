@@ -36,4 +36,4 @@ class QtQuickTemplateWorkspaceRecipe(ConanFile):
         # conanfile.py so that the authoritative version list is visible
         # here in one place.
 
-        self.requires("anyrpc/1.0.2")
+        pass

@@ -62,6 +62,7 @@ Item {
 
             MouseArea {
                 id: linkMouse
+                objectName: "licenseLinkArea"
                 anchors.fill: parent
                 cursorShape: Qt.PointingHandCursor
                 hoverEnabled: true

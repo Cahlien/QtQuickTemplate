@@ -5,9 +5,11 @@ import dev.crowell.AppTheme
 
 ApplicationWindow {
     id: root
+    objectName: "mainWindow"
 
     readonly property bool isMobile: Qt.platform.os === "android"
                                   || Qt.platform.os === "ios"
+    readonly property string currentNavigationUrl: NavigationController.currentUrl
     property bool _displayedShowChrome: navigationStack.displayedShowChrome
 
     color: Theme.background

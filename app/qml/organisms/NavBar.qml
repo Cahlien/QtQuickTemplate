@@ -38,11 +38,13 @@ Item {
             anchors.fill: parent
 
             TabButton {
+                objectName: "readmeTab"
                 text: qsTr("Readme")
                 onClicked: root.readmeRequested()
             }
 
             TabButton {
+                objectName: "controlsTab"
                 text: qsTr("Controls")
                 onClicked: root.controlsRequested()
             }

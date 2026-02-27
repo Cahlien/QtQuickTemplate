@@ -14,5 +14,5 @@ private slots:
     void message_isNotEmpty() const;
 
 private:
-    const HelloWorld m_hw{};
+    const dev::crowell::helloworld::HelloWorld m_hw{};
 };

@@ -19,6 +19,7 @@ Key files:
 - **`conanws.py`** — Conan workspace definition; lists all monorepo products for `conan workspace install`
 - **`conanfile.py`** — workspace version-authority recipe; records canonical versions for the single-version rule
 - **`app/conanfile.py`** — app-level Conan recipe; declares which packages the app needs
+- **`app/libs/*/conanfile.py`** — per-library Conan recipes; auto-discovered by `conanws.py`
 - **`app/pyproject.toml`** — app-level pytest configuration (testpaths, markers, addopts)
 
 After bootstrapping, prefix build/test commands with `./tools/uv run` (e.g. `./tools/uv run cmake --preset <name>`) or activate the venv directly (`source .venv/bin/activate`).
@@ -133,13 +134,17 @@ Three QML modules, each a separate CMake target:
 - **`dev.crowell.AppTheme`** — `Theme.qml` singleton with design tokens (colors, spacing, radii, typography)
 - **`dev.crowell.AppStyle`** — custom Qt Quick Controls 2 style overriding Button, TextField, etc.
 
+The Spix UI test (`tst_ui_navigation`) creates a test-only STATIC library (`QtQuickTemplateTestQml`) that mirrors the app's QML module. This allows the test to load the real UI without modifying the app's executable-based QML module architecture. Spix is fetched via FetchContent (`cmake/testing/FetchSpix.cmake`).
+
 AppTheme and AppStyle link against Qt Private modules (`Qt6::QmlPrivate`, `Qt6::QuickPrivate`, `Qt6::QuickTemplates2Private`) for deep style customization. Both have the Qt type compiler enabled.
 
 QML files use `QT_RESOURCE_ALIAS` for flattened resource paths (e.g., `app/qml/pages/Readme.qml` → `pages/Readme.qml`).
 
 ### Libraries
 
-Libraries live in `app/libs/` — project-internal libraries are an architectural decision of `app/`, not the workspace. Libraries mirror the `app/` directory convention: C++ production code lives in `src/main/` and `include/main/`, tests live in a top-level `test/` directory (sibling to `src/`) with a `unit/cpp/` or `unit/qml/` hierarchy, and QML files in a top-level `qml/` directory.
+Libraries live in `app/libs/` — project-internal libraries are an architectural decision of `app/`, not the workspace. Each library has its own `conanfile.py` (`app/libs/*/conanfile.py`) for per-library dependency management, automatically discovered by `conanws.py`. Libraries mirror the `app/` directory convention: C++ production code lives in `src/main/` and `include/main/`, tests live in a top-level `test/` directory (sibling to `src/`) with a `unit/cpp/` or `unit/qml/` hierarchy, and QML files in a top-level `qml/` directory.
+
+C++ test projects use an `include/` + `src/` directory structure: headers in `include/`, source files in `src/`.
 
 Helper macros in `cmake/libs/LibraryCommon.cmake`:
 - `add_portable_cpp_library()` / `add_portable_qt_library()` — static on iOS, shared elsewhere
@@ -174,6 +179,7 @@ C++ unit tests use Qt Test; QML tests use Qt Quick Test. Gated by `QTQUICKTEMPLA
 ./tools/uv run ctest --preset linux-tests -R tst_qml_apptheme    # AppTheme QML tests
 ./tools/uv run ctest --preset linux-tests -R tst_qml_appstyle    # AppStyle QML tests
 ./tools/uv run ctest --preset linux-tests -R tst_qml_navigation  # Navigation QML tests
+./tools/uv run ctest --preset linux-tests -R tst_ui_navigation  # Spix UI navigation test
 
 # Disable testing (e.g. for mobile builds)
 ./tools/uv run cmake -S . -B build/no-tests -DQTQUICKTEMPLATE_ENABLE_TESTING=OFF
@@ -193,10 +199,12 @@ Integration tests (Apple deploy pipeline, pytest, macOS only):
 Test infrastructure:
 - **`cmake/testing/TestingSetup.cmake`** — `configure_testing()`: option, `enable_testing()`, `find_package(Qt6 … Test QuickTest)`
 - **`cmake/testing/TestTargets.cmake`** — `add_qt_test()` and `add_qt_quick_test()` helper functions
+- **`cmake/testing/FetchSpix.cmake`** — `fetch_spix()` macro: fetches anyrpc + Spix via FetchContent for UI tests
 
 App-level tests:
 - **`app/test/unit/cpp/`** — NavigationController C++ test runner + Q_OBJECT headers (`tst_cpp`)
 - **`app/test/unit/qml/`** — Navigation QML test runner (`tst_qml_navigation`)
+- **`app/test/ui/cpp/`** — Spix UI navigation test (`tst_ui_navigation`); loads the real app UI and verifies NavBar/Footer navigation via Spix click simulation. Runs headless with `QT_QPA_PLATFORM=offscreen`.
 - **`app/test/integration/`** — Apple deploy pipeline integration tests (pytest, macOS only); verifies macOS DMG, macOS App Store PKG, and iOS IPA artifacts produced by the CMake deploy targets
 
 Library tests (each library owns its own tests):
