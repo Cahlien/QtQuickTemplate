@@ -3,6 +3,8 @@ include_guard(GLOBAL)
 # MacOSVerify.cmake — Configures the VerifyMacOSPackage target that runs
 # codesign, spctl, and stapler checks on the final DMG and app bundle.
 
+set(_MACOS_VERIFY_DIR "${CMAKE_CURRENT_LIST_DIR}")
+
 function(configure_macos_verify target)
     if (NOT APPLE OR IOS)
         return()
@@ -20,7 +22,7 @@ function(configure_macos_verify target)
         return()
     endif ()
 
-    set(_verify_script "${CMAKE_CURRENT_SOURCE_DIR}/cmake/deploy/macos/VerifyPackage.cmake")
+    set(_verify_script "${_MACOS_VERIFY_DIR}/VerifyPackage.cmake")
     set(_expected_dmg "${CMAKE_BINARY_DIR}/${PROJECT_NAME}-${PROJECT_VERSION}-macOS.dmg")
 
     if (NOT TARGET VerifyMacOSPackage)

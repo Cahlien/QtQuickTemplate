@@ -1,8 +1,5 @@
 include_guard(GLOBAL)
 
-# MainApp.cmake — Creates the main executable target, registers QML modules,
-# adds platform sources, configures code signing, and wires up deploy pipelines.
-
 include("${CMAKE_CURRENT_LIST_DIR}/qt/QmlModule.cmake")
 include("${CMAKE_CURRENT_LIST_DIR}/platform/PlatformSources.cmake")
 include("${CMAKE_CURRENT_LIST_DIR}/deploy/apple/AppleCodeSigning.cmake")
@@ -14,8 +11,6 @@ include("${CMAKE_CURRENT_LIST_DIR}/help/HelpTargets.cmake")
 include("${CMAKE_CURRENT_LIST_DIR}/deploy/DeployPipelines.cmake")
 
 function(configure_main_app)
-    # Compute git-derived build number so the four-part version
-    # (MAJOR.MINOR.PATCH.BUILD) is available at configure time.
     execute_process(
         COMMAND git rev-list --count HEAD
         WORKING_DIRECTORY "${CMAKE_SOURCE_DIR}"
@@ -28,6 +23,17 @@ function(configure_main_app)
     endif ()
     set(QTQUICKTEMPLATE_BUILD_NUMBER "${_build_number}" CACHE INTERNAL
         "Git commit count used as the fourth version component")
+
+    add_library(QtQuickTemplateNavigation STATIC
+        src/main/common/navigation/navigation_controller.cpp
+        include/main/common/navigation/navigation_controller.h
+    )
+    target_include_directories(QtQuickTemplateNavigation PUBLIC
+        ${CMAKE_CURRENT_SOURCE_DIR}/include/main/common
+        ${CMAKE_CURRENT_SOURCE_DIR}/include/main/common/navigation
+    )
+    target_link_libraries(QtQuickTemplateNavigation PUBLIC Qt6::Qml)
+    target_compile_features(QtQuickTemplateNavigation PUBLIC cxx_std_23)
 
     qt_add_executable(${PROJECT_NAME}
         src/main/common/main.cpp
@@ -81,6 +87,7 @@ function(configure_main_app)
         appstyle
         appstyleplugin
         helloworld
+        QtQuickTemplateNavigation
     )
 
     qt_import_qml_plugins(${PROJECT_NAME})
@@ -92,7 +99,6 @@ function(configure_main_app)
     target_include_directories(${PROJECT_NAME}
         PRIVATE
         ${CMAKE_CURRENT_SOURCE_DIR}/include/main/common
-        ${CMAKE_CURRENT_SOURCE_DIR}/include/main/common/navigation
         ${CMAKE_CURRENT_SOURCE_DIR}/src/main/common
     )
 

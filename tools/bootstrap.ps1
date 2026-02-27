@@ -68,7 +68,7 @@ Write-Host "Bootstrap complete!" -ForegroundColor White -BackgroundColor DarkGre
 if (-not (Test-Path (Join-Path $ProjectRoot ".env.local"))) {
     Write-Host ""
     Write-Host "Next step: " -ForegroundColor Yellow -NoNewline
-    Write-Host "Run .\tools\configure_env.ps1 to set Qt SDK paths and signing credentials."
+    Write-Host "Run .\tools\run.ps1 python tools/configure_env.py to set Qt SDK paths and signing credentials."
 }
 
 Write-Host ""

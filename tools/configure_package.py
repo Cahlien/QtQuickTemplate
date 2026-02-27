@@ -197,7 +197,7 @@ def rename_android_kotlin_tree(
     """
     actions: list[str] = []
 
-    base = root / "platforms" / "android" / "src" / "main" / "kotlin"
+    base = root / "app" / "platforms" / "android" / "src" / "main" / "kotlin"
     old_dir = base / OLD_PACKAGE_PATH.replace("/", os.sep)
     new_dir = base / new.package_path.replace("/", os.sep)
 
@@ -234,20 +234,20 @@ def rename_files(root: Path, new: PackageIdentity) -> list[str]:
     actions: list[str] = []
     renames = [
         (
-            root / "platforms" / "linux" / f"{OLD_PACKAGE}.metainfo.xml.in",
-            root / "platforms" / "linux" / f"{new.package}.metainfo.xml.in",
+            root / "app" / "platforms" / "linux" / f"{OLD_PACKAGE}.metainfo.xml.in",
+            root / "app" / "platforms" / "linux" / f"{new.package}.metainfo.xml.in",
         ),
         (
-            root / "platforms" / "macos" / f"{OLD_APP_CAMEL}.entitlements",
-            root / "platforms" / "macos" / f"{new.app_camel}.entitlements",
+            root / "app" / "platforms" / "macos" / f"{OLD_APP_CAMEL}.entitlements",
+            root / "app" / "platforms" / "macos" / f"{new.app_camel}.entitlements",
         ),
         (
-            root / "platforms" / "linux" / f"{OLD_APP_CAMEL}.desktop.in",
-            root / "platforms" / "linux" / f"{new.app_camel}.desktop.in",
+            root / "app" / "platforms" / "linux" / f"{OLD_APP_CAMEL}.desktop.in",
+            root / "app" / "platforms" / "linux" / f"{new.app_camel}.desktop.in",
         ),
         (
-            root / "doc" / f"{OLD_APP_LOWER}.qdocconf",
-            root / "doc" / f"{new.app_lower}.qdocconf",
+            root / "app" / "doc" / f"{OLD_APP_LOWER}.qdocconf",
+            root / "app" / "doc" / f"{new.app_lower}.qdocconf",
         ),
     ]
 
@@ -401,10 +401,10 @@ def main() -> int:
     # 8. Post-run instructions
     print("\n=== Next Steps ===")
     print("  1. Update the display name \"QtQuick Template\" in:")
-    print("       qml/Main.qml  (window title)")
-    print("       platforms/linux/*.desktop.in  (Name, GenericName, Comment)")
-    print("       platforms/linux/*.metainfo.xml.in  (name, summary, description)")
-    print("       platforms/windows/app.rc.in  (FileDescription, ProductName)")
+    print("       app/qml/Main.qml  (window title)")
+    print("       app/platforms/linux/*.desktop.in  (Name, GenericName, Comment)")
+    print("       app/platforms/linux/*.metainfo.xml.in  (name, summary, description)")
+    print("       app/platforms/windows/app.rc.in  (FileDescription, ProductName)")
     print("  2. Run  ./tools/uv lock  to regenerate the lockfile")
     print("  3. Delete all build directories:  rm -rf build/ cmake-build-*/")
     print("  4. Reconfigure and build to verify everything works")

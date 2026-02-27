@@ -3,6 +3,8 @@ include_guard(GLOBAL)
 # IOSResources.cmake — iOS asset catalog and launch screen configuration.
 # Provides configure_ios_asset_catalog() and configure_ios_launch_screen().
 
+set(_IOS_RESOURCES_DIR "${CMAKE_CURRENT_LIST_DIR}")
+
 # Configures the iOS asset catalog (AppIcon) for App Store submissions.
 function(configure_ios_asset_catalog target)
     set(_src_dir "${CMAKE_CURRENT_SOURCE_DIR}")
@@ -38,7 +40,7 @@ function(configure_ios_launch_screen target)
             -DAPP_BUILD_NUMBER=auto
             -DTEMPLATE=${_ls_template}
             -DOUTPUT=${_ls_output}
-            -P ${_src_dir}/cmake/deploy/ios/GenerateLaunchScreen.cmake
+            -P ${_IOS_RESOURCES_DIR}/GenerateLaunchScreen.cmake
         BYPRODUCTS "${_ls_output}"
         VERBATIM
     )

@@ -69,13 +69,13 @@
         {
             "name": "android-release",
             "displayName": "Android Release",
-            "description": "Configure for Android release builds. Requires QT_ANDROID_ROOT and QT_HOST_ROOT environment variables. For signed builds, set ANDROID_KEYSTORE_PATH, ANDROID_KEYSTORE_PASSWORD, ANDROID_KEY_ALIAS, and ANDROID_KEY_PASSWORD. For Google Play upload, set ANDROID_PLAY_SERVICE_ACCOUNT_FILE, ANDROID_PLAY_TRACK (internal|alpha|beta|production), and ANDROID_PLAY_RELEASE_STATUS (completed|draft|inProgress|halted).",
+            "description": "Configure for Android arm64-v8a release builds. Requires QT_ANDROID_ARM64_ROOT and QT_HOST_ROOT environment variables (set by tools/configure_env.py). For signed builds, set ANDROID_KEYSTORE_PATH, ANDROID_KEYSTORE_PASSWORD, ANDROID_KEY_ALIAS, and ANDROID_KEY_PASSWORD. For Google Play upload, set ANDROID_PLAY_SERVICE_ACCOUNT_FILE, ANDROID_PLAY_TRACK (internal|alpha|beta|production), and ANDROID_PLAY_RELEASE_STATUS (completed|draft|inProgress|halted).",
             "generator": "Ninja",
             "binaryDir": "${sourceDir}/build/Qt_6_10_2_for_Android",
             "cacheVariables": {
                 "CMAKE_BUILD_TYPE": "Release",
-                "CMAKE_PREFIX_PATH": "$env{QT_ANDROID_ROOT}",
-                "CMAKE_TOOLCHAIN_FILE": "$env{QT_ANDROID_ROOT}/lib/cmake/Qt6/qt.toolchain.cmake",
+                "CMAKE_PREFIX_PATH": "$env{QT_ANDROID_ARM64_ROOT}",
+                "CMAKE_TOOLCHAIN_FILE": "$env{QT_ANDROID_ARM64_ROOT}/lib/cmake/Qt6/qt.toolchain.cmake",
                 "QT_HOST_PATH": "$env{QT_HOST_ROOT}",
                 "ANDROID_ABI": "arm64-v8a",
                 "QTQUICKTEMPLATE_ANDROID_KEYSTORE_PATH": "$env{ANDROID_KEYSTORE_PATH}",
@@ -85,6 +85,23 @@
                 "QTQUICKTEMPLATE_ANDROID_PLAY_SERVICE_ACCOUNT_FILE": "$env{ANDROID_PLAY_SERVICE_ACCOUNT_FILE}",
                 "QTQUICKTEMPLATE_ANDROID_PLAY_TRACK": "$env{ANDROID_PLAY_TRACK}",
                 "QTQUICKTEMPLATE_ANDROID_PLAY_RELEASE_STATUS": "$env{ANDROID_PLAY_RELEASE_STATUS}"
+            }
+        },
+        {
+            "name": "linux-release",
+            "displayName": "Linux Release",
+            "description": "Configure for Linux release distribution using Ninja. Requires QT_LINUX_ROOT environment variable (set by tools/configure_env). For GPG-signed AppImages, set GPG_KEY_ID.",
+            "generator": "Ninja",
+            "binaryDir": "${sourceDir}/build/Qt_6_10_2_for_Linux",
+            "cacheVariables": {
+                "CMAKE_BUILD_TYPE": "Release",
+                "CMAKE_PREFIX_PATH": "$env{QT_LINUX_ROOT}",
+                "GPG_KEY_ID": "$env{GPG_KEY_ID}"
+            },
+            "condition": {
+                "type": "equals",
+                "lhs": "${hostSystemName}",
+                "rhs": "Linux"
             }
         }
     ],
@@ -148,6 +165,41 @@
             "description": "Full Android AAB pipeline: build signed bundle, verify signature, and upload to Google Play when configured.",
             "configurePreset": "android-release",
             "targets": ["ReleaseDistributableAndroidAAB"]
+        },
+        {
+            "name": "linux-app",
+            "displayName": "Linux App (build only)",
+            "description": "Build the Linux app without packaging.",
+            "configurePreset": "linux-release"
+        },
+        {
+            "name": "linux-distributable",
+            "displayName": "Linux Release Distributable",
+            "description": "Full Linux pipeline: build and package as AppImage. GPG-signed when GPG_KEY_ID is set.",
+            "configurePreset": "linux-release",
+            "targets": ["ReleaseDistributableLinux"]
+        }
+    ],
+    "testPresets": [
+        {
+            "name": "linux-tests",
+            "configurePreset": "linux-release",
+            "output": { "outputOnFailure": true },
+            "condition": {
+                "type": "equals",
+                "lhs": "${hostSystemName}",
+                "rhs": "Linux"
+            }
+        },
+        {
+            "name": "macos-tests",
+            "configurePreset": "macos-release",
+            "output": { "outputOnFailure": true },
+            "condition": {
+                "type": "equals",
+                "lhs": "${hostSystemName}",
+                "rhs": "Darwin"
+            }
         }
     ]
 }

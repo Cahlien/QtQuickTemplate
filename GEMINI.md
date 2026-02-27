@@ -65,10 +65,10 @@ Build via Qt Creator (recommended) or the generated Gradle project in `<build-di
 
 ### CMake Module Organization
 
-Root `CMakeLists.txt` is minimal (14 lines) — it delegates to two entry points:
+Root `CMakeLists.txt` is a workspace coordinator — it declares `project(QtQuickTemplate)` without a version and adds `app/` as the sole subdirectory:
 
 - **`cmake/ProjectSetup.cmake`** → `configure_project()`: compiler settings, Conan, Qt discovery, AUTOMOC
-- **`cmake/MainApp.cmake`** → `configure_main_app()`: creates the executable, registers QML modules, platform sources, code signing, packaging targets
+- **`app/CMakeLists.txt`** → declares `project(QtQuickTemplate VERSION 0.2.0)`, adds `app/libs/` subdirectory, includes `cmake/MainApp.cmake` and calls `configure_main_app()`: creates the executable, registers QML modules, platform sources, code signing, packaging targets
 
 Deploy modules live in `cmake/deploy/` with consistent `{Platform}{Stage}.cmake` naming and define custom build targets that chain together:
 - **iOS**: `IOSArchive → IOSExportIPA → VerifyIOSIPA → IOSUploadASC → ReleaseDistributableIOS`
@@ -103,11 +103,13 @@ QML files use `QT_RESOURCE_ALIAS` for flattened resource paths (e.g., `qml/pages
 
 ### Libraries
 
-Libraries live in `libs/`. Helper macros in `cmake/libs/LibraryCommon.cmake`:
+Libraries live in `app/libs/` — project-internal libraries are an architectural decision of `app/`, not the workspace. Libraries mirror the `app/` directory convention: C++ production code lives in `src/main/` and `include/main/`, test code in `src/test/` and `include/test/`, and QML files in a top-level `qml/` directory (sibling to `src/`).
+
+Helper macros in `cmake/libs/LibraryCommon.cmake`:
 - `add_portable_cpp_library()` / `add_portable_qt_library()` — static on iOS, shared elsewhere
 - `apply_android_max_page_size()` — 16KB page alignment for Android
 
-`libs/appstyle/tools/` contains Node.js developer utilities for palette extraction (`extract-crowell-palette.js`) and WCAG contrast validation (`validate-contrast.js`).
+`app/libs/appstyle/tools/` contains Node.js developer utilities for palette extraction (`extract-crowell-palette.js`) and WCAG contrast validation (`validate-contrast.js`).
 
 ### Version Generation
 
@@ -115,6 +117,45 @@ Libraries live in `libs/`. Helper macros in `cmake/libs/LibraryCommon.cmake`:
 - iOS: generates `platforms/ios/version.xcconfig`
 - Android: generates `platforms/android/version.properties`
 - Format: `MARKETING_VERSION = 1.0`, `CURRENT_PROJECT_VERSION = 1.0.0.<commit_count>`
+
+## Testing
+
+C++ unit tests use Qt Test; QML tests use Qt Quick Test. Gated by `QTQUICKTEMPLATE_ENABLE_TESTING` (ON by default on desktop, OFF on iOS/Android).
+
+```bash
+# Configure (testing enabled by default on desktop)
+./tools/uv run cmake --preset linux-release
+
+# Build all (includes test targets)
+./tools/uv run cmake --build build/Qt_6_10_2_for_Linux
+
+# Run all tests via CTest preset
+./tools/uv run ctest --preset linux-tests
+
+# Run individual tests
+./tools/uv run ctest --preset linux-tests -R tst_helloworld      # HelloWorld C++ tests
+./tools/uv run ctest --preset linux-tests -R tst_cpp             # NavigationController C++ tests
+./tools/uv run ctest --preset linux-tests -R tst_qml_apptheme    # AppTheme QML tests
+./tools/uv run ctest --preset linux-tests -R tst_qml_appstyle    # AppStyle QML tests
+./tools/uv run ctest --preset linux-tests -R tst_qml_navigation  # Navigation QML tests
+
+# Disable testing (e.g. for mobile builds)
+./tools/uv run cmake -S . -B build/no-tests -DQTQUICKTEMPLATE_ENABLE_TESTING=OFF
+```
+
+Test infrastructure:
+- **`cmake/testing/TestingSetup.cmake`** — `configure_testing()`: option, `enable_testing()`, `find_package(Qt6 … Test QuickTest)`
+- **`cmake/testing/TestTargets.cmake`** — `add_qt_test()` and `add_qt_quick_test()` helper functions
+
+App-level tests:
+- **`app/include/test/`** — test suite headers (declarations with Q_OBJECT)
+- **`app/src/test/cpp/`** — NavigationController C++ test runner (`tst_cpp`)
+- **`app/src/test/qml/`** — Navigation QML test runner (`tst_qml_navigation`)
+
+Library tests (each library owns its own tests):
+- **`app/libs/helloworld/src/test/cpp/`** — HelloWorld C++ tests (`tst_helloworld`)
+- **`app/libs/apptheme/src/test/qml/`** — AppTheme QML tests (`tst_qml_apptheme`)
+- **`app/libs/appstyle/src/test/qml/`** — AppStyle QML tests (`tst_qml_appstyle`)
 
 ## Key Conventions
 

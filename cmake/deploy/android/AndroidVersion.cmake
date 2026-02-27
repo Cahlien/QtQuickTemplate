@@ -3,6 +3,8 @@ include_guard(GLOBAL)
 # AndroidVersion.cmake — Creates the GenerateAndroidVersion target that writes
 # platforms/android/version.properties from the project version.
 
+set(_ANDROID_VERSION_DIR "${CMAKE_CURRENT_LIST_DIR}")
+
 # Add a custom target that generates platforms/android/version.properties
 # from the project version, and make the given target depend on it.
 function(add_android_version_target target)
@@ -14,7 +16,7 @@ function(add_android_version_target target)
             -DMINOR=${PROJECT_VERSION_MINOR}
             -DPATCH=${PROJECT_VERSION_PATCH}
             -DOUT_FILE=${_ver_file}
-            -P ${CMAKE_CURRENT_SOURCE_DIR}/cmake/deploy/android/GenerateVersion.cmake
+            -P ${_ANDROID_VERSION_DIR}/GenerateVersion.cmake
         COMMENT "Generating Android version.properties -> ${_ver_file}"
         VERBATIM
     )

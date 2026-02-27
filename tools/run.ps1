@@ -21,7 +21,7 @@ if (Test-Path (Join-Path $ProjectRoot ".env.local")) {
 } else {
     # Warn when running cmake without .env.local
     if ($args -contains "cmake") {
-        Write-Host "[run] .env.local not found - run .\tools\configure_env.ps1 to set SDK paths" -ForegroundColor Yellow
+        Write-Host "[run] .env.local not found - run .\tools\run.ps1 python tools/configure_env.py to set SDK paths" -ForegroundColor Yellow
     }
 }
 

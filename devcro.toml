@@ -1,0 +1,9 @@
+[application]
+name = "QtQuickTemplate"
+description = "Baseline QtQuick application template from Matthew Crowell and Confederated Technologies, Inc."
+version = "0.1.0"
+build_number = 1
+
+[config]
+bootstrapped = false
+package_name = "dev.crowell.qtquicktemplate"

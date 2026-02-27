@@ -6,6 +6,8 @@ include_guard(GLOBAL)
 option(ENABLE_WAYLAND "Bundle Qt Wayland platform plugin into AppImage" ON)
 set(GPG_KEY_ID "" CACHE STRING "GPG Key ID for AppImage signing")
 
+set(_LINUX_PACKAGE_DIR "${CMAKE_CURRENT_LIST_DIR}")
+
 function(configure_linux_package target)
     if (NOT (UNIX AND NOT APPLE AND NOT ANDROID))
         return()
@@ -24,15 +26,15 @@ function(configure_linux_package target)
 
     find_program(LINUXDEPLOY_EXECUTABLE
         NAMES linuxdeploy "linuxdeploy-${_ld_arch}.AppImage"
-        HINTS "${PROJECT_SOURCE_DIR}/tools" "$ENV{HOME}/applications" "$ENV{HOME}/.local/bin" /usr/local/bin
+        HINTS "${CMAKE_SOURCE_DIR}/tools" "$ENV{HOME}/applications" "$ENV{HOME}/.local/bin" /usr/local/bin
     )
     find_program(LINUXDEPLOY_PLUGIN_QT_EXECUTABLE
         NAMES linuxdeploy-plugin-qt "linuxdeploy-plugin-qt-${_ld_arch}.AppImage"
-        HINTS "${PROJECT_SOURCE_DIR}/tools" "$ENV{HOME}/applications" "$ENV{HOME}/.local/bin" /usr/local/bin
+        HINTS "${CMAKE_SOURCE_DIR}/tools" "$ENV{HOME}/applications" "$ENV{HOME}/.local/bin" /usr/local/bin
     )
     find_program(LINUXDEPLOY_PLUGIN_APPIMAGE_EXECUTABLE
         NAMES linuxdeploy-plugin-appimage "linuxdeploy-plugin-appimage-${_ldai_arch}.AppImage"
-        HINTS "${PROJECT_SOURCE_DIR}/tools" "$ENV{HOME}/applications" "$ENV{HOME}/.local/bin" /usr/local/bin
+        HINTS "${CMAKE_SOURCE_DIR}/tools" "$ENV{HOME}/applications" "$ENV{HOME}/.local/bin" /usr/local/bin
     )
 
     foreach (_tool LINUXDEPLOY_EXECUTABLE LINUXDEPLOY_PLUGIN_QT_EXECUTABLE LINUXDEPLOY_PLUGIN_APPIMAGE_EXECUTABLE)
@@ -63,8 +65,8 @@ function(configure_linux_package target)
         "[Paths]\nPrefix=..\nPlugins=plugins\nQml2Imports=qml\nLibraries=lib\n")
     file(REMOVE "${CMAKE_CURRENT_BINARY_DIR}/qt.conf")
 
-    set(_stage_script "${CMAKE_CURRENT_SOURCE_DIR}/cmake/deploy/linux/StageWaylandSupport.cmake")
-    set(_verify_script "${CMAKE_CURRENT_SOURCE_DIR}/cmake/deploy/linux/VerifyWaylandDeps.cmake")
+    set(_stage_script "${_LINUX_PACKAGE_DIR}/StageWaylandSupport.cmake")
+    set(_verify_script "${_LINUX_PACKAGE_DIR}/VerifyWaylandDeps.cmake")
 
     set(_appimage_env
         LINUXDEPLOY_PLUGIN_DIR=${_ld_dir}:${_qt_plugin_dir}:${_ai_plugin_dir}
