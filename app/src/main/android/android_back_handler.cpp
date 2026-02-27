@@ -18,8 +18,8 @@
 using dev::crowell::qtquicktemplate::navigation::NavigationController;
 
 extern "C" {
-
 JNIEXPORT void JNICALL
+
 Java_dev_crowell_qtquicktemplate_activities_MainActivity_nativeBackRequested(
     JNIEnv * /*env*/, jobject /*thiz*/)
 {
@@ -32,5 +32,4 @@ Java_dev_crowell_qtquicktemplate_activities_MainActivity_nativeBackRequested(
         "pop",
         Qt::QueuedConnection);
 }
-
 } // extern "C"

@@ -9,162 +9,164 @@
 #include <QJniObject>
 #endif
 
-namespace dev::crowell::qtquicktemplate::navigation {
-
-NavigationController::NavigationController(QObject *parent)
-    : QObject(parent)
+namespace dev::crowell::qtquicktemplate::navigation
 {
-    int platformDefault = 16;
+    NavigationController::NavigationController(QObject *parent)
+        : QObject(parent)
+    {
+        int platformDefault = 16;
 #if defined(Q_OS_ANDROID)
-    platformDefault = 6;
+        platformDefault = 6;
 #elif defined(Q_OS_IOS)
-    platformDefault = 8;
+        platformDefault = 8;
 #endif
 
-    bool hasEnvLimit = false;
-    int envLimit = qEnvironmentVariableIntValue("APP_HISTORY_LIMIT", &hasEnvLimit);
-    if (!hasEnvLimit)
-        envLimit = qEnvironmentVariableIntValue("QTQUICKTEMPLATE_HISTORY_LIMIT", &hasEnvLimit);
+        bool hasEnvLimit = false;
+        int envLimit = qEnvironmentVariableIntValue("APP_HISTORY_LIMIT", &hasEnvLimit);
+        if (!hasEnvLimit)
+            envLimit = qEnvironmentVariableIntValue("QTQUICKTEMPLATE_HISTORY_LIMIT", &hasEnvLimit);
 
-    m_historyLimit = hasEnvLimit ? qBound(1, envLimit, 512) : platformDefault;
-}
-
-NavigationController *NavigationController::instance()
-{
-    static NavigationController s_instance;
-    return &s_instance;
-}
-
-NavigationController *NavigationController::create(QQmlEngine * /*engine*/,
-                                                   QJSEngine  * /*scriptEngine*/)
-{
-    QJSEngine::setObjectOwnership(instance(), QJSEngine::CppOwnership);
-    return instance();
-}
-
-void NavigationController::push(const QString     &url,
-                                const QVariantMap &props,
-                                bool               showChrome)
-{
-    if (!m_forward.isEmpty()) {
-        m_forward.clear();
-        emit currentChanged();
+        m_historyLimit = hasEnvLimit ? qBound(1, envLimit, 512) : platformDefault;
     }
 
-    if (m_stackDepth >= m_historyLimit)
+    NavigationController *NavigationController::instance()
+    {
+        static NavigationController s_instance;
+        return &s_instance;
+    }
+
+    NavigationController *NavigationController::create(QQmlEngine * /*engine*/,
+                                                       QJSEngine * /*scriptEngine*/)
+    {
+        QJSEngine::setObjectOwnership(instance(), QJSEngine::CppOwnership);
+        return instance();
+    }
+
+    void NavigationController::push(const QString &url,
+                                    const QVariantMap &props,
+                                    bool showChrome)
+    {
+        if (!m_forward.isEmpty())
+        {
+            m_forward.clear();
+            emit currentChanged();
+        }
+
+        if (m_stackDepth >= m_historyLimit)
+            emit replaceRequested(url, props, showChrome);
+        else
+            emit pushRequested(url, props, showChrome);
+    }
+
+    void NavigationController::pop()
+    {
+        if (!m_canGoBack)
+        {
+            emit backAtRoot();
+            return;
+        }
+
+        m_forward.push_back({m_currentUrl, m_currentProps, m_currentShowChrome});
+        emit popRequested();
+    }
+
+    void NavigationController::forward()
+    {
+        if (m_forward.isEmpty())
+            return;
+
+        const Entry next = m_forward.takeLast();
+        emit pushRequested(next.url, next.props, next.showChrome);
+    }
+
+    void NavigationController::replace(const QString &url,
+                                       const QVariantMap &props,
+                                       bool showChrome)
+    {
+        if (!m_forward.isEmpty())
+        {
+            m_forward.clear();
+            emit currentChanged();
+        }
+
         emit replaceRequested(url, props, showChrome);
-    else
-        emit pushRequested(url, props, showChrome);
-}
-
-void NavigationController::pop()
-{
-    if (!m_canGoBack) {
-        emit backAtRoot();
-        return;
     }
 
-    m_forward.push_back({ m_currentUrl, m_currentProps, m_currentShowChrome });
-    emit popRequested();
-}
+    void NavigationController::setCurrent(const QString &url,
+                                          const QVariantMap &props,
+                                          bool showChrome,
+                                          int stackDepth)
+    {
+        const bool canGoBack = stackDepth > 1;
 
-void NavigationController::forward()
-{
-    if (m_forward.isEmpty())
-        return;
-
-    const Entry next = m_forward.takeLast();
-    emit pushRequested(next.url, next.props, next.showChrome);
-}
-
-void NavigationController::replace(const QString     &url,
-                                   const QVariantMap &props,
-                                   bool               showChrome)
-{
-    if (!m_forward.isEmpty()) {
-        m_forward.clear();
-        emit currentChanged();
-    }
-
-    emit replaceRequested(url, props, showChrome);
-}
-
-void NavigationController::setCurrent(const QString     &url,
-                                      const QVariantMap &props,
-                                      bool               showChrome,
-                                      int                stackDepth)
-{
-    const bool canGoBack = stackDepth > 1;
-
-    if (m_currentUrl == url
+        if (m_currentUrl == url
             && m_currentProps == props
             && m_currentShowChrome == showChrome
             && m_canGoBack == canGoBack
             && m_stackDepth == stackDepth)
-        return;
+            return;
 
-    m_currentUrl = url;
-    m_currentProps = props;
-    m_currentShowChrome = showChrome;
-    m_canGoBack = canGoBack;
-    m_stackDepth = stackDepth;
+        m_currentUrl = url;
+        m_currentProps = props;
+        m_currentShowChrome = showChrome;
+        m_canGoBack = canGoBack;
+        m_stackDepth = stackDepth;
 
-    emit currentChanged();
-}
+        emit currentChanged();
+    }
 
-void NavigationController::resetForTesting()
-{
-    m_currentUrl.clear();
-    m_currentProps.clear();
-    m_currentShowChrome = true;
-    m_canGoBack = false;
-    m_stackDepth = 0;
-    m_forward.clear();
-}
+    void NavigationController::resetForTesting()
+    {
+        m_currentUrl.clear();
+        m_currentProps.clear();
+        m_currentShowChrome = true;
+        m_canGoBack = false;
+        m_stackDepth = 0;
+        m_forward.clear();
+    }
 
-void NavigationController::minimizeApp()
-{
+    void NavigationController::minimizeApp()
+    {
 #if defined(Q_OS_ANDROID) && __has_include(<QJniObject>)
-    QNativeInterface::QAndroidApplication::runOnAndroidMainThread([]() {
-        QJniObject activity = QJniObject::callStaticObjectMethod(
-            "org/qtproject/qt/android/QtNative",
-            "activity",
-            "()Landroid/app/Activity;");
+        QNativeInterface::QAndroidApplication::runOnAndroidMainThread([]() {
+            QJniObject activity = QJniObject::callStaticObjectMethod(
+                "org/qtproject/qt/android/QtNative",
+                "activity",
+                "()Landroid/app/Activity;");
 
-        if (activity.isValid())
-            activity.callMethod<jboolean>("moveTaskToBack", "(Z)Z", true);
-    });
+            if (activity.isValid())
+                activity.callMethod<jboolean>("moveTaskToBack", "(Z)Z", true);
+        });
 #endif
-}
+    }
 
-QString NavigationController::currentUrl() const
-{
-    return m_currentUrl;
-}
+    QString NavigationController::currentUrl() const
+    {
+        return m_currentUrl;
+    }
 
-QVariantMap NavigationController::currentProps() const
-{
-    return m_currentProps;
-}
+    QVariantMap NavigationController::currentProps() const
+    {
+        return m_currentProps;
+    }
 
-bool NavigationController::currentShowChrome() const
-{
-    return m_currentShowChrome;
-}
+    bool NavigationController::currentShowChrome() const
+    {
+        return m_currentShowChrome;
+    }
 
-bool NavigationController::canGoBack() const
-{
-    return m_canGoBack;
-}
+    bool NavigationController::canGoBack() const
+    {
+        return m_canGoBack;
+    }
 
-bool NavigationController::canGoForward() const
-{
-    return !m_forward.isEmpty();
-}
+    bool NavigationController::canGoForward() const
+    {
+        return !m_forward.isEmpty();
+    }
 
-int NavigationController::historyLimit() const
-{
-    return m_historyLimit;
-}
-
-}  // namespace dev::crowell::qtquicktemplate::navigation
+    int NavigationController::historyLimit() const
+    {
+        return m_historyLimit;
+    }
+} // namespace dev::crowell::qtquicktemplate::navigation
