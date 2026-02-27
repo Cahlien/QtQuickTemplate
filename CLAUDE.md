@@ -16,7 +16,7 @@ Key files:
 - **`uv.lock`** — cross-platform lockfile; regenerate with `./tools/uv lock` after changing `pyproject.toml`
 - **`tools/bootstrap.sh`** / **`tools/bootstrap.ps1`** — idempotent bootstrap scripts
 - **`tools/uv`** — project-local uv binary (gitignored, installed by bootstrap)
-- **`conanws.yml`** — Conan workspace definition; lists all monorepo products for `conan workspace install`
+- **`conanws.py`** — Conan workspace definition; lists all monorepo products for `conan workspace install`
 - **`conanfile.py`** — workspace version-authority recipe; records canonical versions for the single-version rule
 - **`app/conanfile.py`** — app-level Conan recipe; declares which packages the app needs
 - **`app/pyproject.toml`** — app-level pytest configuration (testpaths, markers, addopts)
@@ -25,14 +25,11 @@ After bootstrapping, prefix build/test commands with `./tools/uv run` (e.g. `./t
 
 ## Conan Workspace
 
-C++ dependencies are managed via Conan 2. The workspace (`conanws.yml`) lists every product in the monorepo; `conanfile.py` at the workspace root is the single-version-rule authority for canonical dependency versions.
+C++ dependencies are managed via Conan 2. The workspace (`conanws.py`) lists every product in the monorepo; `conanfile.py` at the workspace root is the single-version-rule authority for canonical dependency versions.
 
 ```bash
 # Install dependencies for all workspace products
-./tools/uv run conan workspace install conanws.yml
-
-# Regenerate the lockfile after adding or bumping a dependency
-./tools/uv run conan lock create conanws.yml
+./tools/uv run conan workspace install --build=missing
 
 # Install dependencies for the app only (e.g. during iterative development)
 ./tools/uv run conan install app/ --build=missing

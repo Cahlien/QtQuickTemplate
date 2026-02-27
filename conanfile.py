@@ -16,8 +16,8 @@ class QtQuickTemplateWorkspaceRecipe(ConanFile):
            self.requires("fmt/11.0.2")
     2. Record the same version as a comment below under "Canonical
        dependency versions" so the authoritative list is in one place.
-    3. Regenerate the workspace lockfile:
-           ./tools/uv run conan lock create conanws.yml
+    3. Reinstall workspace dependencies (resolves and rebuilds as needed):
+           ./tools/uv run conan workspace install --build=missing
     4. Commit conanfile.py, the project's conanfile.py, and conan.lock.
 
     When a version must be bumped, update it here and in every project
