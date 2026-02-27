@@ -61,15 +61,21 @@ if (-not (Test-Path $BundletoolJar)) {
     Write-Ok "bundletool $BundletoolVersion already installed"
 }
 
+# ── Step 6: Project configuration (devcro.py) ────────────────────────────────
+Write-Info "Running project configuration..."
+& $UV run python tools/devcro.py @args
+if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+Write-Ok "Project configuration complete."
+
+# ── Step 7: Developer environment (.env.local) ───────────────────────────────
+Write-Info "Configuring developer environment..."
+& $UV run python tools/configure_env.py
+if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+Write-Ok "Developer environment configured."
+
 # ── Done ─────────────────────────────────────────────────────────────────────
 Write-Host ""
 Write-Host "Bootstrap complete!" -ForegroundColor White -BackgroundColor DarkGreen
-
-if (-not (Test-Path (Join-Path $ProjectRoot ".env.local"))) {
-    Write-Host ""
-    Write-Host "Next step: " -ForegroundColor Yellow -NoNewline
-    Write-Host "Run .\tools\run.ps1 python tools/configure_env.py to set Qt SDK paths and signing credentials."
-}
 
 Write-Host ""
 Write-Host "Run commands through the env-aware wrapper with '.\tools\run.ps1':"
