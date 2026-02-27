@@ -114,7 +114,7 @@ def prompt_value(label: str, default: str) -> str:
 
 VERSION_TARGETS: list[tuple[str, str]] = [
     # (relative glob, regex pattern with one capture group before version)
-    ("app/CMakeLists.txt",       r'(project\(\S+\s+VERSION\s+)\S+'),
+    # app/CMakeLists.txt reads version from devcro.toml at configure time
     ("app/conanfile.py",         r'(version\s*=\s*")[^"]*"'),
     ("conanfile.py",             r'(version\s*=\s*")[^"]*"'),
     ("pyproject.toml",           r'(version\s*=\s*")[^"]*"'),
@@ -139,11 +139,7 @@ def propagate_version(version: str) -> int:
         text = fpath.read_text(encoding="utf-8")
         # The pattern captures everything before the version; we replace the
         # version portion while keeping the prefix.
-        if rel_path.endswith("CMakeLists.txt"):
-            new_text = re.sub(pattern, rf'\g<1>{version}', text, count=1)
-        else:
-            # For quoted patterns like version = "X.Y.Z"
-            new_text = re.sub(pattern, rf'\g<1>{version}"', text, count=1)
+        new_text = re.sub(pattern, rf'\g<1>{version}"', text, count=1)
         if new_text != text:
             fpath.write_text(new_text, encoding="utf-8")
             changed += 1
