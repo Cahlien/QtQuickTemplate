@@ -1,0 +1,18 @@
+# App-level pytest configuration.
+# Run from the workspace root: ./tools/uv run pytest -c app/pyproject.toml
+
+[tool.pytest.ini_options]
+testpaths = ["test/integration"]
+markers = [
+    "integration: opt-in marker for all integration tests (excluded from default pytest run)",
+    "ios: iOS App Store pipeline tests",
+    "macos_dmg: macOS DMG (direct distribution) pipeline tests",
+    "macos_appstore: macOS App Store PKG pipeline tests",
+    "slow: full pipeline builds (10+ min each)",
+    "asc_upload: actually uploads to App Store Connect",
+    "asc_processing: checks ASC processing status",
+    "requires_signing: requires code signing credentials",
+    "requires_notarization: requires notarization credentials",
+    "build_pipeline: tests that invoke cmake --build",
+]
+addopts = "--strict-markers --tb=short -m 'not integration'"
