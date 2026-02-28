@@ -1,6 +1,6 @@
-# bootstrap.ps1 — one-command dev environment setup for QtQuickTemplate (Windows)
+# bootstrap.ps1 - one-command dev environment setup for QtQuickTemplate (Windows)
 # Installs uv into tools\ (if needed), downloads the pinned Python, and syncs
-# all dependencies. Idempotent — safe to re-run at any time.
+# all dependencies. Idempotent - safe to re-run at any time.
 
 $ErrorActionPreference = "Stop"
 $ProjectRoot = Split-Path $PSScriptRoot -Parent
@@ -13,7 +13,7 @@ function Write-Ok    { Write-Host "[bootstrap] $args" -ForegroundColor Green }
 
 # ── Step 1: Ensure uv is installed ───────────────────────────────────────────
 if (-not (Test-Path $UV)) {
-    Write-Info "uv not found — installing..."
+    Write-Info "uv not found - installing..."
     $env:UV_UNMANAGED_INSTALL = $PSScriptRoot
     try {
         irm https://astral.sh/uv/install.ps1 | iex
