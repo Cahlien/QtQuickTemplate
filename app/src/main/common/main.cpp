@@ -21,8 +21,6 @@ int main(int argc, char *argv[])
     qputenv("QT_QPA_PLATFORMTHEME", "generic");
 #endif
 
-
-
     QGuiApplication app(argc, argv);
     QQuickStyle::setStyle("dev.crowell.AppStyle");
     QQuickStyle::setFallbackStyle("Basic");
