@@ -17,18 +17,16 @@ int main(int argc, char *argv[])
 {
     qputenv("QML_XHR_ALLOW_FILE_READ", "1");
 
-    // Prevent the desktop platform theme (e.g. KDE's KDEPlatformTheme) from
-    // overriding our custom Qt Quick Controls style with Breeze/org.kde.desktop.
-    // The KDE platform plugin programmatically forces its style AFTER both
-    // QT_QUICK_CONTROLS_STYLE and QQuickStyle::setStyle() are evaluated,
-    // so the only reliable way to use a custom style on KDE is to opt out of
-    // the platform theme entirely.  This must happen before QGuiApplication.
+#ifdef Q_OS_LINUX
     qputenv("QT_QPA_PLATFORMTHEME", "generic");
+#endif
 
+
+
+    QGuiApplication app(argc, argv);
     QQuickStyle::setStyle("dev.crowell.AppStyle");
     QQuickStyle::setFallbackStyle("Basic");
 
-    QGuiApplication app(argc, argv);
     app.setWindowIcon(QIcon(":/qt/qml/dev/crowell/QtQuickTemplate/app_icon.png"));
     app.setApplicationName("QtQuickTemplate");
     app.setApplicationVersion(APP_VERSION_STRING);
