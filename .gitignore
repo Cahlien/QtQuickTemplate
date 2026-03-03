@@ -82,6 +82,7 @@ __pycache__/
 tools/*
 !tools/bootstrap.sh
 !tools/bootstrap.ps1
+!tools/bootstrap.bat
 !tools/configure_package.py
 !tools/devcro.py
 !tools/configure_env.py
