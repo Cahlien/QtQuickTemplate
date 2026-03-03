@@ -5,6 +5,8 @@
 #include <QQuickWindow>
 #include <memory>
 
+#include "helloworld.h"
+
 #if defined(QTQUICKTEMPLATE_USE_HELLOWORLD_MODULE)
 import helloworld;
 #else
@@ -64,7 +66,7 @@ int main(int argc, char *argv[])
         Qt::QueuedConnection
     );
 
-    const HelloWorld helloWorld{};
+    const dev::crowell::helloworld::HelloWorld helloWorld{};
 
     qDebug() << helloWorld.formatMessage();
 
