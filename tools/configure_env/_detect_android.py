@@ -8,7 +8,7 @@ import shutil
 import subprocess
 from pathlib import Path
 
-from configure_env._types import Platform
+from configure_env._types import Platform, posix_path
 
 _VERSION_RE = re.compile(r"^\d+")
 _NDK_RELEASE_RE = re.compile(r"android-ndk-(r\w+)$")
@@ -34,12 +34,12 @@ def detect_android_sdk(home: Path, plat: Platform) -> str:
 
     for d in candidates:
         if d.is_dir():
-            return str(d)
+            return posix_path(str(d))
 
     for var in ("ANDROID_SDK_ROOT", "ANDROID_HOME"):
         val = os.environ.get(var, "")
         if val and Path(val).is_dir():
-            return val
+            return posix_path(val)
 
     return ""
 
@@ -115,9 +115,9 @@ def detect_android_ndk(sdk_root: str, qt_abi_root: str = "") -> str:
     if tag:
         for ndk_path in installed:
             if _ndk_release_name(ndk_path) == tag:
-                return str(ndk_path)
+                return posix_path(str(ndk_path))
 
-    return str(installed[-1])
+    return posix_path(str(installed[-1]))
 
 
 def detect_java_home(plat: Platform) -> str:
@@ -168,7 +168,7 @@ def detect_java_home(plat: Platform) -> str:
                     reverse=True,
                 )
                 if jdks:
-                    return str(jdks[0])
+                    return posix_path(str(jdks[0]))
         ms_root = Path("C:/Program Files/Microsoft")
         if ms_root.is_dir():
             ms_jdks = sorted(
@@ -177,10 +177,10 @@ def detect_java_home(plat: Platform) -> str:
                 reverse=True,
             )
             if ms_jdks:
-                return str(ms_jdks[0])
+                return posix_path(str(ms_jdks[0]))
 
     val = os.environ.get("JAVA_HOME", "")
     if val and Path(val).is_dir():
-        return val
+        return posix_path(val)
 
     return ""

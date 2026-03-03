@@ -5,7 +5,7 @@ from __future__ import annotations
 import re
 from pathlib import Path
 
-from configure_env._types import Platform
+from configure_env._types import Platform, posix_path
 
 _VERSION_RE = re.compile(r"^(\d+)\.(\d+)(?:\.(\d+))?$")
 
@@ -62,5 +62,5 @@ def detect_qt_platform_root(
         return ""
     candidate = ver_dir / subdir
     if candidate.is_dir():
-        return str(candidate)
+        return posix_path(str(candidate))
     return ""
