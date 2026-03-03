@@ -5,7 +5,7 @@ from __future__ import annotations
 import sys
 from pathlib import Path
 
-from configure_env._types import EnvVar
+from configure_env._types import EnvVar, posix_path
 
 
 class ColorOutput:
@@ -66,6 +66,7 @@ def prompt_var(
     if value and var.is_path:
         if not Path(value).exists():
             out.warn(f"    Path does not exist yet: {value} (continuing anyway)")
+        value = posix_path(value)
 
     if value:
         result[var.name] = value
