@@ -12,6 +12,13 @@ class Platform(enum.Enum):
     WINDOWS = "Windows"
 
 
+def posix_path(p: str) -> str:
+    """Normalize a file-system path to use forward slashes."""
+    if not p:
+        return p
+    return p.replace("\\", "/")
+
+
 class EnvVar(NamedTuple):
     """A single environment variable to prompt the user for."""
 

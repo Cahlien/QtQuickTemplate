@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from pathlib import Path
 
-from configure_env._types import EnvVar, Platform, Section
+from configure_env._types import EnvVar, Platform, Section, posix_path
 from configure_env._detect_android import (
     detect_android_ndk,
     detect_android_sdk,
@@ -205,6 +205,7 @@ def derive_defaults(
         root = result.get("QT_ROOT", defaults.get("QT_ROOT", ""))
 
     if root:
+        root = posix_path(root)
         result["Qt6_DIR"] = f"{root}/lib/cmake/Qt6"
         result["CMAKE_PREFIX_PATH"] = root
 

@@ -63,13 +63,13 @@ if (-not (Test-Path $BundletoolJar)) {
 
 # ── Step 6: Project configuration (devcro.py) ────────────────────────────────
 Write-Info "Running project configuration..."
-& $UV run python tools/devcro.py @args
+& $UV run python (Join-Path "tools" "devcro.py") @args
 if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
 Write-Ok "Project configuration complete."
 
 # ── Step 7: Developer environment (.env.local) ───────────────────────────────
 Write-Info "Configuring developer environment..."
-& $UV run python tools/configure_env.py
+& $UV run python (Join-Path "tools" "configure_env.py")
 if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
 Write-Ok "Developer environment configured."
 
