@@ -12,6 +12,7 @@ import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowCompat
 import androidx.core.view.WindowInsetsCompat
+import androidx.activity.enableEdgeToEdge
 import dev.crowell.qtquicktemplate.R
 import dev.crowell.qtquicktemplate.extensions.dp
 import org.qtproject.qt.android.bindings.QtActivity
@@ -40,6 +41,7 @@ class MainActivity : QtActivity() {
         splash.setKeepOnScreenCondition { false }
 
         super.onCreate(savedInstanceState)
+	enableEdgeToEdge()
 
         if (Build.VERSION.SDK_INT >= 33) {
             onBackInvokedDispatcher.registerOnBackInvokedCallback(
