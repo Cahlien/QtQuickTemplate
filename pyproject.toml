@@ -9,7 +9,7 @@ dependencies = [
 
 [dependency-groups]
 test = [
-    "pytest>=8.0",
+    "pytest>=9.0.3",
     "pytest-timeout>=2.3",
     "PyJWT>=2.8",
     "cryptography>=42.0",
